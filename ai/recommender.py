@@ -1,12 +1,11 @@
 import streamlit as st
 import google.generativeai as genai
 import os
-from typing import List, Dict, Optional
+from typing import List, Dict
 import json
 from dotenv import load_dotenv
 import requests 
 from bs4 import BeautifulSoup 
-# [★수정] ai.prompts의 올바른 함수명 임포트
 from ai.prompts import get_segment_recommendation_prompt
 
 load_dotenv()
@@ -27,7 +26,6 @@ class AISegmentRecommender:
         try:
             genai.configure(api_key=self.api_key)
             try:
-                # [★수정] 원본 코드의 모델로 복원
                 self.model = genai.GenerativeModel('gemini-2.0-flash')
             except:
                 self.model = genai.GenerativeModel('gemini-pro')
@@ -88,7 +86,6 @@ class AISegmentRecommender:
                     seg['confidence_score'] = enriched_info_map[seg_name]['confidence_score']
                     seg['key_factors'] = enriched_info_map[seg_name]['key_factors']
             
-            # 폴백 로직 (조용히 3개 채우기)
             num_to_pad = 3 - len(recommended_segments)
             if num_to_pad > 0:
                 existing_names = [seg['name'] for seg in recommended_segments]
@@ -133,7 +130,6 @@ class AISegmentRecommender:
         segments_with_desc = [f"- {seg['name']} (설명: {seg['description']})" for seg in available_segments_info]
         segments_list_str = "\n".join(segments_with_desc)
         
-        # [★수정] 'ai.prompts'의 실제 함수명으로 호출
         prompt = get_segment_recommendation_prompt(product_name, website_url, scraped_text, segments_list_str)
         
         try:
@@ -196,45 +192,73 @@ class AISegmentRecommender:
                         flat_segments.append(segment_copy)
         return flat_segments
     
-    # [★수정] 가독성 (핵심 매칭 요소) UI 수정
+    # [★수정] 별 5개 만점 계산 헬퍼 함수
+    def _get_star_rating(self, score):
+        """100점 만점 점수를 별 5개 만점으로 변환합니다."""
+        if score < 60:
+            num_stars = 3
+        elif score < 70:
+            num_stars = 3
+        elif score < 80:
+            num_stars = 4
+        elif score < 90:
+            num_stars = 4
+        else:
+            num_stars = 5
+        
+        stars = "⭐" * num_stars + "☆" * (5 - num_stars)
+        return stars
+
+    # [★수정] 압축적/시각적 카드 UI를 그리는 헬퍼 함수
+    def _display_segment_card(self, segment, rank):
+        """세그먼트 추천 카드 1개를 그립니다."""
+        score = segment.get('confidence_score', 0)
+        
+        if score >= 90:
+            emoji = "🎯"
+        elif score >= 80:
+            emoji = "✅"
+        elif score >= 70:
+            emoji = "👍"
+        else:
+            emoji = "ℹ️" # 기본 추천
+
+        with st.container(border=True):
+            # 1. 제목 (순위 + 이모지 + 풀패스)
+            st.markdown(f"### {emoji} {rank}. {segment.get('full_path', segment.get('name', 'N/A'))}")
+            
+            # 2. 별점 (프로그레스 바 대체)
+            stars = self._get_star_rating(score)
+            st.markdown(f"**적합도: {stars}** (`{score}점`)")
+            
+            # 3. 설명 (st.caption 대신 st.write로 크게)
+            if segment.get('description'):
+                st.write(segment['description'])
+
+            st.divider()
+
+            # 4. 핵심 매칭 요소
+            if segment.get('key_factors'):
+                key_factors_str = ', '.join(segment['key_factors'])
+                st.markdown(f"**🔑 핵심 매칭:** `{key_factors_str}`")
+
+            # 5. 추천 이유
+            if segment.get('reason'):
+                if score >= 60:
+                    st.success(f"**💡 AI 추천:** {segment['reason']}")
+                else:
+                    st.info(f"**ℹ️ 기본 추천:** {segment['reason']}")
+
+    # [★수정] 3열 카드 레이아웃으로 변경
     def display_recommendations(self, recommended_segments: List[Dict]):
-        """추천 결과 표시 (st.expander 사용)"""
         if not recommended_segments:
             st.warning("❌ 추천할 세그먼트를 찾지 못했습니다.")
             return
         
-        for i, segment in enumerate(recommended_segments, 1):
-            score = segment.get('confidence_score', 0)
-            
-            # 1. 제목 (풀패스)
-            title = f"**{i}. {segment.get('full_path', segment.get('name', 'N/A'))}**"
-            
-            # 2. 적합도
-            if score >= 60: 
-                title += f" <span style='color:#d9534f; font-weight:bold;'>(적합도: {score}점)</span>"
-                reason_prefix = "💡 AI 추천 사유:"
-            else:
-                title += " <span style='color:#555;'>(기본 추천)</span>"
-                reason_prefix = "ℹ️ 기본 추천 사유:"
-                
-            # 3. 핵심 매칭 요소 (제목에서 제거)
-
-            with st.expander(title, expanded=True):
-                if segment.get('description'):
-                    st.caption(f"{segment['description']}")
-                
-                # 4. 핵심 매칭 요소를 별도 라인으로 추가
-                if segment.get('key_factors'):
-                    key_factors_str = ', '.join(segment['key_factors'])
-                    # '기본 추천'일 때는 '기본 추천'이라고 표시
-                    if score >= 60: 
-                        st.markdown(f"<span style='color: #004a9e;'>**🔑 핵심 매칭 요소:** {key_factors_str}</span>", unsafe_allow_html=True)
-                    else:
-                        st.markdown(f"**🔑 핵심 매칭 요소:** {key_factors_str}", unsafe_allow_html=True)
-
-
-                if segment.get('reason'):
-                    if score >= 60:
-                        st.success(f"**{reason_prefix}** {segment['reason']}")
-                    else:
-                        st.info(f"**{reason_prefix}** {segment['reason']}")
+        # 3열 생성
+        cols = st.columns(len(recommended_segments))
+        
+        for i, col in enumerate(cols):
+            with col:
+                # 각 열에 카드 1개씩 그리기
+                self._display_segment_card(recommended_segments[i], i + 1)
