@@ -6,7 +6,8 @@ import json
 from dotenv import load_dotenv
 import requests 
 from bs4 import BeautifulSoup 
-from ai.prompts import create_gemini_prompt, create_strategy_prompt
+# [★수정] 'ai.prompts'에서 올바른 함수 이름을 가져옵니다.
+from ai.prompts import create_segment_recommendation_prompt, create_strategy_overview_prompt
 
 load_dotenv()
 
@@ -34,6 +35,7 @@ class AISegmentRecommender:
     
     def recommend_segments(self, product_name: str, website_url: str) -> List[Dict]:
         
+        # [★수정] '제품명' 또는 '제품 URL' 중 하나만 입력해도 되도록 수정
         if not product_name.strip() and not website_url.strip():
             st.error("❌ '제품명' 또는 '제품 URL'을 입력해주세요.")
             return []
@@ -63,6 +65,8 @@ class AISegmentRecommender:
                 segments_from_ai = ai_response.get("recommended_segments", [])
 
         except Exception as e:
+            # UX를 위해 AI 실패 시 오류 대신 경고 표시
+            st.warning(f"⚠️ AI 분석 중 오류가 발생했습니다. (오류: {e})")
             print(f"AI 추천 실패 (폴백 실행): {e}") 
             segments_from_ai = []
         
@@ -86,6 +90,7 @@ class AISegmentRecommender:
                 seg['confidence_score'] = details.get('confidence_score', 0)
                 seg['key_factors'] = details.get('key_factors', [])
             
+            # [★수정] AI 추천 실패 시 (0개) 또는 3개 미만 시 조용한 폴백 로직
             num_to_pad = 3 - len(recommended_segments)
             if num_to_pad > 0:
                 existing_names = [seg['name'] for seg in recommended_segments]
@@ -145,7 +150,8 @@ class AISegmentRecommender:
         if not available_segments_info:
             raise ValueError("파싱할 세그먼트 데이터를 찾을 수 없습니다.")
 
-        prompt = create_gemini_prompt(product_name, website_url, scraped_text, available_segments_info)
+        # [★수정] 'ai.prompts'의 실제 함수명으로 호출
+        prompt = create_segment_recommendation_prompt(product_name, website_url, scraped_text, available_segments_info)
         
         raw_response_text = ""
         try:
@@ -172,7 +178,7 @@ class AISegmentRecommender:
                 if "name" not in seg or "reason" not in seg or "confidence_score" not in seg:
                     raise ValueError(f"AI 응답의 {i+1}번째 세그먼트에 name, reason 또는 confidence_score가 누락되었습니다.")
                 if not isinstance(seg["confidence_score"], int):
-                    raise ValueError(f"AI 응답의 {i+1}번째 세그먼트 confidence_score가 숫자가 아닙니다.")
+                    raise ValueError(f"AI 응M 응답의 {i+1}번째 세그먼트 confidence_score가 숫자가 아닙니다.")
 
             return parsed_data
             
@@ -231,7 +237,6 @@ class AISegmentRecommender:
                         
         return flat_segments
 
-    # [★수정] '핵심 매칭 요소'를 제목 옆 한 줄로 표시
     def display_recommendations(self, recommended_segments: List[Dict]):
         """추천 결과 표시 (st.expander 사용)"""
         if not recommended_segments:
@@ -241,10 +246,8 @@ class AISegmentRecommender:
         for i, segment in enumerate(recommended_segments, 1):
             score = segment.get('confidence_score', 0)
             
-            # 1. 제목 (풀패스)
             title = f"**{i}. {segment.get('full_path', segment.get('name', 'N/A'))}**"
             
-            # 2. 적합도
             if score > 0:
                 title += f" <span style='color:#d9534f; font-weight:bold;'>(적합도: {score}점)</span>"
                 reason_prefix = "💡 AI 추천 사유:"
@@ -252,12 +255,10 @@ class AISegmentRecommender:
                 title += " <span style='color:#555;'>(기본 추천)</span>"
                 reason_prefix = "ℹ️ 기본 추천 사유:"
                 
-            # 3. 핵심 매칭 요소 (제목 옆 한 줄로)
             if segment.get('key_factors'):
                  key_factors_str = ', '.join(segment['key_factors'])
                  title += f" <span style='font-size: 0.9em; color: #004a9e; font-weight:bold;'>(🔑 핵심 매칭: {key_factors_str})</span>"
 
-            # st.expander는 markdown을 지원
             with st.expander(title, expanded=True):
                 if segment.get('description'):
                     st.caption(f"{segment['description']}")
@@ -267,3 +268,26 @@ class AISegmentRecommender:
                         st.success(f"**{reason_prefix}** {segment['reason']}")
                     else:
                         st.info(f"**{reason_prefix}** {segment['reason']}")
+
+    def generate_strategy_overview(self, product_name: str, total_budget_won: int, recommended_segments: List[Dict], channel_budgets_mw: Dict[str, int]) -> str:
+        """AI 광고 전략 총평 생성 (분리된 함수)"""
+        
+        if not self.gemini_available or not self.model:
+            return "AI 모델을 사용할 수 없어 총평을 생성하지 못했습니다."
+            
+        try:
+            prompt = create_strategy_overview_prompt(
+                product_name, total_budget_won, recommended_segments, channel_budgets_mw
+            )
+            
+            with st.spinner("AI가 최종 전략 리포트를 생성 중입니다..."):
+                response = self.model.generate_content(prompt)
+                
+                if not response or not response.text:
+                    raise ValueError("Gemini API에서 빈 응답을 받았습니다.")
+                
+                return response.text.strip()
+        
+        except Exception as e:
+            st.error(f"❌ AI 총평 생성 실패: {str(e)}")
+            return "AI 총평을 생성하는 중 오류가 발생했습니다. 입력값을 확인해주세요."
