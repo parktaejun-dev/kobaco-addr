@@ -1,0 +1,30 @@
+# Python 캐시
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# 환경 변수 파일 (API 키 보호)
+.env
+*.env
+
+# Streamlit 비밀 설정
+.streamlit/secrets.toml
+
+# OS 생성 파일
+.DS_Store
+Thumbs.db
+
+# IDE 설정
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 로그 파일
+*.log
+
+# 임시 파일
+*.tmp
+*.bak
