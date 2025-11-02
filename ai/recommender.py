@@ -6,7 +6,6 @@ import json
 from dotenv import load_dotenv
 import requests 
 from bs4 import BeautifulSoup 
-# [★수정] ai/prompts.py의 실제 함수명을 정확히 임포트
 from ai.prompts import get_segment_recommendation_prompt
 
 load_dotenv()
@@ -27,26 +26,25 @@ class AISegmentRecommender:
         try:
             genai.configure(api_key=self.api_key)
             try:
-                # [★수정] 모델명을 최신으로 (gemini-1.5-flash-latest)
-                self.model = genai.GenerativeModel('gemini-1.5-flash-latest')
+                self.model = genai.GenerativeModel('gemini-2.5-flash')
             except:
-                self.model = genai.GenerativeModel('gemini-pro')
+                self.model = genai.GenerativeModel('gemini-2.5-pro')
             self.gemini_available = True
         except Exception as e:
             st.error(f"❌ Gemini API 설정 오류: {str(e)}")
             self.gemini_available = False
     
     def recommend_segments(self, product_name: str, website_url: str) -> List[Dict]:
-        # [★수정] ui/pages.py의 문구와 동일하게 '제품명' 또는 'URL' 중 하나만 있어도 실행
+        
         if not product_name.strip() and not website_url.strip():
             st.error("❌ '제품명' 또는 '제품 URL*'을 입력해주세요.")
             return []
-        
+            
         if not self.gemini_available or not self.model:
             st.error("❌ Gemini AI를 사용할 수 없습니다.")
             return []
-        
-        st.info(f"🔍 '{product_name or website_url}'에 대한 AI 분석을 시작합니다...")
+            
+        st.info(f"🔍 '{product_name or website_url}'에 대한 AI 타겟 분석을 시작합니다...")
         
         scraped_text = ""
         if website_url:
@@ -58,7 +56,6 @@ class AISegmentRecommender:
         try:
             ai_response = self._recommend_with_gemini(product_name, website_url, scraped_text) 
             if not ai_response:
-                # _recommend_with_gemini에서 오류를 처리하므로, 여기서는 폴백 로직으로 넘어감
                 segments_from_ai = []
             else:
                 product_understanding = ai_response.get("product_understanding")
@@ -89,7 +86,6 @@ class AISegmentRecommender:
                     seg['confidence_score'] = enriched_info_map[seg_name]['confidence_score']
                     seg['key_factors'] = enriched_info_map[seg_name]['key_factors']
             
-            # [★수정] 사용자 UX를 위한 '조용한' 폴백 로직 (st.warning 제거)
             num_to_pad = 3 - len(recommended_segments)
             if num_to_pad > 0:
                 existing_names = [seg['name'] for seg in recommended_segments]
@@ -97,7 +93,7 @@ class AISegmentRecommender:
                 for i in range(min(num_to_pad, len(fallback_segments))):
                     fallback_seg = fallback_segments[i].copy()
                     fallback_seg['reason'] = "제품과 관련성이 높은 기본 세그먼트입니다."
-                    fallback_seg['confidence_score'] = 60 # 기본 점수
+                    fallback_seg['confidence_score'] = 60
                     fallback_seg['key_factors'] = ["기본 추천"]
                     recommended_segments.append(fallback_seg)
             
@@ -134,7 +130,6 @@ class AISegmentRecommender:
         segments_with_desc = [f"- {seg['name']} (설명: {seg['description']})" for seg in available_segments_info]
         segments_list_str = "\n".join(segments_with_desc)
         
-        # [★수정] 'ai.prompts'의 실제 함수명으로 호출
         prompt = get_segment_recommendation_prompt(product_name, website_url, scraped_text, segments_list_str)
         
         try:
@@ -197,7 +192,6 @@ class AISegmentRecommender:
                         flat_segments.append(segment_copy)
         return flat_segments
     
-    # [★수정] '핵심 매칭 요소'를 제목 옆 한 줄로 표시 (최신 UI 요청 반영)
     def display_recommendations(self, recommended_segments: List[Dict]):
         """추천 결과 표시 (st.expander 사용)"""
         if not recommended_segments:
@@ -211,7 +205,7 @@ class AISegmentRecommender:
             title = f"**{i}. {segment.get('full_path', segment.get('name', 'N/A'))}**"
             
             # 2. 적합도
-            if score > 0:
+            if score >= 60: # [★수정] 점수 기준으로 텍스트 변경
                 title += f" <span style='color:#d9534f; font-weight:bold;'>(적합도: {score}점)</span>"
                 reason_prefix = "💡 AI 추천 사유:"
             else:
@@ -221,7 +215,9 @@ class AISegmentRecommender:
             # 3. 핵심 매칭 요소 (제목 옆 한 줄로)
             if segment.get('key_factors'):
                  key_factors_str = ', '.join(segment['key_factors'])
-                 title += f" <span style='font-size: 0.9em; color: #004a9e; font-weight:bold;'>(🔑 핵심 매칭: {key_factors_str})</span>"
+                 # [★수정] '기본 추천'일 때는 핵심 요소 숨김
+                 if score >= 60:
+                    title += f" <span style='font-size: 0.9em; color: #004a9e; font-weight:bold;'>(🔑 핵심 매칭: {key_factors_str})</span>"
 
             # st.expander는 markdown을 지원
             with st.expander(title, expanded=True):
@@ -229,7 +225,7 @@ class AISegmentRecommender:
                     st.caption(f"{segment['description']}")
                 
                 if segment.get('reason'):
-                    if score > 0:
+                    if score >= 60:
                         st.success(f"**{reason_prefix}** {segment['reason']}")
                     else:
                         st.info(f"**{reason_prefix}** {segment['reason']}")
