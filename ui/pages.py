@@ -1,0 +1,156 @@
+import streamlit as st
+import pandas as pd
+import json
+from ui.components import create_metric_cards, create_results_table, create_budget_inputs, create_region_selectors
+from utils.validators import validate_budget_allocation, validate_required_fields
+
+def render_admin_login():
+    """관리자 로그인 UI"""
+    with st.expander("🔐 관리자 로그인"):
+        admin_id = st.text_input("관리자 ID")
+        admin_pw = st.text_input("비밀번호", type="password")
+        if st.button("관리자 로그인"):
+            try:
+                if (admin_id == st.secrets["admin_id"] and admin_pw == st.secrets["admin_password"]):
+                    st.session_state.authenticated = True
+                    st.session_state.admin_mode = True
+                    st.rerun()
+                else:
+                    st.error("ID 또는 비밀번호가 incorrect.")
+            except KeyError:
+                st.error("Secrets 설정이 필요합니다.")
+            except Exception as e:
+                st.error(f"로그인 오류: {e}")
+
+def render_product_info_section():
+    """제품 정보 입력 섹션"""
+    st.header("📋 광고주/제품 정보")
+    advertiser_name = st.text_input("광고주명*", placeholder="예: (주)OO전자", key="advertiser_name")
+    product_name = st.text_input("제품명*", placeholder="예: 신형 로봇청소기", key="product_name")
+    website_url = st.text_input("제품 URL", placeholder="https://example.com", key="website_url")
+    return advertiser_name, product_name, website_url
+
+def render_ad_settings_section(data_manager):
+    """광고 설정 섹션"""
+    st.header("⚙️ 광고 설정")
+    ad_col1, ad_col2 = st.columns(2)
+    
+    with ad_col1:
+        duration_options = {"15초": 15, "30초": 30}
+        selected_duration = st.selectbox("광고 초수", list(duration_options.keys()), index=0) # [★수정] 15초 기본
+        ad_duration = duration_options[selected_duration]
+    
+    with ad_col2:
+        audience_targeting = st.checkbox("어드레서블 타겟팅 사용", value=True)
+        custom_targeting = st.checkbox("커스텀 타겟팅 사용 (추가 할증)", value=False) if audience_targeting else False
+        region_targeting = st.checkbox("지역 타겟팅 사용")
+    
+    region_selections = {}
+    if region_targeting:
+        st.subheader("📍 지역 타겟팅 설정")
+        surcharges_data = data_manager.load_surcharges()
+        
+        # [★수정] 여기서 'region_options'를 만들지 않고 surcharges_data를 직접 전달
+        
+        channels_data = data_manager.load_channels()
+        if channels_data is not None:
+            available_channels = channels_data['channel_name'].tolist()
+            # [★수정] 'region_options' 대신 'surcharges_data' 전달
+            region_selections = create_region_selectors(available_channels, surcharges_data)
+    
+    return ad_duration, audience_targeting, custom_targeting, region_targeting, region_selections
+
+def render_budget_section(data_manager):
+    """예산 설정 섹션"""
+    st.header("💰 예산 설정")
+    total_budget = st.number_input(
+        "총 월 예산 (만원)*",
+        min_value=100,
+        max_value=50000,
+        value=5000,
+        step=100,
+        key="total_budget"
+    )
+    
+    channels_data = data_manager.load_channels()
+    if channels_data is not None:
+        available_channels = channels_data['channel_name'].tolist()
+        default_allocations = {'MBC': 0.3, 'EBS': 0.2, 'PP': 0.5}
+        
+        st.subheader("📊 채널별 예산 배분")
+        channel_budgets = create_budget_inputs(available_channels, total_budget, default_allocations)
+        
+        is_valid, allocated_total = validate_budget_allocation(channel_budgets, total_budget)
+        if not is_valid:
+            st.warning(f"⚠️ 배분된 총액({allocated_total}만원)이 총 예산({total_budget}만원)과 다릅니다.")
+        
+        duration = st.slider("📅 광고 기간 (개월)", 1, 12, 3, key="duration")
+        
+        return total_budget, channel_budgets, duration, available_channels, is_valid
+    
+    return None, None, None, None, False
+
+def render_results_section(result, calculator, advertiser_name, product_name, recommended_segments):
+    """결과 표시 섹션"""
+    st.header("📊 AI 전략 분석 결과")
+    create_metric_cards(result['summary'])
+    st.subheader("📈 채널별 상세 내역")
+    create_results_table(result)
+
+def render_sales_policy_page(data_manager):
+    """판매정책 관리 페이지"""
+    st.title("🔧 판매정책 관리")
+    tab1, tab2, tab3 = st.tabs(["채널 관리", "보너스 정책", "할증 정책"])
+    
+    with tab1:
+        st.subheader("채널 기본 요금 관리")
+        channels_data = data_manager.load_channels()
+        if channels_data is not None:
+            edited_channels = st.data_editor(channels_data, num_rows="dynamic", use_container_width=True)
+            if st.button("💾 채널 데이터 저장"):
+                data_manager.save_data('channels', edited_channels)
+                st.success("✅ 채널 데이터가 저장되었습니다.")
+    
+    with tab2:
+        st.subheader("보너스 정책 관리")
+        bonuses_data = data_manager.load_bonuses()
+        if bonuses_data is not None:
+            edited_bonuses = st.data_editor(bonuses_data, num_rows="dynamic", use_container_width=True)
+            if st.button("💾 보너스 데이터 저장"):
+                data_manager.save_data('bonuses', edited_bonuses)
+                st.success("✅ 보너스 데이터가 저장되었습니다.")
+    
+    with tab3:
+        st.subheader("할증 정책 관리")
+        surcharges_data = data_manager.load_surcharges()
+        if surcharges_data is not None:
+            edited_surcharges = st.data_editor(surcharges_data, num_rows="dynamic", use_container_width=True)
+            if st.button("💾 할증 데이터 저장"):
+                data_manager.save_data('surcharges', edited_surcharges)
+                st.success("✅ 할증 데이터가 저장되었습니다.")
+
+def render_segment_management_page(data_manager):
+    """세그먼트 관리 페이지"""
+    st.title("🎯 세그먼트 관리")
+    segments_data = data_manager.load_segments()
+    
+    if segments_data:
+        st.subheader("세그먼트 데이터 편집")
+        edited_json = st.text_area(
+            "세그먼트 데이터 (JSON 형식)",
+            value=json.dumps(segments_data, ensure_ascii=False, indent=2),
+            height=500
+        )
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("💾 세그먼트 데이터 저장", type="primary"):
+                try:
+                    parsed_data = json.loads(edited_json)
+                    data_manager.save_segments(parsed_data)
+                    st.success("✅ 세그먼트 데이터가 저장되었습니다!")
+                except json.JSONDecodeError as e:
+                    st.error(f"❌ JSON 형식 오류: {e}")
+        with col2:
+            if st.button("🔄 데이터 새로고침"):
+                st.rerun()

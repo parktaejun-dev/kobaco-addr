@@ -1,0 +1,159 @@
+import pandas as pd
+from datetime import datetime
+import os
+import io
+from jinja2 import Environment, FileSystemLoader, select_autoescape
+import base64
+
+class EstimateCalculator:
+    def __init__(self, data_manager):
+        self.data_manager = data_manager
+        self.channels_df = self.data_manager.load_channels()
+        self.bonuses_df = self.data_manager.load_bonuses()
+        self.surcharges_df = self.data_manager.load_surcharges()
+
+        if self.channels_df is None or self.bonuses_df is None or self.surcharges_df is None:
+            raise ValueError("데이터 로드 실패. data/ 디렉토리의 파일을 확인하세요.")
+
+    def calculate_estimate(self, selected_channels, channel_budgets, duration, 
+                           region_targeting, region_selections, 
+                           audience_targeting, ad_duration, custom_targeting):
+        
+        # [★수정] results['details']를 리스트로 초기화 (TypeError 해결)
+        results = {'details': [], 'summary': {}}
+        total_budget_won = 0 
+        total_guaranteed_impressions = 0
+        
+        if self.channels_df is None:
+            return {"error": "채널 데이터를 로드할 수 없습니다."}
+
+        for channel_name in selected_channels:
+            budget_mw = channel_budgets.get(channel_name, 0)
+            if budget_mw == 0:
+                continue
+
+            # [★수정] 'budget_won'을 '월 예산' (원)으로 정의
+            budget_won = budget_mw * 10000
+            total_budget_won += budget_won
+            
+            channel_info = self.channels_df[self.channels_df['channel_name'] == channel_name]
+            if channel_info.empty:
+                continue
+                
+            try:
+                base_cpv_15s = channel_info.iloc[0]['base_cpv']
+                if pd.isna(base_cpv_15s) or base_cpv_15s == 0:
+                    continue
+
+                if ad_duration == 30:
+                    base_cpv = base_cpv_15s * 2.0
+                else:
+                    base_cpv = base_cpv_15s
+                    
+            except KeyError as e:
+                return {"error": f"설정 오류 (KeyError): 'data/channels.csv'에서 'base_cpv' 열을 찾지 못했습니다."}
+
+            total_bonus_rate = 0.0
+            
+            if self.bonuses_df is not None:
+                
+                basic_bonus = self.bonuses_df[
+                    (self.bonuses_df['bonus_type'] == 'basic') &
+                    (self.bonuses_df['channel_name'] == channel_name)
+                ]
+                if not basic_bonus.empty:
+                    total_bonus_rate += basic_bonus['rate'].sum()
+
+                # 'duration'은 여기서만 사용
+                duration_bonus = self.bonuses_df[
+                    (self.bonuses_df['bonus_type'] == 'duration') &
+                    (self.bonuses_df['channel_name'] == channel_name) &
+                    (self.bonuses_df['min_value'] <= duration)
+                ]
+                if not duration_bonus.empty:
+                    total_bonus_rate += duration_bonus['rate'].max()
+
+                # 'volume_bonus'를 '월 예산' (budget_won) 기준으로 계산
+                volume_bonus = self.bonuses_df[
+                    (self.bonuses_df['bonus_type'] == 'volume') &
+                    (self.bonuses_df['channel_name'] == channel_name) &
+                    (self.bonuses_df['min_value'] <= budget_won) 
+                ]
+                if not volume_bonus.empty:
+                    total_bonus_rate += volume_bonus['rate'].max()
+                
+                promo_bonus = self.bonuses_df[
+                    (self.bonuses_df['bonus_type'] == 'promotion') &
+                    (self.bonuses_df['channel_name'] == channel_name)
+                ]
+                if not promo_bonus.empty:
+                    total_bonus_rate += promo_bonus['rate'].sum()
+            
+            total_surcharge_rate = 0.0
+            
+            if self.surcharges_df is not None:
+                if region_targeting and region_selections.get(channel_name) != '선택안함':
+                    region_name = region_selections.get(channel_name)
+                    region_surcharge = self.surcharges_df[
+                        (self.surcharges_df['surcharge_type'] == 'region') &
+                        (self.surcharges_df['channel_name'] == channel_name) &
+                        (self.surcharges_df['condition_value'] == region_name)
+                    ]
+                    if not region_surcharge.empty:
+                        total_surcharge_rate += region_surcharge.iloc[0]['rate'] * 100.0
+                
+                if custom_targeting:
+                    custom_surcharge = self.surcharges_df[
+                        (self.surcharges_df['surcharge_type'] == 'custom') &
+                        (self.surcharges_df['channel_name'] == channel_name)
+                    ]
+                    if not custom_surcharge.empty:
+                        total_surcharge_rate += custom_surcharge.iloc[0]['rate'] * 100.0
+
+            
+            # 계산 로직 (월 예산 기준)
+            
+            # 1. 할증 적용 CPV
+            surcharge_multiplier = (1 + (total_surcharge_rate / 100))
+            applied_cpv = base_cpv * surcharge_multiplier
+            
+            # 2. 보장 노출수 (보너스 반영)
+            bonus_multiplier = (1 + total_bonus_rate)
+            
+            initial_impressions = 0
+            if applied_cpv > 0:
+                 initial_impressions = budget_won / applied_cpv
+            
+            guaranteed_impressions = initial_impressions * bonus_multiplier
+
+            # 3. 최종 CPV 재산출
+            final_cpv = 0
+            if guaranteed_impressions > 0:
+                final_cpv = budget_won / guaranteed_impressions 
+            
+            total_guaranteed_impressions += guaranteed_impressions
+
+            # [★수정] results['details']에 딕셔너리를 append (TypeError 해결)
+            results['details'].append({
+                "channel": channel_name,
+                "budget": budget_won, # '월 예산' (원)
+                "base_cpv": base_cpv,
+                "total_bonus_rate": total_bonus_rate * 100,
+                "total_surcharge_rate": total_surcharge_rate,
+                "guaranteed_impressions": round(guaranteed_impressions),
+                "final_cpv": final_cpv
+            })
+
+        average_cpv = 0
+        if total_guaranteed_impressions > 0:
+            average_cpv = total_budget_won / total_guaranteed_impressions
+
+        summary = {
+            "total_budget": total_budget_won, # 총 월 예산
+            "total_impressions": round(total_guaranteed_impressions), # 총 월 노출수
+            "average_cpv": average_cpv,
+            "ad_duration": ad_duration
+        }
+
+        results['summary'] = summary
+        return results

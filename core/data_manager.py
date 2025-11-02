@@ -18,7 +18,6 @@ class DataManager:
             st.error(f"데이터 파일을 찾을 수 없습니다: {file_path}")
             return None
         try:
-            # 'utf-8-sig' 인코딩을 사용하여 'BOM' 관련 KeyError/ValueError 해결
             return pd.read_csv(file_path, dtype=dtype, encoding='utf-8-sig')
         except Exception as e:
             st.error(f"데이터 로딩 중 오류 발생 ({file_path}): {e}")
@@ -27,24 +26,20 @@ class DataManager:
     def save_data(self, file_type, df):
         file_path = self.get_file_path(file_type, format='csv')
         try:
-            # 저장 시에도 'utf-8-sig' 사용
             df.to_csv(file_path, index=False, encoding='utf-8-sig')
         except Exception as e:
             st.error(f"데이터 저장 중 오류 발생 ({file_path}): {e}")
 
     def load_channels(self):
-        # 'base_cpv'를 float로 강제 지정
         return self.load_data('channels', dtype={'base_cpv': 'float'})
 
     def load_bonuses(self):
-        # bonuses.csv의 실제 컬럼명(min_value, rate)을 숫자로 로드
         return self.load_data('bonuses', dtype={
             'min_value': 'float',
             'rate': 'float'
         })
 
     def load_surcharges(self):
-        # 'surcharge_rate'를 float로 강제 지정
         return self.load_data('surcharges', dtype={'rate': 'float'})
 
     def load_segments(self):
