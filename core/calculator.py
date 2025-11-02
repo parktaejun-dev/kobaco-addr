@@ -19,7 +19,6 @@ class EstimateCalculator:
                            region_targeting, region_selections, 
                            audience_targeting, ad_duration, custom_targeting):
         
-        # [★수정] results['details']를 리스트로 초기화 (TypeError 해결)
         results = {'details': [], 'summary': {}}
         total_budget_won = 0 
         total_guaranteed_impressions = 0
@@ -32,7 +31,6 @@ class EstimateCalculator:
             if budget_mw == 0:
                 continue
 
-            # [★수정] 'budget_won'을 '월 예산' (원)으로 정의
             budget_won = budget_mw * 10000
             total_budget_won += budget_won
             
@@ -64,7 +62,6 @@ class EstimateCalculator:
                 if not basic_bonus.empty:
                     total_bonus_rate += basic_bonus['rate'].sum()
 
-                # 'duration'은 여기서만 사용
                 duration_bonus = self.bonuses_df[
                     (self.bonuses_df['bonus_type'] == 'duration') &
                     (self.bonuses_df['channel_name'] == channel_name) &
@@ -73,7 +70,6 @@ class EstimateCalculator:
                 if not duration_bonus.empty:
                     total_bonus_rate += duration_bonus['rate'].max()
 
-                # 'volume_bonus'를 '월 예산' (budget_won) 기준으로 계산
                 volume_bonus = self.bonuses_df[
                     (self.bonuses_df['bonus_type'] == 'volume') &
                     (self.bonuses_df['channel_name'] == channel_name) &
@@ -111,13 +107,9 @@ class EstimateCalculator:
                         total_surcharge_rate += custom_surcharge.iloc[0]['rate'] * 100.0
 
             
-            # 계산 로직 (월 예산 기준)
-            
-            # 1. 할증 적용 CPV
             surcharge_multiplier = (1 + (total_surcharge_rate / 100))
             applied_cpv = base_cpv * surcharge_multiplier
             
-            # 2. 보장 노출수 (보너스 반영)
             bonus_multiplier = (1 + total_bonus_rate)
             
             initial_impressions = 0
@@ -126,17 +118,15 @@ class EstimateCalculator:
             
             guaranteed_impressions = initial_impressions * bonus_multiplier
 
-            # 3. 최종 CPV 재산출
             final_cpv = 0
             if guaranteed_impressions > 0:
                 final_cpv = budget_won / guaranteed_impressions 
             
             total_guaranteed_impressions += guaranteed_impressions
 
-            # [★수정] results['details']에 딕셔너리를 append (TypeError 해결)
             results['details'].append({
                 "channel": channel_name,
-                "budget": budget_won, # '월 예산' (원)
+                "budget": budget_won,
                 "base_cpv": base_cpv,
                 "total_bonus_rate": total_bonus_rate * 100,
                 "total_surcharge_rate": total_surcharge_rate,
@@ -149,10 +139,11 @@ class EstimateCalculator:
             average_cpv = total_budget_won / total_guaranteed_impressions
 
         summary = {
-            "total_budget": total_budget_won, # 총 월 예산
-            "total_impressions": round(total_guaranteed_impressions), # 총 월 노출수
+            "total_budget": total_budget_won,
+            "total_impressions": round(total_guaranteed_impressions),
             "average_cpv": average_cpv,
-            "ad_duration": ad_duration
+            "ad_duration": ad_duration,
+            "duration_months": duration # [★수정] 집행 기간(개월) 추가
         }
 
         results['summary'] = summary

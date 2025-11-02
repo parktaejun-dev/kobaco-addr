@@ -6,6 +6,7 @@ from utils.validators import validate_budget_allocation, validate_required_field
 
 def render_admin_login():
     """관리자 로그인 UI"""
+    # [★문구 수정]
     with st.expander("🔐 관리자 로그인"):
         admin_id = st.text_input("관리자 ID")
         admin_pw = st.text_input("비밀번호", type="password")
@@ -24,45 +25,47 @@ def render_admin_login():
 
 def render_product_info_section():
     """제품 정보 입력 섹션"""
-    st.header("📋 광고주/제품 정보")
+    # [★문구 수정]
+    st.header("📋 광고 캠페인 기본 정보")
+    st.caption("광고 제품명과 URL 주소를 입력해주시면, AI가 적합한 타깃을 추천해 드립니다.")
     advertiser_name = st.text_input("광고주명*", placeholder="예: (주)OO전자", key="advertiser_name")
-    product_name = st.text_input("제품명*", placeholder="예: 신형 로봇청소기", key="product_name")
-    website_url = st.text_input("제품 URL", placeholder="https://example.com", key="website_url")
+    product_name = st.text_input("제품명*", placeholder="예: 로봇청소기(URL 사용 실패시 제품명으로 검색합니다.)", key="product_name")
+    website_url = st.text_input("제품 URL*", placeholder="상품설명 등이 포함된 URL, 정확성이 향상됩니다.", key="website_url")
     return advertiser_name, product_name, website_url
 
 def render_ad_settings_section(data_manager):
     """광고 설정 섹션"""
-    st.header("⚙️ 광고 설정")
+    # [★문구 수정]
+    st.header("🎯 타기팅 & 광고 조건 설정")
+    st.caption("타깃이 명확할수록 광고 효율이 높아집니다.")
     ad_col1, ad_col2 = st.columns(2)
     
     with ad_col1:
         duration_options = {"15초": 15, "30초": 30}
-        selected_duration = st.selectbox("광고 초수", list(duration_options.keys()), index=0) # [★수정] 15초 기본
+        selected_duration = st.selectbox("광고 초수", list(duration_options.keys()), index=0)
         ad_duration = duration_options[selected_duration]
     
     with ad_col2:
-        audience_targeting = st.checkbox("어드레서블 타겟팅 사용", value=True)
-        custom_targeting = st.checkbox("커스텀 타겟팅 사용 (추가 할증)", value=False) if audience_targeting else False
-        region_targeting = st.checkbox("지역 타겟팅 사용")
+        audience_targeting = st.checkbox("오디언스 타기팅", value=True)
+        custom_targeting = st.checkbox("커스텀 타기팅", value=False) if audience_targeting else False
+        region_targeting = st.checkbox("지역 타기팅")
     
     region_selections = {}
     if region_targeting:
-        st.subheader("📍 지역 타겟팅 설정")
+        st.subheader("📍 지역 타기팅 설정")
         surcharges_data = data_manager.load_surcharges()
-        
-        # [★수정] 여기서 'region_options'를 만들지 않고 surcharges_data를 직접 전달
-        
         channels_data = data_manager.load_channels()
         if channels_data is not None:
             available_channels = channels_data['channel_name'].tolist()
-            # [★수정] 'region_options' 대신 'surcharges_data' 전달
             region_selections = create_region_selectors(available_channels, surcharges_data)
     
     return ad_duration, audience_targeting, custom_targeting, region_targeting, region_selections
 
 def render_budget_section(data_manager):
     """예산 설정 섹션"""
-    st.header("💰 예산 설정")
+    # [★문구 수정]
+    st.header("💰 예산 배분 계획")
+    st.caption("총 예산을 채널별로 나누어 예상 노출량과 최종 단가가 자동으로 계산됩니다.")
     total_budget = st.number_input(
         "총 월 예산 (만원)*",
         min_value=100,

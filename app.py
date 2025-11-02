@@ -21,18 +21,16 @@ def initialize_data():
     앱 부팅 시(또는 슬립에서 깨어날 때) 한 번만 실행되어
     필수 데이터를 로드하고 캐시합니다.
     """
-    # time.sleep(2) # 로딩 테스트용
     data_manager = DataManager()
     return data_manager
 
 def main():
     st.set_page_config(
-        page_title="KOBACO 어드레서블 TV 광고 시스템",
-        page_icon="📺",
+        page_title="KOBACO 어드레서블 TV : AI 도우미",
+        page_icon="🎯",
         layout="wide"
     )
 
-    # [★수정] 슬립 모드에서 깨어날 때 로딩 화면 표시
     with st.spinner("🚀 AI 광고 전략 컨설턴트를 준비 중입니다..."):
         data_manager = initialize_data() 
 
@@ -43,37 +41,36 @@ def main():
     if 'recommended_segments' not in st.session_state:
         st.session_state.recommended_segments = []
 
-    with st.sidebar:
-        st.title("📺 KOBACO")
-        if st.session_state.authenticated and st.session_state.admin_mode:
+    if st.session_state.authenticated and st.session_state.admin_mode:
+        with st.sidebar:
+            st.title("📺 KOBACO (Admin)")
             st.success("🔐 관리자 모드")
-            page = st.radio("메뉴 선택", ["고객 페이지", "판매정책 관리", "세그먼트 관리"])
+            page = st.radio("메뉴 선택", ["✨ 고객 전용 페이지", "판매정책 관리", "세그먼트 관리"])
             if st.button("로그아웃"):
                 st.session_state.authenticated = False
                 st.session_state.admin_mode = False
                 st.session_state.recommended_segments = []
                 st.rerun()
-        else:
-            page = "고객 페이지"
-            st.info("고객용 페이지")
-            render_admin_login()
+    else:
+        page = "✨ 고객 전용 페이지"
 
-    if page == "고객 페이지":
-        st.title("📺 KOBACO 어드레서블 TV 광고 견적 시스템")
+
+    if page == "✨ 고객 전용 페이지":
+        st.title("🎯 KOBACO 어드레서블 TV : AI 도우미")
         col1, col2 = st.columns([2, 1])
         
         with col1:
             advertiser_name, product_name, website_url = render_product_info_section()
             
-            if product_name:
-                # [★수정] width='stretch'로 변경
-                if st.button("🤖 AI 타겟 분석 요청", type="primary", width='stretch'):
-                    st.session_state.recommended_segments = []
-                    recommender = AISegmentRecommender(data_manager)
-                    st.session_state.recommended_segments = recommender.recommend_segments(product_name, website_url)
+            # [★수정] 'if product_name:' 조건을 제거하여 버튼이 항상 보이도록 수정
+            if st.button("🎯 AI 타깃 분석을 실행합니다.", type="primary", width='stretch'):
+                st.session_state.recommended_segments = []
+                recommender = AISegmentRecommender(data_manager)
+                # recommender.recommend_segments가 product_name이 비었을 때 st.error를 띄울 것임
+                st.session_state.recommended_segments = recommender.recommend_segments(product_name, website_url)
             
             if st.session_state.recommended_segments:
-                st.header("🎯 AI 타겟 분석 결과")
+                st.header("🎯 AI 타깃 분석 결과")
                 recommender = AISegmentRecommender(data_manager)
                 recommender.display_recommendations(st.session_state.recommended_segments)
 
@@ -81,8 +78,7 @@ def main():
             
             total_budget, channel_budgets, duration, available_channels, is_valid_budget = render_budget_section(data_manager)
 
-            # [★수정] width='stretch'로 변경
-            if st.button("🧮 AI 최적화 플랜 생성", type="primary", width='stretch'):
+            if st.button("🚀 최적 광고 집행안 만들기", type="primary", width='stretch'):
                 is_valid_fields, error_message = validate_required_fields(advertiser_name, product_name)
                 
                 if not is_valid_fields:
@@ -95,7 +91,7 @@ def main():
                         estimate_result = calculator.calculate_estimate(
                             selected_channels=available_channels,
                             channel_budgets=channel_budgets,
-                            duration=duration, # [★수정] 누락되었던 duration 인자 추가
+                            duration=duration,
                             region_targeting=region_targeting,
                             region_selections=region_selections,
                             audience_targeting=audience_targeting,
@@ -106,6 +102,10 @@ def main():
         
         with col2:
             render_sidebar_links()
+            
+            if not st.session_state.admin_mode:
+                st.divider()
+                render_admin_login()
         
         if 'estimate_result' in st.session_state:
             result = st.session_state.estimate_result
