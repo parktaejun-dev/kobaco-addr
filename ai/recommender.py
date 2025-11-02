@@ -192,22 +192,14 @@ class AISegmentRecommender:
                         flat_segments.append(segment_copy)
         return flat_segments
     
-    # [★수정] 별 5개 만점 계산 헬퍼 함수
-    def _get_star_rating(self, score):
-        """100점 만점 점수를 별 5개 만점으로 변환합니다."""
-        if score < 60:
-            num_stars = 3
-        elif score < 70:
-            num_stars = 3
-        elif score < 80:
-            num_stars = 4
-        elif score < 90:
-            num_stars = 4
-        else:
-            num_stars = 5
-        
-        stars = "⭐" * num_stars + "☆" * (5 - num_stars)
-        return stars
+    # [★수정] 녹색 바 5개 헬퍼 함수
+    def _get_score_bars(self, score):
+        """100점 만점 점수를 5개 바(bar)로 변환합니다."""
+        # 20점당 1칸
+        num_green = int(round(score / 20.0))
+        num_gray = 5 - num_green
+        bars = "🟩" * num_green + "🔲" * num_gray
+        return bars
 
     # [★수정] 압축적/시각적 카드 UI를 그리는 헬퍼 함수
     def _display_segment_card(self, segment, rank):
@@ -227,13 +219,14 @@ class AISegmentRecommender:
             # 1. 제목 (순위 + 이모지 + 풀패스)
             st.markdown(f"### {emoji} {rank}. {segment.get('full_path', segment.get('name', 'N/A'))}")
             
-            # 2. 별점 (프로그레스 바 대체)
-            stars = self._get_star_rating(score)
-            st.markdown(f"**적합도: {stars}** (`{score}점`)")
+            # 2. 적합도 (점수 + 녹색 바 5개)
+            bars = self._get_score_bars(score)
+            st.metric(label="AI 적합도 점수", value=f"{score} 점")
+            st.markdown(f"**신뢰도:** {bars}")
             
-            # 3. 설명 (st.caption 대신 st.write로 크게)
+            # 3. 설명 (st.write로 크게)
             if segment.get('description'):
-                st.write(segment['description'])
+                st.write(segment['description']) # st.caption 대신 st.write
 
             st.divider()
 
@@ -245,7 +238,7 @@ class AISegmentRecommender:
             # 5. 추천 이유
             if segment.get('reason'):
                 if score >= 60:
-                    st.success(f"**💡 AI 추천:** {segment['reason']}")
+                    st.info(f"**💡 AI 추천:** {segment['reason']}")
                 else:
                     st.info(f"**ℹ️ 기본 추천:** {segment['reason']}")
 
