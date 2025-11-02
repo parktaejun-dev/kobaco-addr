@@ -205,25 +205,26 @@ class AISegmentRecommender:
             title = f"**{i}. {segment.get('full_path', segment.get('name', 'N/A'))}**"
             
             # 2. 적합도
-            if score >= 60: # [★수정] 점수 기준으로 텍스트 변경
+            if score >= 60:
                 title += f" <span style='color:#d9534f; font-weight:bold;'>(적합도: {score}점)</span>"
                 reason_prefix = "💡 AI 추천 사유:"
             else:
                 title += " <span style='color:#555;'>(기본 추천)</span>"
                 reason_prefix = "ℹ️ 기본 추천 사유:"
                 
-            # 3. 핵심 매칭 요소 (제목 옆 한 줄로)
-            if segment.get('key_factors'):
-                 key_factors_str = ', '.join(segment['key_factors'])
-                 # [★수정] '기본 추천'일 때는 핵심 요소 숨김
-                 if score >= 60:
-                    title += f" <span style='font-size: 0.9em; color: #004a9e; font-weight:bold;'>(🔑 핵심 매칭: {key_factors_str})</span>"
+            # [★수정] 3. 핵심 매칭 요소 (제목에서 제거)
 
-            # st.expander는 markdown을 지원
             with st.expander(title, expanded=True):
                 if segment.get('description'):
                     st.caption(f"{segment['description']}")
                 
+                # [★수정] 핵심 매칭 요소를 별도 라인으로 추가
+                if segment.get('key_factors'):
+                    key_factors_str = ', '.join(segment['key_factors'])
+                    # '기본 추천'일 때는 핵심 요소 숨김
+                    if score >= 60: 
+                        st.markdown(f"<span style='color: #004a9e;'>**🔑 핵심 매칭 요소:** {key_factors_str}</span>", unsafe_allow_html=True)
+
                 if segment.get('reason'):
                     if score >= 60:
                         st.success(f"**{reason_prefix}** {segment['reason']}")

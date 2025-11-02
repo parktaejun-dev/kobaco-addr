@@ -194,21 +194,22 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
                 font-size: 15px;
                 color: #333;
             }
-            /* [★수정] 핵심 매칭 요소 스타일 */
-            .segment-item strong .key-factors {
-                font-size: 13px;
-                font-weight: 700;
-                color: #004a9e;
-                margin-left: 8px;
-            }
+            
+            /* [★수정] 핵심 매칭 요소 p 태그 스타일 (추천 이유와 동일하게) */
             .segment-item p {
                 font-size: 13px;
                 color: #666;
                 margin: 5px 0 0 0;
             }
+            /* [★수정] 핵심 매칭 요소 텍스트 색상만 강조 */
+            .segment-item p .key-factors-text {
+                color: #004a9e;
+                font-weight: 700;
+            }
+
             .segment-item .score {
                 display: inline-block;
-                background: #d9534f; /* [★수정] 적합도 점수 색상 변경 */
+                background: #d9534f;
                 color: white;
                 padding: 2px 8px;
                 border-radius: 3px;
@@ -301,14 +302,10 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
                 h2 {
                     font-size: 18px;
                 }
-                /* [★수정] 모바일에서 핵심요소/적합도 줄바꿈 허용 */
                 .segment-item strong, .segment-item .score {
                     display: block;
                     margin-left: 0;
                     margin-top: 5px;
-                }
-                .segment-item strong .key-factors {
-                    margin-left: 0;
                 }
             }
             
@@ -378,10 +375,9 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
                     font-size: 10pt;
                 }
                 /* [★수정] 인쇄 시 핵심 요소 스타일 */
-                .segment-item strong .key-factors {
-                    font-size: 9pt;
-                    font-weight: 700;
+                .segment-item p .key-factors-text {
                     color: #004a9e;
+                    font-weight: 700;
                 }
                 .segment-item p {
                     font-size: 9pt;
@@ -544,13 +540,15 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
                 <div class="segment-item">
                     <strong>
                         {{ loop.index }}. {{ segment.name }}
-                        {% if segment.key_factors %}
-                        <span class="key-factors">(🔑 {{ segment.key_factors|join(', ') }})</span>
-                        {% endif %}
                     </strong>
                     {% if segment.confidence_score is defined %}
                     <span class="score">적합도: {{ segment.confidence_score }}점</span>
                     {% endif %}
+                    
+                    {% if segment.key_factors %}
+                    <p><strong>🔑 핵심 매칭 요소:</strong> <span class="key-factors-text">{{ segment.key_factors|join(', ') }}</span></p>
+                    {% endif %}
+                    
                     <p><strong>💡 추천 이유:</strong> {{ segment.reason | default('N/A') }}</p>
                 </div>
                 {% endfor %}
