@@ -27,7 +27,7 @@ def initialize_data():
 def main():
     st.set_page_config(
         # [★문구 수정]
-        page_title="코바타 - KOBA-TA (Target Advisor)",
+        page_title="KOBA-TA (Target Advisor)",
         page_icon="🚀",
         layout="wide"
     )
@@ -58,7 +58,7 @@ def main():
 
     if page == "✨ 광고주 전용 페이지":
         # [★문구 수정]
-        st.title("코바타 - KOBA-TA (Target Advisor)")
+        st.title("KOBATA(Target Advisor)")
         col1, col2 = st.columns([2, 1])
         
         with col1:

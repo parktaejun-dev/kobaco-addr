@@ -6,7 +6,6 @@ from utils.validators import validate_budget_allocation, validate_required_field
 
 def render_admin_login():
     """관리자 로그인 UI"""
-    # [★문구 수정]
     with st.expander("🔐 관리자 로그인"):
         admin_id = st.text_input("관리자 ID")
         admin_pw = st.text_input("비밀번호", type="password")
@@ -28,7 +27,7 @@ def render_product_info_section():
     # [★문구 수정]
     st.header("📋 광고 캠페인 기본 정보")
     st.caption("광고 제품명과 URL 주소를 입력해주시면, AI가 적합한 타깃을 추천해 드립니다.")
-    advertiser_name = st.text_input("광고주명*", placeholder="예: (주)OO전자", key="advertiser_name")
+    advertiser_name = st.text_input("광고주*", placeholder="예: (주)OO전자", key="advertiser_name")
     product_name = st.text_input("제품명*", placeholder="예: 로봇청소기(URL 사용 실패시 제품명으로 검색합니다.)", key="product_name")
     website_url = st.text_input("제품 URL*", placeholder="https://example.com 상품설명 등이 포함된 URL, 정확성이 향상됩니다.", key="website_url")
     return advertiser_name, product_name, website_url
@@ -46,13 +45,14 @@ def render_ad_settings_section(data_manager):
         ad_duration = duration_options[selected_duration]
     
     with ad_col2:
+        # [★문구 수정]
         audience_targeting = st.checkbox("오디언스 타기팅", value=True)
         custom_targeting = st.checkbox("커스텀 타기팅", value=False) if audience_targeting else False
         region_targeting = st.checkbox("지역 타기팅")
     
     region_selections = {}
     if region_targeting:
-        st.subheader("📍 지역 타기팅 설정")
+        st.subheader("📍 지역 타겟팅 설정")
         surcharges_data = data_manager.load_surcharges()
         
         channels_data = data_manager.load_channels()

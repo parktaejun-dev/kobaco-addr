@@ -57,6 +57,7 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
     <html lang="ko">
     <head>
         <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>KOBACO AI 광고 최적화 플랜</title>
         <style>
             @font-face {
@@ -76,6 +77,7 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
                 max-width: 900px;
                 color: #333;
                 background-color: #ffffff; 
+                word-wrap: break-word;
             }
             .container {
                 padding: 40px;
@@ -149,6 +151,10 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
                 padding-bottom: 8px;
                 margin-top: 30px;
             }
+            .table-wrapper {
+                width: 100%;
+                overflow-x: auto;
+            }
             .results-table {
                 width: 100%;
                 border-collapse: collapse;
@@ -159,6 +165,7 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
                 padding: 10px;
                 text-align: center;
                 font-size: 14px;
+                white-space: nowrap;
             }
             .results-table th {
                 background-color: #f0f6ff;
@@ -187,6 +194,13 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
                 font-size: 15px;
                 color: #333;
             }
+            /* [★수정] 핵심 매칭 요소 스타일 */
+            .segment-item strong .key-factors {
+                font-size: 13px;
+                font-weight: 700;
+                color: #004a9e;
+                margin-left: 8px;
+            }
             .segment-item p {
                 font-size: 13px;
                 color: #666;
@@ -194,12 +208,13 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
             }
             .segment-item .score {
                 display: inline-block;
-                background: #004a9e;
+                background: #d9534f; /* [★수정] 적합도 점수 색상 변경 */
                 color: white;
                 padding: 2px 8px;
                 border-radius: 3px;
                 font-size: 12px;
                 margin-left: 10px;
+                font-weight: 700;
             }
             .footer {
                 margin-top: 30px;
@@ -248,6 +263,53 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
                 line-height: 1.6;
                 color: #333;
                 white-space: pre-wrap; 
+            }
+            
+            @media (max-width: 600px) {
+                body {
+                    padding: 15px;
+                }
+                .container {
+                    padding: 20px;
+                }
+                .header h1 {
+                    font-size: 22px;
+                }
+                .header .logo {
+                    max-height: 30px;
+                }
+                .summary {
+                    grid-template-columns: 1fr;
+                    gap: 10px;
+                }
+                .summary-item {
+                    padding: 15px;
+                }
+                .summary-item p {
+                    font-size: 20px;
+                }
+                .results-table {
+                    font-size: 12px;
+                }
+                .results-table th, .results-table td {
+                    padding: 6px 4px;
+                }
+                .info-table th, .info-table td {
+                    padding: 8px;
+                    font-size: 12px;
+                }
+                h2 {
+                    font-size: 18px;
+                }
+                /* [★수정] 모바일에서 핵심요소/적합도 줄바꿈 허용 */
+                .segment-item strong, .segment-item .score {
+                    display: block;
+                    margin-left: 0;
+                    margin-top: 5px;
+                }
+                .segment-item strong .key-factors {
+                    margin-left: 0;
+                }
             }
             
             @media print {
@@ -314,6 +376,12 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
                 }
                 .segment-item strong {
                     font-size: 10pt;
+                }
+                /* [★수정] 인쇄 시 핵심 요소 스타일 */
+                .segment-item strong .key-factors {
+                    font-size: 9pt;
+                    font-weight: 700;
+                    color: #004a9e;
                 }
                 .segment-item p {
                     font-size: 9pt;
@@ -431,55 +499,59 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
             </div>
 
             <h2>📈 채널별 상세 내역 (월 기준)</h2>
-            <table class="results-table">
-                <thead>
-                    <tr>
-                        <th>채널</th>
-                        <th>예산(원)</th>
-                        <th>기본 CPV</th>
-                        <th>보너스율</th>
-                        <th>할증율</th>
-                        <th>최종 CPV</th>
-                        <th>보장 노출수</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for detail in details %}
-                    <tr>
-                        <td>{{ detail.channel }}</td>
-                        <td>{{ "{:,.0f}".format(detail.budget) }}</td>
-                        <td>{{ "{:.1f}".format(detail.base_cpv) }}</td>
-                        <td>{{ "{:.1f}%".format(detail.total_bonus_rate) }}</td>
-                        <td>{{ "{:.1f}%".format(detail.total_surcharge_rate) }}</td>
-                        <td>{{ "{:.1f}".format(detail.final_cpv) }}</td>
-                        <td>{{ "{:,.0f}".format(detail.guaranteed_impressions) }}</td>
-                    </tr>
-                    {% endfor %}
-                    <tr>
-                        <td>종합</td>
-                        <td>{{ "{:,.0f}".format(summary.total_budget) }}</td>
-                        <td>{{ summary_details.base_cpv_total }}</td>
-                        <td>{{ summary_details.total_bonus_rate_percent }}</td>
-                        <td>-</td>
-                        <td>{{ "{:.1f}".format(summary.average_cpv) }}</td>
-                        <td>{{ "{:,.0f}".format(summary.total_impressions) }}</td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="table-wrapper">
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>채널</th>
+                            <th>예산(원)</th>
+                            <th>기본 CPV</th>
+                            <th>보너스율</th>
+                            <th>할증율</th>
+                            <th>최종 CPV</th>
+                            <th>보장 노출수</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for detail in details %}
+                        <tr>
+                            <td>{{ detail.channel }}</td>
+                            <td>{{ "{:,.0f}".format(detail.budget) }}</td>
+                            <td>{{ "{:.1f}".format(detail.base_cpv) }}</td>
+                            <td>{{ "{:.1f}%".format(detail.total_bonus_rate) }}</td>
+                            <td>{{ "{:.1f}%".format(detail.total_surcharge_rate) }}</td>
+                            <td>{{ "{:.1f}".format(detail.final_cpv) }}</td>
+                            <td>{{ "{:,.0f}".format(detail.guaranteed_impressions) }}</td>
+                        </tr>
+                        {% endfor %}
+                        <tr>
+                            <td>종합</td>
+                            <td>{{ "{:,.0f}".format(summary.total_budget) }}</td>
+                            <td>{{ summary_details.base_cpv_total }}</td>
+                            <td>{{ summary_details.total_bonus_rate_percent }}</td>
+                            <td>-</td>
+                            <td>{{ "{:.1f}".format(summary.average_cpv) }}</td>
+                            <td>{{ "{:,.0f}".format(summary.total_impressions) }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
             
             {% if recommended_segments %}
             <h2>🎯 AI 타겟 분석 상세</h2>
             <div class="segment-list">
                 {% for segment in recommended_segments %}
                 <div class="segment-item">
-                    <strong>{{ loop.index }}. {{ segment.name }}</strong>
+                    <strong>
+                        {{ loop.index }}. {{ segment.name }}
+                        {% if segment.key_factors %}
+                        <span class="key-factors">(🔑 {{ segment.key_factors|join(', ') }})</span>
+                        {% endif %}
+                    </strong>
                     {% if segment.confidence_score is defined %}
                     <span class="score">적합도: {{ segment.confidence_score }}점</span>
                     {% endif %}
                     <p><strong>💡 추천 이유:</strong> {{ segment.reason | default('N/A') }}</p>
-                    {% if segment.key_factors %}
-                    <p><strong>🔑 핵심 매칭 요소:</strong> {{ segment.key_factors|join(', ') }}</p>
-                    {% endif %}
                 </div>
                 {% endfor %}
             </div>
