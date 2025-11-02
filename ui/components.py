@@ -121,7 +121,7 @@ def render_sidebar_links():
 def render_report_button(result, advertiser_name, product_name, recommended_segments):
     """HTML 리포트 생성 버튼 렌더링"""
     # [★수정] width='stretch'
-    if st.button("📄 AI 광고 전략 제안서 생성", type="primary", width='stretch'):
+    if st.button("📄 AI 광고 전략 제안서 생성하기", type="primary", width='stretch'):
         try:
             from reports.html_generator import generate_html_report
             html_content = generate_html_report(

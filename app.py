@@ -80,7 +80,7 @@ def main():
             total_budget, channel_budgets, duration, available_channels, is_valid_budget = render_budget_section(data_manager)
 
             # [★문구 수정]
-            if st.button("🧮 AI 최적화 플랜 생성", type="primary", width='stretch'):
+            if st.button("🧮 AI 최적화 플랜 생성하기", type="primary", width='stretch'):
                 is_valid_fields, error_message = validate_required_fields(advertiser_name, product_name)
                 
                 if not is_valid_fields:

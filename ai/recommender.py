@@ -6,6 +6,7 @@ import json
 from dotenv import load_dotenv
 import requests 
 from bs4 import BeautifulSoup 
+# [★수정] ai.prompts의 올바른 함수명 임포트
 from ai.prompts import get_segment_recommendation_prompt
 
 load_dotenv()
@@ -26,6 +27,7 @@ class AISegmentRecommender:
         try:
             genai.configure(api_key=self.api_key)
             try:
+                # [★수정] 원본 코드의 모델로 복원
                 self.model = genai.GenerativeModel('gemini-2.0-flash')
             except:
                 self.model = genai.GenerativeModel('gemini-pro')
@@ -86,6 +88,7 @@ class AISegmentRecommender:
                     seg['confidence_score'] = enriched_info_map[seg_name]['confidence_score']
                     seg['key_factors'] = enriched_info_map[seg_name]['key_factors']
             
+            # 폴백 로직 (조용히 3개 채우기)
             num_to_pad = 3 - len(recommended_segments)
             if num_to_pad > 0:
                 existing_names = [seg['name'] for seg in recommended_segments]
@@ -130,6 +133,7 @@ class AISegmentRecommender:
         segments_with_desc = [f"- {seg['name']} (설명: {seg['description']})" for seg in available_segments_info]
         segments_list_str = "\n".join(segments_with_desc)
         
+        # [★수정] 'ai.prompts'의 실제 함수명으로 호출
         prompt = get_segment_recommendation_prompt(product_name, website_url, scraped_text, segments_list_str)
         
         try:
@@ -192,6 +196,7 @@ class AISegmentRecommender:
                         flat_segments.append(segment_copy)
         return flat_segments
     
+    # [★수정] 가독성 (핵심 매칭 요소) UI 수정
     def display_recommendations(self, recommended_segments: List[Dict]):
         """추천 결과 표시 (st.expander 사용)"""
         if not recommended_segments:
@@ -205,25 +210,28 @@ class AISegmentRecommender:
             title = f"**{i}. {segment.get('full_path', segment.get('name', 'N/A'))}**"
             
             # 2. 적합도
-            if score >= 60:
+            if score >= 60: 
                 title += f" <span style='color:#d9534f; font-weight:bold;'>(적합도: {score}점)</span>"
                 reason_prefix = "💡 AI 추천 사유:"
             else:
                 title += " <span style='color:#555;'>(기본 추천)</span>"
                 reason_prefix = "ℹ️ 기본 추천 사유:"
                 
-            # [★수정] 3. 핵심 매칭 요소 (제목에서 제거)
+            # 3. 핵심 매칭 요소 (제목에서 제거)
 
             with st.expander(title, expanded=True):
                 if segment.get('description'):
                     st.caption(f"{segment['description']}")
                 
-                # [★수정] 핵심 매칭 요소를 별도 라인으로 추가
+                # 4. 핵심 매칭 요소를 별도 라인으로 추가
                 if segment.get('key_factors'):
                     key_factors_str = ', '.join(segment['key_factors'])
-                    # '기본 추천'일 때는 핵심 요소 숨김
+                    # '기본 추천'일 때는 '기본 추천'이라고 표시
                     if score >= 60: 
                         st.markdown(f"<span style='color: #004a9e;'>**🔑 핵심 매칭 요소:** {key_factors_str}</span>", unsafe_allow_html=True)
+                    else:
+                        st.markdown(f"**🔑 핵심 매칭 요소:** {key_factors_str}", unsafe_allow_html=True)
+
 
                 if segment.get('reason'):
                     if score >= 60:
