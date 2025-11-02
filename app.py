@@ -26,12 +26,13 @@ def initialize_data():
 
 def main():
     st.set_page_config(
-        page_title="KOBACO 어드레서블 TV : AI 도우미",
-        page_icon="🎯",
+        # [★문구 수정]
+        page_title="코바타 - KOBA-TA (Target Advisor)",
+        page_icon="🚀",
         layout="wide"
     )
 
-    with st.spinner("🚀 AI 광고 전략 컨설턴트를 준비 중입니다..."):
+    with st.spinner("🚀 KOBA-TA (Target Advisor)를 준비 중입니다..."):
         data_manager = initialize_data() 
 
     if 'authenticated' not in st.session_state:
@@ -45,32 +46,32 @@ def main():
         with st.sidebar:
             st.title("📺 KOBACO (Admin)")
             st.success("🔐 관리자 모드")
-            page = st.radio("메뉴 선택", ["✨ 고객 전용 페이지", "판매정책 관리", "세그먼트 관리"])
+            page = st.radio("메뉴 선택", ["✨ 광고주 전용 페이지", "판매정책 관리", "세그먼트 관리"])
             if st.button("로그아웃"):
                 st.session_state.authenticated = False
                 st.session_state.admin_mode = False
                 st.session_state.recommended_segments = []
                 st.rerun()
     else:
-        page = "✨ 고객 전용 페이지"
+        page = "✨ 광고주 전용 페이지"
 
 
-    if page == "✨ 고객 전용 페이지":
-        st.title("🎯 KOBACO 어드레서블 TV : AI 도우미")
+    if page == "✨ 광고주 전용 페이지":
+        # [★문구 수정]
+        st.title("코바타 - KOBA-TA (Target Advisor)")
         col1, col2 = st.columns([2, 1])
         
         with col1:
             advertiser_name, product_name, website_url = render_product_info_section()
             
-            # [★수정] 'if product_name:' 조건을 제거하여 버튼이 항상 보이도록 수정
-            if st.button("🎯 AI 타깃 분석을 실행합니다.", type="primary", width='stretch'):
+            # [★문구 수정]
+            if st.button("🤖 AI 타겟 분석 요청", type="primary", width='stretch'):
                 st.session_state.recommended_segments = []
                 recommender = AISegmentRecommender(data_manager)
-                # recommender.recommend_segments가 product_name이 비었을 때 st.error를 띄울 것임
                 st.session_state.recommended_segments = recommender.recommend_segments(product_name, website_url)
             
             if st.session_state.recommended_segments:
-                st.header("🎯 AI 타깃 분석 결과")
+                st.header("🎯 AI 타겟 분석 결과")
                 recommender = AISegmentRecommender(data_manager)
                 recommender.display_recommendations(st.session_state.recommended_segments)
 
@@ -78,7 +79,8 @@ def main():
             
             total_budget, channel_budgets, duration, available_channels, is_valid_budget = render_budget_section(data_manager)
 
-            if st.button("🚀 최적 광고 집행안 만들기", type="primary", width='stretch'):
+            # [★문구 수정]
+            if st.button("🧮 AI 최적화 플랜 생성", type="primary", width='stretch'):
                 is_valid_fields, error_message = validate_required_fields(advertiser_name, product_name)
                 
                 if not is_valid_fields:
@@ -99,6 +101,26 @@ def main():
                             custom_targeting=custom_targeting
                         )
                         st.session_state.estimate_result = estimate_result
+            
+            if 'estimate_result' in st.session_state:
+                result = st.session_state.estimate_result
+                if isinstance(result, dict) and "error" in result:
+                    st.error(f"❌ 계산 오류: {result['error']}")
+                else:
+                    render_results_section(
+                        result, 
+                        EstimateCalculator(data_manager), 
+                        st.session_state.advertiser_name,
+                        st.session_state.product_name,
+                        st.session_state.recommended_segments
+                    )
+                    
+                    render_report_button(
+                        result,
+                        st.session_state.advertiser_name,
+                        st.session_state.product_name,
+                        st.session_state.recommended_segments
+                    )
         
         with col2:
             render_sidebar_links()
@@ -107,26 +129,6 @@ def main():
                 st.divider()
                 render_admin_login()
         
-        if 'estimate_result' in st.session_state:
-            result = st.session_state.estimate_result
-            if isinstance(result, dict) and "error" in result:
-                st.error(f"❌ 계산 오류: {result['error']}")
-            else:
-                render_results_section(
-                    result, 
-                    EstimateCalculator(data_manager), 
-                    st.session_state.advertiser_name,
-                    st.session_state.product_name,
-                    st.session_state.recommended_segments
-                )
-                
-                render_report_button(
-                    result,
-                    st.session_state.advertiser_name,
-                    st.session_state.product_name,
-                    st.session_state.recommended_segments
-                )
-
     elif page == "판매정책 관리":
         render_sales_policy_page(data_manager)
     elif page == "세그먼트 관리":

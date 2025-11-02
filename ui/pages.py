@@ -30,7 +30,7 @@ def render_product_info_section():
     st.caption("광고 제품명과 URL 주소를 입력해주시면, AI가 적합한 타깃을 추천해 드립니다.")
     advertiser_name = st.text_input("광고주명*", placeholder="예: (주)OO전자", key="advertiser_name")
     product_name = st.text_input("제품명*", placeholder="예: 로봇청소기(URL 사용 실패시 제품명으로 검색합니다.)", key="product_name")
-    website_url = st.text_input("제품 URL*", placeholder="상품설명 등이 포함된 URL, 정확성이 향상됩니다.", key="website_url")
+    website_url = st.text_input("제품 URL*", placeholder="https://example.com 상품설명 등이 포함된 URL, 정확성이 향상됩니다.", key="website_url")
     return advertiser_name, product_name, website_url
 
 def render_ad_settings_section(data_manager):
@@ -54,6 +54,7 @@ def render_ad_settings_section(data_manager):
     if region_targeting:
         st.subheader("📍 지역 타기팅 설정")
         surcharges_data = data_manager.load_surcharges()
+        
         channels_data = data_manager.load_channels()
         if channels_data is not None:
             available_channels = channels_data['channel_name'].tolist()
@@ -65,9 +66,9 @@ def render_budget_section(data_manager):
     """예산 설정 섹션"""
     # [★문구 수정]
     st.header("💰 예산 배분 계획")
-    st.caption("총 예산을 채널별로 나누어 예상 노출량과 최종 단가가 자동으로 계산됩니다.")
+    st.caption("월 예산을 입력해주세요. 채널별로 예상 노출량과 최종 단가를 자동 계산합니다.")
     total_budget = st.number_input(
-        "총 월 예산 (만원)*",
+        "월 예산 (만원)*",
         min_value=100,
         max_value=50000,
         value=5000,
