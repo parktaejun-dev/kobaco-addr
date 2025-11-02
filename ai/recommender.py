@@ -26,9 +26,9 @@ class AISegmentRecommender:
         try:
             genai.configure(api_key=self.api_key)
             try:
-                self.model = genai.GenerativeModel('gemini-2.5-flash')
+                self.model = genai.GenerativeModel('gemini-2.0-flash')
             except:
-                self.model = genai.GenerativeModel('gemini-2.5-pro')
+                self.model = genai.GenerativeModel('gemini-pro')
             self.gemini_available = True
         except Exception as e:
             st.error(f"❌ Gemini API 설정 오류: {str(e)}")
