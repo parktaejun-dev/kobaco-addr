@@ -58,7 +58,7 @@ def main():
 
     if page == "✨ 고객용 페이지":
         # [★문구 수정]
-        st.title("KOBATA(Target Advisor)")
+        st.title("KOBATA(Target Advisor) with AI 🚀")
         col1, col2 = st.columns([2, 1])
         
         with col1:

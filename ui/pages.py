@@ -45,12 +45,15 @@ def render_ad_settings_section(data_manager):
         ad_duration = duration_options[selected_duration]
     
     with ad_col2:
-        # [★수정] '커스텀 타기팅' 제거하고, 두 체크박스를 나란히 배치하기 위해 내부 컬럼 생성
+        # [★수정] st.write(" ")를 추가하여 selectbox와의 수직 정렬을 맞춥니다.
+        st.write(" ") 
+        
+        # [★수정] st.checkbox를 st.toggle로 변경하여 시각적 디자인을 개선합니다.
         chk_col1, chk_col2 = st.columns(2)
         with chk_col1:
-            audience_targeting = st.checkbox("오디언스 타기팅", value=True)
+            audience_targeting = st.toggle("오디언스 타기팅", value=True)
         with chk_col2:
-            region_targeting = st.checkbox("지역 타기팅")
+            region_targeting = st.toggle("지역 타기팅")
     
     region_selections = {}
     if region_targeting:
