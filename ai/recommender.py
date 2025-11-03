@@ -7,11 +7,13 @@ from dotenv import load_dotenv
 import requests 
 from bs4 import BeautifulSoup 
 from ai.prompts import get_segment_recommendation_prompt
-from itertools import groupby # [★수정] 그룹화를 위해 추가
-import math # [★수정] 1차 추천 개수 계산을 위해 추가
-import pandas as pd
+# [★수정] groupby, math 임포트 제거
+import pandas as pd 
 
 load_dotenv()
+
+# [★수정] 1단계에서 필터링할 후보 개수 정의
+NUM_CANDIDATES_STAGE_1 = 40
 
 class AISegmentRecommender:
     def __init__(self, data_manager):
@@ -37,7 +39,7 @@ class AISegmentRecommender:
             st.error(f"❌ Gemini API 설정 오류: {str(e)}")
             self.gemini_available = False
     
-    # [★수정] 2-Stage (그룹별 호출) 방식으로 로직 전면 수정
+    # [★수정] 'Filter & Rerank' 2-API-Call 방식으로 로직 변경
     def recommend_segments(self, product_name: str, website_url: str, num_recommendations: int = 3) -> List[Dict]:
         
         if not product_name.strip() and not website_url.strip():
@@ -56,124 +58,147 @@ class AISegmentRecommender:
                     st.warning("⚠️ 웹사이트 내용을 자동으로 읽어오는 데 실패했습니다. 제품명/URL로만 분석합니다.")
 
         try:
-            # 1. 모든 세그먼트 정보 로드 (4-depth 구조)
+            # 1. 모든 세그먼트 정보 로드
             available_segments_info = self._get_available_segments_info()
             if not available_segments_info:
                 st.error("❌ 세그먼트 데이터를 로드하지 못했습니다. (data/segments.json)")
                 return []
 
-            # 2. 세그먼트를 (대분류, 중분류, 소분류) 키로 그룹화
-            def get_group_key(segment):
-                return (
-                    segment.get('대분류', 'N/A'), 
-                    segment.get('중분류', 'N/A'), 
-                    segment.get('소분류', 'N/A') # null(None) 값도 고유 키로 사용됨
+            st.info(f"🔍 AI 타겟 분석 시작... (총 {len(available_segments_info)}개 세그먼트)")
+
+            # 2. [1단계: 필터링]
+            # 140개 전체 목록에서 상위 40개 후보 필터링
+            with st.spinner(f"🤖 AI 분석 중... (1/2단계: {len(available_segments_info)}개 세그먼트 필터링)"):
+                ai_response_s1 = self._recommend_with_gemini(
+                    product_name, website_url, scraped_text, 
+                    available_segments_info, 
+                    num_to_recommend=NUM_CANDIDATES_STAGE_1
                 )
+
+            if (not ai_response_s1 or 
+                "recommended_segments" not in ai_response_s1 or 
+                not ai_response_s1["recommended_segments"]):
+                st.warning("⚠️ AI가 1단계 후보를 생성하지 못했습니다. 기본 추천을 제공합니다.")
+                return self._get_fallback_recommendations(available_segments_info, [], num_recommendations)
+
+            # 제품 이해도 표시
+            product_understanding = ai_response_s1.get("product_understanding")
+            if product_understanding:
+                st.info(f"**💡 AI가 이해한 제품:** {product_understanding}")
+
+            segments_from_ai_s1 = ai_response_s1.get("recommended_segments", [])
             
-            # 정렬 후 그룹화
-            segments_sorted = sorted(available_segments_info, key=get_group_key)
-            grouped_segments = {k: list(g) for k, g in groupby(segments_sorted, key=get_group_key)}
+            # AI 응답(이름만)과 원본 세그먼트 정보(설명, 경로 등)를 병합
+            segment_names_s1 = [s.get("name") for s in segments_from_ai_s1 if s.get("name")]
+            stage_1_candidates = self._get_segments_by_names(segment_names_s1, available_segments_info)
             
-            num_groups = len(grouped_segments)
-            st.info(f"🔍 AI 타겟 분석 시작... (총 {len(available_segments_info)}개 세그먼트, {num_groups}개 그룹 분석)")
+            if not stage_1_candidates:
+                st.warning("⚠️ AI가 추천한 후보 세그먼트를 매칭하지 못했습니다.")
+                return self._get_fallback_recommendations(available_segments_info, [], num_recommendations)
 
-            all_recommendations = []
+            # 3. [2단계: 재정렬]
+            # 1단계에서 뽑힌 40개 후보 안에서만 최종 N개 정밀 분석
+            with st.spinner(f"🤖 AI 분석 중... (2/2단계: {len(stage_1_candidates)}개 후보 정밀 분석)"):
+                ai_response_s2 = self._recommend_with_gemini(
+                    product_name, website_url, scraped_text,
+                    stage_1_candidates, # [★핵심] 전체가 아닌 1단계 후보 리스트 전달
+                    num_to_recommend=num_recommendations
+                )
+
+            if (not ai_response_s2 or 
+                "recommended_segments" not in ai_response_s2 or 
+                not ai_response_s2["recommended_segments"]):
+                st.warning("⚠️ AI가 2단계 정밀 분석에 실패했습니다. 1단계 기준으로 추천합니다.")
+                # 1단계 후보 중 상위 N개를 점수 없이 반환 (임시방편)
+                enriched_candidates = self._enrich_segments(stage_1_candidates, segments_from_ai_s1)
+                return enriched_candidates[:num_recommendations]
+
+            segments_from_ai_s2 = ai_response_s2.get("recommended_segments", [])
+
+            # 4. 최종 결과 병합
+            # 2단계 AI 응답(이름, 이유, 점수)과 1단계 후보(전체 정보)를 병합
+            final_segment_names = [s.get("name") for s in segments_from_ai_s2 if s.get("name")]
+            final_recommendations = self._get_segments_by_names(final_segment_names, stage_1_candidates)
             
-            # [★수정] 그룹별로 AI에게 1차 추천을 몇 개 받을지 결정 (최소 2개, 최대 5개)
-            # 그룹이 많을수록(20개 이상) 그룹당 2-3개, 그룹이 적으면 4-5개
-            num_per_group = max(2, min(5, math.ceil(100 / max(1, num_groups))))
-
-
-            # 3. 각 그룹별로 AI 호출 (2-Stage의 1단계)
-            for i, (group_key, segments_in_group) in enumerate(grouped_segments.items()):
-                
-                group_name = " > ".join(filter(None, [k if k != 'N/A' else None for k in group_key]))
-                
-                with st.spinner(f"🤖 AI 분석 중... ({i+1}/{num_groups}) : '{group_name}' 그룹 ({len(segments_in_group)}개)"):
-                    
-                    # [★수정] 그룹별 1차 추천 개수 동적 조절
-                    # 그룹 내 세그먼트가 5개 미만이면 전부, 아니면 num_per_group 개수만큼
-                    num_to_recommend_group = min(len(segments_in_group), num_per_group)
-
-                    ai_response = self._recommend_with_gemini(
-                        product_name, website_url, scraped_text, 
-                        segments_in_group, # [★수정] 전체가 아닌 그룹 리스트 전달
-                        num_to_recommend=num_to_recommend_group
-                    )
-                
-                if not ai_response:
-                    segments_from_ai = []
-                else:
-                    # [★수정] 제품 이해는 첫 번째 그룹 분석 시 1회만 표시
-                    if i == 0:
-                        product_understanding = ai_response.get("product_understanding")
-                        if product_understanding:
-                            st.info(f"**💡 AI가 이해한 제품:** {product_understanding}")
-                    segments_from_ai = ai_response.get("recommended_segments", [])
-
-                if not segments_from_ai:
-                    continue
-
-                # AI 응답(이름, 이유, 점수)과 원본 세그먼트 정보(설명, 경로 등)를 병합
-                segment_names = [s.get("name") for s in segments_from_ai if s.get("name")]
-                enriched_info_map = {
-                    s.get("name"): {
-                        "reason": s.get("reason", "추천 이유를 생성하지 못했습니다."),
-                        "confidence_score": s.get("confidence_score", 50),
-                        "key_factors": s.get("key_factors", [])
-                    }
-                    for s in segments_from_ai if s.get("name")
-                }
-                
-                # 원본 세그먼트 정보에서 AI가 추천한 것만 필터링
-                recommended_segments_group = self._get_segments_by_names(segment_names, segments_in_group)
-                
-                # 병합
-                for seg in recommended_segments_group:
-                    seg_name = seg['name']
-                    if seg_name in enriched_info_map:
-                        seg['reason'] = enriched_info_map[seg_name]['reason']
-                        seg['confidence_score'] = enriched_info_map[seg_name]['confidence_score']
-                        seg['key_factors'] = enriched_info_map[seg_name]['key_factors']
-                
-                all_recommendations.extend(recommended_segments_group)
-
-            if not all_recommendations:
-                 st.warning("⚠️ AI가 추천 세그먼트를 생성하지 못했습니다. 기본 추천을 제공합니다.")
-
-            # 4. 1차 취합된 모든 추천 결과를 점수 순으로 정렬 (2-Stage의 2단계)
-            all_recommendations.sort(key=lambda x: x.get('confidence_score', 0), reverse=True)
-            
-            # 중복 제거 (이름 기준)
-            final_recommendations = []
-            seen_names = set()
-            for seg in all_recommendations:
-                if seg['name'] not in seen_names:
-                    final_recommendations.append(seg)
-                    seen_names.add(seg['name'])
+            # 이유, 점수, 키팩터 주입
+            final_recommendations_enriched = self._enrich_segments(final_recommendations, segments_from_ai_s2)
 
             # 5. Fallback 로직 (필요시)
-            num_to_pad = num_recommendations - len(final_recommendations)
-            if num_to_pad > 0:
-                existing_names = [seg['name'] for seg in final_recommendations]
-                fallback_segments = [seg for seg in available_segments_info if seg['name'] not in existing_names]
-                
-                # Fallback 후보도 점수순(기본값)이나 다른 기준으로 정렬하면 좋지만, 여기서는 단순 추가
-                for i in range(min(num_to_pad, len(fallback_segments))):
-                    fallback_seg = fallback_segments[i].copy()
-                    fallback_seg['reason'] = "제품과 관련성이 높은 기본 세그먼트입니다."
-                    fallback_seg['confidence_score'] = 60 # 기본 추천 점수
-                    fallback_seg['key_factors'] = ["기본 추천"]
-                    final_recommendations.append(fallback_seg)
+            final_recommendations_with_fallback = self._get_fallback_recommendations(
+                available_segments_info, 
+                final_recommendations_enriched, 
+                num_recommendations
+            )
             
-            st.success(f"✅ AI 타겟 분석 완료! (총 {len(final_recommendations)}개 후보 중 상위 {num_recommendations}개)")
+            st.success(f"✅ AI 타겟 분석 완료!")
             
             # 6. 최종 개수만큼 잘라서 반환
-            return final_recommendations[:num_recommendations]
+            return final_recommendations_with_fallback[:num_recommendations]
 
         except Exception as e:
             st.error(f"❌ 세그먼트 추천 중 오류: {str(e)}")
             return []
+
+    def _enrich_segments(self, segments_list: List[Dict], ai_response_list: List[Dict]) -> List[Dict]:
+        """세그먼트 리스트에 AI의 응답(이유, 점수)을 병합합니다."""
+        enriched_info_map = {
+            s.get("name"): {
+                "reason": s.get("reason", "추천 이유를 생성하지 못했습니다."),
+                "confidence_score": s.get("confidence_score", 50),
+                "key_factors": s.get("key_factors", [])
+            }
+            for s in ai_response_list if s.get("name")
+        }
+        
+        for seg in segments_list:
+            seg_name = seg['name']
+            if seg_name in enriched_info_map:
+                seg['reason'] = enriched_info_map[seg_name]['reason']
+                seg['confidence_score'] = enriched_info_map[seg_name]['confidence_score']
+                seg['key_factors'] = enriched_info_map[seg_name]['key_factors']
+            else:
+                # AI 응답에 누락된 경우 (발생하면 안 되지만)
+                seg['reason'] = "AI 응답 누락"
+                seg['confidence_score'] = 40
+                seg['key_factors'] = []
+
+        # AI 응답의 순서대로 정렬 (get_segments_by_names는 순서를 섞을 수 있음)
+        name_to_seg_map = {seg['name']: seg for seg in segments_list}
+        ordered_list = [
+            name_to_seg_map[s['name']]
+            for s in ai_response_list
+            if s['name'] in name_to_seg_map
+        ]
+        return ordered_list
+
+    def _get_fallback_recommendations(self, all_segments: List[Dict], current_recommendations: List[Dict], num_required: int) -> List[Dict]:
+        """최종 추천 개수가 모자랄 경우 기본 세그먼트로 채웁니다."""
+        num_to_pad = num_required - len(current_recommendations)
+        if num_to_pad > 0:
+            existing_names = {seg['name'] for seg in current_recommendations}
+            
+            # [★수정] Fallback 후보: '페르소나' 또는 '라이프스타일' 그룹
+            fallback_candidates = [
+                seg for seg in all_segments 
+                if seg['name'] not in existing_names and 
+                   (seg.get('중분류') == '페르소나' or seg.get('중분류') == '라이프스타일')
+            ]
+            
+            # 후보가 없으면 전체에서 찾기
+            if not fallback_candidates:
+                fallback_candidates = [
+                    seg for seg in all_segments if seg['name'] not in existing_names
+                ]
+
+            for i in range(min(num_to_pad, len(fallback_candidates))):
+                fallback_seg = fallback_candidates[i].copy()
+                fallback_seg['reason'] = "제품과 관련성이 높은 기본 세그먼트입니다."
+                fallback_seg['confidence_score'] = 60 # 기본 추천 점수
+                fallback_seg['key_factors'] = ["기본 추천"]
+                current_recommendations.append(fallback_seg)
+        
+        return current_recommendations
+
     
     def _fetch_url_content(self, url: str) -> str:
         try:
@@ -193,19 +218,17 @@ class AISegmentRecommender:
         except:
             return ""
     
-    # [★수정] available_segments_info: 이제 전체가 아닌 '특정 그룹'의 세그먼트 리스트
+    # [★수정] 이 함수는 변경 없음 (입력 리스트가 140개 또는 40개가 됨)
     def _recommend_with_gemini(self, product_name: str, website_url: str, scraped_text: str, available_segments_info: List[Dict], num_to_recommend: int) -> Dict:
         if not available_segments_info:
-            # 그룹이 비어있는 경우는 오류가 아니므로 빈 dict 반환
             return {}
         
         segments_with_desc = []
         for seg in available_segments_info:
-            # [★수정] 새 JSON 키 사용
             seg_str = f"- {seg.get('name', 'N/A')} (설명: {seg.get('description', 'N/A')}"
             
             advertisers = seg.get('recommended_advertisers')
-            if advertisers and pd.notna(advertisers):
+            if pd.notna(advertisers) and advertisers:
                 clean_advertisers = str(advertisers).replace('\n', ', ')
                 seg_str += f", 추천 광고주: {clean_advertisers}"
             seg_str += ")"
@@ -219,14 +242,13 @@ class AISegmentRecommender:
         )
         
         try:
-            # [★수정] 2-Stage에서는 spinner를 외부(recommend_segments)에서 관리
             response = self.model.generate_content(prompt)
             if not response or not response.text:
                 raise ValueError("Gemini API에서 빈 응답을 받았습니다.")
             raw_response_text = response.text
         except Exception as e:
-            # 개별 그룹 실패 시 st.error 대신 로깅/무시
-            print(f"❌ Gemini API 호출 실패 (그룹): {str(e)}")
+            # [★수정] 2-Stage에서는 개별 실패가 치명적이지 않도록 print
+            print(f"❌ Gemini API 호출 실패: {str(e)}")
             return {}
         
         try:
@@ -239,16 +261,19 @@ class AISegmentRecommender:
             print(f"❌ AI가 유효하지 않은 JSON 형식으로 응답했습니다: {cleaned_text}")
             return {}
     
-    # [★수정] 로직은 동일, 입력되는 available_segments가 그룹 리스트일 뿐
+    # [★수정] 변경 없음
     def _get_segments_by_names(self, segment_names: List[str], available_segments: List[Dict]) -> List[Dict]:
+        """ AI가 반환한 이름 목록을 기반으로 전체 세그먼트 정보 목록을 반환합니다. """
         recommended_segments = []
         available_names = {seg['name']: seg for seg in available_segments}
+        
+        # AI 응답 순서를 유지하기 위해 segment_names 순서대로 찾음
         for name in segment_names:
             if name in available_names:
                 recommended_segments.append(available_names[name].copy())
         return recommended_segments
     
-    # [★수정] 새 4-Depth JSON 구조를 파싱하도록 수정
+    # [★수정] 변경 없음 (이전 단계에서 이미 4-depth JSON을 읽도록 수정됨)
     def _get_available_segments_info(self) -> List[Dict]:
         if 'data' not in self.segments_data or not isinstance(self.segments_data['data'], list):
             return []
@@ -258,21 +283,18 @@ class AISegmentRecommender:
             if not isinstance(segment, dict):
                 continue
             
-            # CSV의 null을 None으로 처리
             cat1 = segment.get('대분류')
             cat2 = segment.get('중분류')
             cat3 = segment.get('소분류')
             name = segment.get('name', 'N/A')
             
-            if cat3 and pd.notna(cat3) and cat3.lower() != 'null':
+            if pd.notna(cat3) and str(cat3).lower() != 'null':
                 full_path = f"{cat1} > {cat2} > {cat3} > {name}"
             else:
                 full_path = f"{cat1} > {cat2} > {name}"
 
-            # 새 구조에 맞게 복사
             seg_copy = segment.copy()
             seg_copy['full_path'] = full_path
-            # 키 이름 일관성 유지 (description, recommended_advertisers는 CSV와 동일)
             seg_copy['description'] = segment.get('description', '')
             seg_copy['recommended_advertisers'] = segment.get('recommended_advertisers', '')
             
@@ -280,10 +302,8 @@ class AISegmentRecommender:
             
         return segments_info
     
-    # [★제거] _flatten_segments 함수는 더 이상 필요하지 않음
-    
+    # [★수정] 변경 없음
     def display_recommendations(self, recommended_segments: List[Dict]):
-        """추천 결과 표시 (st.expander 사용, UI 수정)"""
         if not recommended_segments:
             st.warning("❌ 추천할 세그먼트를 찾지 못했습니다.")
             return
@@ -308,7 +328,6 @@ class AISegmentRecommender:
         for i, segment in enumerate(recommended_segments, 1):
             score = segment.get('confidence_score', 0)
             
-            # [★수정] full_path 키 사용
             title_text = f"**{i}. {segment.get('full_path', segment.get('name', 'N/A'))}**"
             
             if score < 60:
@@ -323,13 +342,8 @@ class AISegmentRecommender:
                     st.markdown(f"**적합도:** {score}점")
                     reason_prefix = "ℹ️ 기본 추천 사유:"
                 
-                # [★수정] description 키 사용
                 if segment.get('description'):
                     st.write(f"**📋 설명:** {segment['description']}")
-                
-                # '추천 광고주' 항목은 이전에 제거 요청됨
-                # if segment.get('recommended_advertisers'):
-                #     st.write(f"**🎯 추천 광고주:** {segment['recommended_advertisers']}")
 
                 if segment.get('key_factors'):
                     tags_html = "".join([f"<span class='tag-box'>{factor}</span>" for factor in segment['key_factors']])
