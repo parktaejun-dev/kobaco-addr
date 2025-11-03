@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import streamlit.components.v1 as components
 import base64
-import time # 팝업 재실행을 위해 필요
+import time # [★수정] 팝업 재실행을 위해 필요
 
 def create_metric_cards(summary):
     """요약 지표 카드를 생성합니다."""
@@ -125,12 +125,10 @@ def render_sidebar_links():
     width='stretch',
     type="primary")
 
-# [★수정] 메모리 활용: 인자를 result 하나만 받도록 변경
 def render_report_button(result):
     """HTML 리포트 생성 버튼 렌더링"""
     if st.button("📄 AI 광고 전략 제안서 생성하기", type="primary", width='stretch'):
         try:
-            # [★수정] 스냅샷된 result 객체에서 정보를 꺼내 사용
             advertiser_name = result.get('advertiser_name', 'N/A')
             product_name = result.get('product_name', 'N/A')
             recommended_segments = result.get('recommended_segments', [])
@@ -146,11 +144,13 @@ def render_report_button(result):
             
             b64_html = base64.b64encode(html_content.encode('utf-8')).decode('utf-8')
             
-            unique_key = f"popup_{time.time()}"
+            # [★수정] key 인자 대신, script 내부에 고유한 값을 주석으로 추가
+            unique_val = time.time()
             
             components.html(
                 f"""
                 <script>
+                // Unique execution ID: {unique_val}
                 (function() {{
                     const newWindow = window.open("", "_blank");
                     if (newWindow) {{
@@ -163,8 +163,8 @@ def render_report_button(result):
                 </script>
                 """,
                 height=0,
-                width=0,
-                key=unique_key
+                width=0
+                # [★수정] key=unique_key 인자 제거
             )
         except ImportError as ie:
             st.error(f"❌ 리포트 생성 실패 (ImportError): {ie}. 'reports/html_generator.py' 파일에 'generate_html_report' 함수가 있는지 확인하세요.")
