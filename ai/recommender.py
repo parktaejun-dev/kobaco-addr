@@ -9,6 +9,7 @@ from bs4 import BeautifulSoup
 from ai.prompts import get_segment_recommendation_prompt
 from itertools import groupby # [★수정] 그룹화를 위해 추가
 import math # [★수정] 1차 추천 개수 계산을 위해 추가
+import pandas as pd
 
 load_dotenv()
 
