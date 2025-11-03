@@ -105,18 +105,43 @@ def create_budget_inputs(available_channels, total_budget, default_allocations):
 
 def render_sidebar_links():
     """사이드바 링크 렌더링"""
+
+    # [★수정] 버튼 크기를 키우고 간격을 조절하기 위해 CSS 주입
+    st.markdown("""
+    <style>
+    /* 사이드바([data-testid="stSidebar"]) 내부의 링크 버튼([data-testid="stLinkButton"]) 안의
+       실제 링크(a 태그)에 패딩(여백)을 주어 버튼 크기를 키웁니다. */
+    [data-testid="stSidebar"] [data-testid="stLinkButton"] a {
+        padding-top: 12px !important;    /* 상단 패딩 12px */
+        padding-bottom: 12px !important; /* 하단 패딩 12px */
+        font-size: 1.05em;               /* 폰트 크기 살짝 키움 */
+    }
+    
+    /* 버튼과 버튼 사이의 하단 간격을 10px로 설정합니다. */
+    [data-testid="stSidebar"] [data-testid="stLinkButton"] {
+        margin-bottom: 10px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
     st.header("🔗 바로가기")
-    # [★문구 수정]
+    
+    # [★수정] type="primary"를 추가하여 버튼을 시각적으로 강조
     st.link_button("🤖 AI에게 질문하기 (NotebookLM)", 
                   "https://notebooklm.google.com/notebook/ab573898-2bb6-4034-8694-bc1c08d480c7", 
-                  width='stretch')
+                  width='stretch',
+                  type="primary")
     st.link_button("📄 Addressable 소개자료 다운로드", 
                   "https://drive.google.com/file/d/1iyZCKQSYvrxazfxaz4F5Eh2ejjfWbZUw/view?usp=sharing",
-                  width='stretch')
+                  width='stretch',
+                  type="primary")
+                  
     st.header("📬 이메일 문의")
     st.link_button(
     "📧 담당자 박태준 차장 | tj1000@kobaco.co.kr",
-    "mailto:tj1000@kobaco.co.kr", width='stretch')
+    "mailto:tj1000@kobaco.co.kr", 
+    width='stretch',
+    type="primary")
 
 def render_report_button(result, advertiser_name, product_name, recommended_segments):
     """HTML 리포트 생성 버튼 렌더링"""
