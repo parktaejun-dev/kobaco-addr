@@ -28,8 +28,7 @@ class AISegmentRecommender:
         try:
             genai.configure(api_key=self.api_key)
             try:
-                # 1.5-flash가 더 빠르므로 1순위로 시도
-                self.model = genai.GenerativeModel('gemini-1.5-flash')
+                self.model = genai.GenerativeModel('gemini-2.0-flash')
             except:
                 self.model = genai.GenerativeModel('gemini-pro')
             self.gemini_available = True
