@@ -25,18 +25,18 @@ def render_admin_login():
 def render_product_info_section():
     """제품 정보 입력 섹션"""
     # [★문구 수정]
-    st.header("📋 광고 캠페인 기본 정보")
+    st.header("📋 기본 정보 입력")
     st.caption("광고 제품명과 URL 주소를 입력해주시면, AI가 적합한 타깃을 추천해 드립니다.")
-    advertiser_name = st.text_input("광고주*", placeholder="예: (주)OO전자", key="advertiser_name")
+    advertiser_name = st.text_input("광고주*", placeholder="예: OO전자", key="advertiser_name")
     product_name = st.text_input("제품명*", placeholder="예: 로봇청소기(URL 사용 실패시 제품명으로 검색합니다.)", key="product_name")
-    website_url = st.text_input("제품 URL*", placeholder="https://example.com 상품설명 등이 포함된 URL, 정확성이 향상됩니다.", key="website_url")
+    website_url = st.text_input("제품 URL*", placeholder="상품설명 등이 포함된 URL, 정확성이 향상됩니다.", key="website_url")
     return advertiser_name, product_name, website_url
 
 def render_ad_settings_section(data_manager):
     """광고 설정 섹션"""
     # [★문구 수정]
-    st.header("🎯 타기팅 & 광고 조건 설정")
-    st.caption("타깃이 명확할수록 광고 효율이 높아집니다.")
+    st.header("🎯 초수/타기팅 설정")
+    st.caption("30초는 15초 대비 CPV가 2배로 책정됩니다.")
     ad_col1, ad_col2 = st.columns(2)
     
     with ad_col1:
