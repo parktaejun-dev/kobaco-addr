@@ -7,8 +7,9 @@ import json
 from dotenv import load_dotenv
 import requests 
 from bs4 import BeautifulSoup 
-from ai.prompts import get_segment_recommendation_prompt, get_segment_filtering_prompt # [★수정] 1단계 프롬프트 임포트
+from ai.prompts import get_segment_recommendation_prompt, get_segment_filtering_prompt
 import pandas as pd
+import time # [★수정] 429 오류(재시도/지연) 방지를 위해 time 임포트
 
 load_dotenv()
 
@@ -28,15 +29,44 @@ class AISegmentRecommender:
         try:
             genai.configure(api_key=self.api_key)
             try:
-                self.model = genai.GenerativeModel('gemini-2.0-flash')
-            except:
+                # [★수정] 1.5-flash 실패 이슈로, gemini-pro (2.0)를 기본으로 시도
                 self.model = genai.GenerativeModel('gemini-pro')
+            except:
+                # [★수정] gemini-pro 실패 시 1.5-flash를 2순위(Fallback)로 시도
+                self.model = genai.GenerativeModel('gemini-1.5-flash')
             self.gemini_available = True
         except Exception as e:
             st.error(f"❌ Gemini API 설정 오류: {str(e)}")
             self.gemini_available = False
-    
-    # [★수정] 2-Stage (필터링 -> 재정렬) 방식으로 로직 전면 수정
+
+    def _generate_with_retry(self, prompt: str, max_retries: int = 3) -> str:
+        """
+        (★신규) Gemini API 호출 시 429 오류(할당량)가 발생하면
+        자동으로 재시도하는 로직 (Exponential Backoff)
+        """
+        retries = 0
+        while retries < max_retries:
+            try:
+                response = self.model.generate_content(prompt)
+                if not response or not response.text:
+                    raise ValueError("Gemini API에서 빈 응답을 받았습니다.")
+                return response.text # 성공 시 응답 텍스트 반환
+            
+            except Exception as e:
+                # 429 오류이고, 재시도 횟수가 남았을 때
+                if "429 Resource exhausted" in str(e) and retries < max_retries - 1:
+                    retries += 1
+                    wait_time = 2 ** retries # 2초, 4초, 8초...
+                    st.warning(f"⚠️ API 할당량(429) 초과. {wait_time}초 후 재시도... ({retries}/{max_retries})")
+                    time.sleep(wait_time)
+                else:
+                    # 429가 아니거나, 마지막 재시도 실패 시 에러 발생
+                    raise e 
+        
+        # 이곳에 도달하면 안 되지만, 만약을 위해
+        raise Exception("API 할당량 초과. 모든 재시도 실패.")
+
+    # 2-Stage (필터링 -> 재정렬) 방식으로 로직 전면 수정
     def recommend_segments(self, product_name: str, website_url: str, num_recommendations: int = 3) -> List[Dict]:
         
         if not product_name.strip() and not website_url.strip():
@@ -74,20 +104,21 @@ class AISegmentRecommender:
             
             if not candidate_names:
                 st.warning("⚠️ AI가 1단계 후보를 선별하지 못했습니다. 관련성 높은 40개를 임의로 사용합니다.")
-                # 비상시 그냥 앞 40개 사용 (혹은 다른 로직)
                 candidate_segments_info = all_segments_info[:num_to_filter] 
             else:
-                # AI가 반환한 이름(40개)에 해당하는 '전체 정보'를 다시 매칭
                 candidate_segments_info = self._get_segments_by_names(candidate_names, all_segments_info)
             
             st.info(f"✅ 1단계 분석 완료. {len(candidate_segments_info)}개 후보 선별.")
+
+            # (★수정) 429 오류 방지를 위한 1초 "숨 고르기"
+            time.sleep(1) 
 
             # --- 2단계: 재정렬 (40개 -> 3개) ---
             with st.spinner(f"🤖 AI 분석 중 (2/2): {len(candidate_segments_info)}개 후보 정밀 분석 및 순위 결정 중..."):
                 ai_response = self._recommend_with_gemini(
                     product_name, website_url, scraped_text,
-                    candidate_segments_info, # [★수정] 전체(140)가 아닌 후보(40) 리스트 전달
-                    num_to_recommend=num_recommendations # 사용자가 요청한 최종 개수
+                    candidate_segments_info,
+                    num_to_recommend=num_recommendations
                 )
 
             if not ai_response:
@@ -112,30 +143,24 @@ class AISegmentRecommender:
                 for s in segments_from_ai if s.get("name")
             }
             
-            # AI가 추천한 순서 + 정보로 최종 리스트 생성
             all_recommendations = []
             for name in segment_names_from_ai:
-                # 40개 후보 리스트(candidate_segments_info)에서 원본 데이터 찾기
                 seg_data = next((s for s in candidate_segments_info if s.get('name') == name), None)
                 if seg_data:
                     seg_copy = seg_data.copy()
                     if name in enriched_info_map:
                         seg_copy['reason'] = enriched_info_map[name]['reason']
-                        # (★정렬 버그 수정★) 점수를 float으로 저장
                         seg_copy['confidence_score'] = float(enriched_info_map[name]['confidence_score'])
                         seg_copy['key_factors'] = enriched_info_map[name]['key_factors']
                     all_recommendations.append(seg_copy)
 
-            # --- (★정렬 버그 수정★) ---
-            # AI가 반환한 순서를 존중하되, 만약을 대비해 점수(숫자)로 다시 정렬
-            # 100점이 없어도 뒤죽박죽인 문제를 해결하기 위해 float()로 강제 형변환
+            # (★정렬 버그 수정★) 점수(숫자)로 다시 정렬
             all_recommendations.sort(key=lambda x: float(x.get('confidence_score', 0)), reverse=True)
             
             # --- (기존 로직 재사용) 중복 제거 및 Fallback ---
             final_recommendations = []
             seen_names = set()
             for seg in all_recommendations:
-                # 점수가 50 (기본값)이 아닌, AI가 생성한 유효한 추천만 먼저 추가
                 if seg['name'] not in seen_names and float(seg.get('confidence_score', 0)) > 50:
                     final_recommendations.append(seg)
                     seen_names.add(seg['name'])
@@ -143,11 +168,9 @@ class AISegmentRecommender:
             # 5. Fallback 로직 (필요시)
             num_to_pad = num_recommendations - len(final_recommendations)
             if num_to_pad > 0:
-                # Fallback 후보는 AI가 추천하지 않은 *전체* 세그먼트에서 찾아야 함
                 existing_names = [seg['name'] for seg in final_recommendations]
                 fallback_segments = [seg for seg in all_segments_info if seg['name'] not in existing_names]
                 
-                # Fallback 후보도 점수순(기본값)이나 다른 기준으로 정렬하면 좋지만, 여기서는 단순 추가
                 for i in range(min(num_to_pad, len(fallback_segments))):
                     fallback_seg = fallback_segments[i].copy()
                     fallback_seg['reason'] = "제품과 관련성이 높은 기본 세그먼트입니다."
@@ -157,7 +180,6 @@ class AISegmentRecommender:
             
             st.success(f"✅ AI 타겟 분석 완료! (총 {len(final_recommendations)}개 후보 중 상위 {num_recommendations}개)")
             
-            # 6. 최종 개수만큼 잘라서 반환
             return final_recommendations[:num_recommendations]
 
         except Exception as e:
@@ -183,11 +205,10 @@ class AISegmentRecommender:
             return ""
 
     def _filter_with_gemini(self, product_name: str, website_url: str, scraped_text: str, all_segments_info: List[Dict], num_to_filter: int) -> List[str]:
-        """(★신규) 1단계: 필터링. 전체 세그먼트에서 후보 이름만 40개 추출"""
+        """1단계: 필터링. 전체 세그먼트에서 후보 이름만 40개 추출"""
         if not all_segments_info:
             return []
         
-        # 1단계에서는 설명만 제공 (추천 광고주 등은 제외)
         segments_with_desc = [
             f"- {seg.get('name', 'N/A')} (설명: {seg.get('description', 'N/A')})"
             for seg in all_segments_info
@@ -201,10 +222,8 @@ class AISegmentRecommender:
         )
         
         try:
-            response = self.model.generate_content(prompt)
-            if not response or not response.text:
-                raise ValueError("Gemini API에서 1단계 빈 응답을 받았습니다.")
-            raw_response_text = response.text
+            # [★수정] 재시도 로직 적용
+            raw_response_text = self._generate_with_retry(prompt)
         except Exception as e:
             st.error(f"❌ Gemini API 1단계(필터링) 호출 실패: {str(e)}")
             return []
@@ -229,15 +248,13 @@ class AISegmentRecommender:
             st.error(f"❌ AI 1단계 응답 파싱 오류: {str(e)}")
             return []
 
-    # [★수정] 이 함수는 이제 2단계 (재정렬)을 담당
     def _recommend_with_gemini(self, product_name: str, website_url: str, scraped_text: str, candidate_segments_info: List[Dict], num_to_recommend: int) -> Dict:
-        """(★수정) 2단계: 재정렬. 40개 후보 리스트를 받아 최종 3~10개 추천"""
+        """2단계: 재정렬. 40개 후보 리스트를 받아 최종 3~10개 추천"""
         if not candidate_segments_info:
-            # 후보 리스트가 비어있으면 빈 dict 반환
             return {}
         
         segments_with_desc = []
-        for seg in candidate_segments_info: # 40개 후보 리스트 사용
+        for seg in candidate_segments_info: 
             seg_str = f"- {seg.get('name', 'N/A')} (설명: {seg.get('description', 'N/A')}"
             
             advertisers = seg.get('recommended_advertisers')
@@ -255,13 +272,10 @@ class AISegmentRecommender:
         )
         
         try:
-            # 2단계 스피너는 외부(recommend_segments)에서 관리
-            response = self.model.generate_content(prompt)
-            if not response or not response.text:
-                raise ValueError("Gemini API에서 2단계 빈 응답을 받았습니다.")
-            raw_response_text = response.text
+            # [★수정] 재시도 로직 적용
+            raw_response_text = self._generate_with_retry(prompt)
         except Exception as e:
-            # 2단계 실패는 중요하므로 st.error
+            # 2단계 실패는 사용자가 본 에러이므로 st.error로 표시
             st.error(f"❌ Gemini API 2단계(재정렬) 호출 실패: {str(e)}")
             return {}
         
@@ -280,14 +294,13 @@ class AISegmentRecommender:
         recommended_segments = []
         available_names_map = {seg['name']: seg for seg in available_segments}
         
-        # AI가 반환한 이름 순서를 유지
         for name in segment_names:
             if name in available_names_map:
                 recommended_segments.append(available_names_map[name].copy())
         return recommended_segments
     
     def _get_available_segments_info(self) -> List[Dict]:
-        """(★수정) 새 4-Depth JSON 구조를 파싱하도록 수정"""
+        """새 4-Depth JSON 구조를 파싱하도록 수정"""
         if 'data' not in self.segments_data or not isinstance(self.segments_data['data'], list):
             return []
             
@@ -296,7 +309,6 @@ class AISegmentRecommender:
             if not isinstance(segment, dict):
                 continue
             
-            # CSV의 null을 None으로 처리
             cat1 = segment.get('대분류')
             cat2 = segment.get('중분류')
             cat3 = segment.get('소분류')
@@ -307,10 +319,8 @@ class AISegmentRecommender:
             else:
                 full_path = f"{cat1} > {cat2} > {name}"
 
-            # 새 구조에 맞게 복사
             seg_copy = segment.copy()
             seg_copy['full_path'] = full_path
-            # 키 이름 일관성 유지 (description, recommended_advertisers는 CSV와 동일)
             seg_copy['description'] = segment.get('description', '')
             seg_copy['recommended_advertisers'] = segment.get('recommended_advertisers', '')
             
@@ -319,7 +329,7 @@ class AISegmentRecommender:
         return segments_info
     
     def display_recommendations(self, recommended_segments: List[Dict]):
-        """추천 결과 표시 (st.expander 사용, UI 수정)"""
+        """추천 결과 표시"""
         if not recommended_segments:
             st.warning("❌ 추천할 세그먼트를 찾지 못했습니다.")
             return
@@ -342,12 +352,11 @@ class AISegmentRecommender:
         """, unsafe_allow_html=True)
 
         for i, segment in enumerate(recommended_segments, 1):
-            score = float(segment.get('confidence_score', 0)) # (★정렬 버그 수정★) float으로 읽기
+            score = float(segment.get('confidence_score', 0)) 
             
-            # [★수정] full_path 키 사용
             title_text = f"**{i}. {segment.get('full_path', segment.get('name', 'N/A'))}**"
             
-            if score <= 60: # 60점 이하는 기본 추천으로 간주
+            if score <= 60: 
                  title_text += " (기본 추천)"
 
             with st.expander(title_text, expanded=True):
@@ -359,7 +368,6 @@ class AISegmentRecommender:
                     st.markdown(f"**적합도:** {score:.0f}점")
                     reason_prefix = "ℹ️ 기본 추천 사유:"
                 
-                # [★수정] description 키 사용
                 if segment.get('description'):
                     st.write(f"**📋 설명:** {segment['description']}")
 
