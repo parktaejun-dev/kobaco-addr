@@ -7,7 +7,11 @@ import json
 from dotenv import load_dotenv
 import requests 
 from bs4 import BeautifulSoup 
-from ai.prompts import get_segment_recommendation_prompt, get_segment_filtering_prompt
+from ai.prompts import (
+    get_segment_recommendation_prompt, 
+    get_segment_filtering_prompt,
+    get_product_understanding_prompt # [★수정] 0단계 프롬프트 임포트
+)
 import pandas as pd
 import time # 429 오류(재시도/지연) 방지를 위해 time 임포트
 
@@ -44,7 +48,7 @@ class AISegmentRecommender:
 
     def _generate_with_retry(self, prompt: str, max_retries: int = 3) -> str:
         """
-        (★신규) Gemini API 호출 시 429 오류(할당량)가 발생하면
+        Gemini API 호출 시 429 오류(할당량)가 발생하면
         자동으로 재시도하는 로직 (Exponential Backoff)
         """
         retries = 0
@@ -67,10 +71,9 @@ class AISegmentRecommender:
                     # 429가 아니거나, 마지막 재시도 실패 시 에러 발생
                     raise e 
         
-        # 이곳에 도달하면 안 되지만, 만약을 위해
         raise Exception("API 할당량 초과. 모든 재시도 실패.")
 
-    # 2-Stage (필터링 -> 재정렬) 방식으로 로직 전면 수정
+    # [★수정] 로직 순서 변경: 0단계(이해) -> 1단계(필터링) -> 2단계(재정렬)
     def recommend_segments(self, product_name: str, website_url: str, num_recommendations: int = 3) -> List[Dict]:
         
         if not product_name.strip() and not website_url.strip():
@@ -81,6 +84,7 @@ class AISegmentRecommender:
             st.error("❌ Gemini AI를 사용할 수 없습니다.")
             return []
             
+        # --- 0-1. URL 스크래핑 ---
         scraped_text = ""
         if website_url:
             with st.spinner(f"🌐 {website_url} 웹페이지 분석 중..."):
@@ -89,19 +93,35 @@ class AISegmentRecommender:
                     st.warning("⚠️ 웹사이트 내용을 자동으로 읽어오는 데 실패했습니다. 제품명/URL로만 분석합니다.")
 
         try:
-            # 1. 모든 세그먼트 정보 로드 (140개)
+            # 1. 모든 세그먼트 정보 로드
             all_segments_info = self._get_available_segments_info()
             if not all_segments_info:
                 st.error("❌ 세그먼트 데이터를 로드하지 못했습니다. (data/segments.json)")
                 return []
+            
+            # --- [★신규] 0-2. AI 제품 이해 (0단계) ---
+            product_understanding = ""
+            with st.spinner("🤖 AI 분석 중 (0/2): 제품 분석 및 이해 중..."):
+                try:
+                    understanding_json = self._get_product_understanding(
+                        product_name, website_url, scraped_text
+                    )
+                    product_understanding = understanding_json.get("product_understanding", "")
+                except Exception as e:
+                    st.warning(f"⚠️ AI 제품 이해 실패: {e}")
+            
+            if not product_understanding:
+                product_understanding = f"제품명: {product_name} (AI 자동 분석 실패)"
+                st.warning("AI가 제품을 자동으로 이해하지 못했습니다. 제품명으로 분석을 시도합니다.")
 
-            st.info(f"🔍 AI 타겟 분석 시작... (총 {len(all_segments_info)}개 세그먼트 대상)")
+            # [★수정] 제품 이해 결과를 *먼저* 표시
+            st.info(f"**💡 AI가 이해한 제품:** {product_understanding}")
 
             # --- 1단계: 필터링 (140개 -> 40개) ---
-            num_to_filter = 40 # 1단계 후보 수
+            num_to_filter = 40 
             with st.spinner(f"🤖 AI 분석 중 (1/2): {len(all_segments_info)}개 중 {num_to_filter}개 후보 선별 중..."):
                 candidate_names = self._filter_with_gemini(
-                    product_name, website_url, scraped_text, 
+                    product_understanding, # [★수정] 제품 이해 결과 전달
                     all_segments_info, 
                     num_to_filter=num_to_filter
                 )
@@ -120,7 +140,7 @@ class AISegmentRecommender:
             # --- 2단계: 재정렬 (40개 -> 3개) ---
             with st.spinner(f"🤖 AI 분석 중 (2/2): {len(candidate_segments_info)}개 후보 정밀 분석 및 순위 결정 중..."):
                 ai_response = self._recommend_with_gemini(
-                    product_name, website_url, scraped_text,
+                    product_understanding, # [★수정] 제품 이해 결과 전달
                     candidate_segments_info,
                     num_to_recommend=num_recommendations
                 )
@@ -128,9 +148,7 @@ class AISegmentRecommender:
             if not ai_response:
                 segments_from_ai = []
             else:
-                product_understanding = ai_response.get("product_understanding")
-                if product_understanding:
-                    st.info(f"**💡 AI가 이해한 제품:** {product_understanding}")
+                # [★수정] 2단계에서는 제품 이해를 생성/표시하지 않음 (0단계에서 완료)
                 segments_from_ai = ai_response.get("recommended_segments", [])
 
             if not segments_from_ai:
@@ -208,8 +226,40 @@ class AISegmentRecommender:
         except:
             return ""
 
-    def _filter_with_gemini(self, product_name: str, website_url: str, scraped_text: str, all_segments_info: List[Dict], num_to_filter: int) -> List[str]:
-        """1단계: 필터링. 전체 세그먼트에서 후보 이름만 40개 추출"""
+    def _get_product_understanding(self, product_name: str, website_url: str, scraped_text: str) -> Dict:
+        """
+        (★신규) 0단계: 제품 이해. AI가 제품을 분석하여 JSON 반환
+        """
+        prompt = get_product_understanding_prompt(
+            product_name, website_url, scraped_text
+        )
+        
+        try:
+            raw_response_text = self._generate_with_retry(prompt)
+        except Exception as e:
+            st.error(f"❌ Gemini API 0단계(제품 이해) 호출 실패: {str(e)}")
+            return {}
+        
+        try:
+            cleaned_text = raw_response_text.strip().replace("```json\n", "").replace("\n```", "").strip()
+            parsed_data = json.loads(cleaned_text)
+            
+            if not isinstance(parsed_data, dict) or "product_understanding" not in parsed_data:
+                raise ValueError("AI 응답이 0단계 JSON 형식이 아닙니다. ('product_understanding' 키 부재)")
+            
+            return parsed_data
+        
+        except json.JSONDecodeError:
+            st.error(f"❌ AI가 0단계에서 유효하지 않은 JSON 형식으로 응답했습니다: {cleaned_text}")
+            return {}
+        except ValueError as e:
+            st.error(f"❌ AI 0단계 응답 파싱 오류: {str(e)}")
+            return {}
+
+    def _filter_with_gemini(self, product_understanding: str, all_segments_info: List[Dict], num_to_filter: int) -> List[str]:
+        """
+        (★수정) 1단계: 필터링. 제품 이해(str)를 받아서 후보 이름(list) 추출
+        """
         if not all_segments_info:
             return []
         
@@ -220,13 +270,12 @@ class AISegmentRecommender:
         segments_list_str = "\n".join(segments_with_desc)
         
         prompt = get_segment_filtering_prompt(
-            product_name, website_url, scraped_text, 
+            product_understanding, # [★수정] 제품 이해 결과 전달
             segments_list_str, 
             num_to_filter=num_to_filter
         )
         
         try:
-            # [★수정] 재시도 로직 적용
             raw_response_text = self._generate_with_retry(prompt)
         except Exception as e:
             st.error(f"❌ Gemini API 1단계(필터링) 호출 실패: {str(e)}")
@@ -252,8 +301,10 @@ class AISegmentRecommender:
             st.error(f"❌ AI 1단계 응답 파싱 오류: {str(e)}")
             return []
 
-    def _recommend_with_gemini(self, product_name: str, website_url: str, scraped_text: str, candidate_segments_info: List[Dict], num_to_recommend: int) -> Dict:
-        """2단계: 재정렬. 40개 후보 리스트를 받아 최종 3~10개 추천"""
+    def _recommend_with_gemini(self, product_understanding: str, candidate_segments_info: List[Dict], num_to_recommend: int) -> Dict:
+        """
+        (★수정) 2단계: 재정렬. 제품 이해(str)와 후보 리스트(list)를 받아 최종 추천(dict)
+        """
         if not candidate_segments_info:
             return {}
         
@@ -271,15 +322,14 @@ class AISegmentRecommender:
         segments_list_str = "\n".join(segments_with_desc)
         
         prompt = get_segment_recommendation_prompt(
-            product_name, website_url, scraped_text, segments_list_str, 
+            product_understanding, # [★수정] 제품 이해 결과 전달
+            segments_list_str, 
             num_to_recommend=num_to_recommend
         )
         
         try:
-            # [★수정] 재시도 로직 적용
             raw_response_text = self._generate_with_retry(prompt)
         except Exception as e:
-            # 2단계 실패는 사용자가 본 에러이므로 st.error로 표시
             st.error(f"❌ Gemini API 2단계(재정렬) 호출 실패: {str(e)}")
             return {}
         
