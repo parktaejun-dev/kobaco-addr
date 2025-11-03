@@ -29,11 +29,9 @@ class AISegmentRecommender:
         try:
             genai.configure(api_key=self.api_key)
             try:
-                # [★수정] 1.5-flash 실패 이슈로, gemini-pro (2.0)를 기본으로 시도
-                self.model = genai.GenerativeModel('gemini-pro')
+                self.model = genai.GenerativeModel('gemini-2.0.flash')
             except:
-                # [★수정] gemini-pro 실패 시 1.5-flash를 2순위(Fallback)로 시도
-                self.model = genai.GenerativeModel('gemini-1.5-flash')
+                self.model = genai.GenerativeModel('gemini-2.0-pro')
             self.gemini_available = True
         except Exception as e:
             st.error(f"❌ Gemini API 설정 오류: {str(e)}")
