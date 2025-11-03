@@ -1,4 +1,38 @@
+def get_segment_filtering_prompt(product_name, website_url, scraped_text, segments_list_str, num_to_filter: int = 40):
+    """(★신규) 1단계: 필터링용 프롬프트"""
+    return f"""
+당신은 **광고 전략 전문가**입니다.
+당신의 임무는 "제품 정보"와 "웹사이트 내용"을 바탕으로, "전체 세그먼트 목록"에서 관련성이 높은 후보를 **최대 {num_to_filter}개** 선별(필터링)하는 것입니다.
+
+* 순서는 중요하지 않습니다.
+* 점수나 추천 이유는 필요 없습니다.
+* **오직 목록에 있는 세그먼트의 '이름'만** JSON 리스트 형식으로 반환하세요.
+
+---
+[제품 정보]
+* 제품명: {product_name}
+* 웹사이트: {website_url or "없음"}
+
+[웹사이트 참고 내용]
+{scraped_text or "없음"}
+
+[전체 세그먼트 목록] (이 목록에서만 선택해야 함):
+{segments_list_str}
+---
+
+[응답 형식 (JSON 예시)]
+{{
+  "candidate_segments": [
+    "세그먼트 이름 1",
+    "세그먼트 이름 5",
+    "세그먼트 이름 20"
+    // ... 최대 {num_to_filter}개의 이름 ...
+  ]
+}}
+    """
+
 def get_segment_recommendation_prompt(product_name, website_url, scraped_text, segments_list_str, num_to_recommend: int = 3):
+    """(기존) 2단계: 정밀 분석 및 추천용 프롬프트"""
     return f"""
 당신은 **광고 전략 전문가이자 타겟 오디언스 분석가**입니다.
 
