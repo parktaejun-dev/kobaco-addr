@@ -9,7 +9,7 @@ import requests
 from bs4 import BeautifulSoup 
 from ai.prompts import get_segment_recommendation_prompt, get_segment_filtering_prompt
 import pandas as pd
-import time # [★수정] 429 오류(재시도/지연) 방지를 위해 time 임포트
+import time # 429 오류(재시도/지연) 방지를 위해 time 임포트
 
 load_dotenv()
 
@@ -29,12 +29,17 @@ class AISegmentRecommender:
         try:
             genai.configure(api_key=self.api_key)
             try:
-                self.model = genai.GenerativeModel('gemini-2.0.flash')
+                # [★수정] 404 오류 해결: 'models/' 접두사 제거 (사장님 지시)
+                # 1순위: '가장 빠른 2.0 flash'
+                self.model = genai.GenerativeModel('gemini-2.0-flash')
             except:
+                # [★수정] 1순위 실패 시 2순위: 'pro'
                 self.model = genai.GenerativeModel('gemini-2.0-pro')
             self.gemini_available = True
+            st.success(f"✅ AI 모델 로드 성공: {self.model.model_name}")
         except Exception as e:
             st.error(f"❌ Gemini API 설정 오류: {str(e)}")
+            st.error("ai/recommender.py 32~37 라인의 모델 이름을 'gemini-2.0-flash' / 'gemini-2.0-pro'로 확인하세요.")
             self.gemini_available = False
 
     def _generate_with_retry(self, prompt: str, max_retries: int = 3) -> str:
@@ -45,6 +50,7 @@ class AISegmentRecommender:
         retries = 0
         while retries < max_retries:
             try:
+                # [★참고] generate_content() 함수를 사용 중입니다.
                 response = self.model.generate_content(prompt)
                 if not response or not response.text:
                     raise ValueError("Gemini API에서 빈 응답을 받았습니다.")
@@ -108,7 +114,7 @@ class AISegmentRecommender:
             
             st.info(f"✅ 1단계 분석 완료. {len(candidate_segments_info)}개 후보 선별.")
 
-            # (★수정) 429 오류 방지를 위한 1초 "숨 고르기"
+            # 429 오류 방지를 위한 1초 "숨 고르기"
             time.sleep(1) 
 
             # --- 2단계: 재정렬 (40개 -> 3개) ---
