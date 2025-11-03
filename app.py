@@ -46,17 +46,17 @@ def main():
         with st.sidebar:
             st.title("📺 KOBACO (Admin)")
             st.success("🔐 관리자 모드")
-            page = st.radio("메뉴 선택", ["✨ 광고주 전용 페이지", "판매정책 관리", "세그먼트 관리"])
+            page = st.radio("메뉴 선택", ["✨ 고객용 페이지", "판매정책 관리", "세그먼트 관리"])
             if st.button("로그아웃"):
                 st.session_state.authenticated = False
                 st.session_state.admin_mode = False
                 st.session_state.recommended_segments = []
                 st.rerun()
     else:
-        page = "✨ 광고주 전용 페이지"
+        page = "✨ 고객용 페이지"
 
 
-    if page == "✨ 광고주 전용 페이지":
+    if page == "✨ 고객용 페이지":
         # [★문구 수정]
         st.title("KOBATA(Target Advisor)")
         col1, col2 = st.columns([2, 1])
@@ -75,7 +75,8 @@ def main():
                 recommender = AISegmentRecommender(data_manager)
                 recommender.display_recommendations(st.session_state.recommended_segments)
 
-            ad_duration, audience_targeting, custom_targeting, region_targeting, region_selections = render_ad_settings_section(data_manager)
+            # [★수정] custom_targeting 변수 제거
+            ad_duration, audience_targeting, region_targeting, region_selections = render_ad_settings_section(data_manager)
             
             total_budget, channel_budgets, duration, available_channels, is_valid_budget = render_budget_section(data_manager)
 
@@ -98,7 +99,7 @@ def main():
                             region_selections=region_selections,
                             audience_targeting=audience_targeting,
                             ad_duration=ad_duration,
-                            custom_targeting=custom_targeting
+                            custom_targeting=False  # [★수정] UI에서 제거되었으므로 False로 고정
                         )
                         st.session_state.estimate_result = estimate_result
             

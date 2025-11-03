@@ -45,10 +45,12 @@ def render_ad_settings_section(data_manager):
         ad_duration = duration_options[selected_duration]
     
     with ad_col2:
-        # [★문구 수정]
-        audience_targeting = st.checkbox("오디언스 타기팅", value=True)
-        custom_targeting = st.checkbox("커스텀 타기팅", value=False) if audience_targeting else False
-        region_targeting = st.checkbox("지역 타기팅")
+        # [★수정] '커스텀 타기팅' 제거하고, 두 체크박스를 나란히 배치하기 위해 내부 컬럼 생성
+        chk_col1, chk_col2 = st.columns(2)
+        with chk_col1:
+            audience_targeting = st.checkbox("오디언스 타기팅", value=True)
+        with chk_col2:
+            region_targeting = st.checkbox("지역 타기팅")
     
     region_selections = {}
     if region_targeting:
@@ -60,7 +62,8 @@ def render_ad_settings_section(data_manager):
             available_channels = channels_data['channel_name'].tolist()
             region_selections = create_region_selectors(available_channels, surcharges_data)
     
-    return ad_duration, audience_targeting, custom_targeting, region_targeting, region_selections
+    # [★수정] custom_targeting 변수 반환 값에서 제거
+    return ad_duration, audience_targeting, region_targeting, region_selections
 
 def render_budget_section(data_manager):
     """예산 설정 섹션"""
