@@ -248,9 +248,9 @@ class AISegmentRecommender:
                 if segment.get('description'):
                     st.write(f"**📋 설명:** {segment['description']}")
                 
-                # [★수정] 추천 광고주 표시 추가
-                if segment.get('recommended_advertisers'):
-                    st.write(f"**🎯 추천 광고주:** {segment['recommended_advertisers']}")
+                # [★수정] 사용자 요청으로 '추천 광고주' 항목 표시 제거 (주석 처리)
+                # if segment.get('recommended_advertisers'):
+                #     st.write(f"**🎯 추천 광고주:** {segment['recommended_advertisers']}")
 
                 if segment.get('key_factors'):
                     tags_html = "".join([f"<span class='tag-box'>{factor}</span>" for factor in segment['key_factors']])
