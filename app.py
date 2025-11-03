@@ -58,7 +58,7 @@ def main():
 
     if page == "✨ 고객용 페이지":
         # [★문구 수정]
-        st.title("KOBATA(Target Advisor) with AI🚀")
+        st.title("KOBATA(Target Advisor)")
         col1, col2 = st.columns([2, 1])
         
         with col1:
@@ -101,6 +101,13 @@ def main():
                             ad_duration=ad_duration,
                             custom_targeting=False  # [★수정] UI에서 제거되었으므로 False로 고정
                         )
+                        
+                        # [★수정] 메모리 활용: 계산 시점의 모든 상태를 '스냅샷'으로 저장
+                        if isinstance(estimate_result, dict) and "error" not in estimate_result:
+                            estimate_result['advertiser_name'] = advertiser_name
+                            estimate_result['product_name'] = product_name
+                            estimate_result['recommended_segments'] = st.session_state.recommended_segments
+                        
                         st.session_state.estimate_result = estimate_result
             
             if 'estimate_result' in st.session_state:
@@ -108,20 +115,14 @@ def main():
                 if isinstance(result, dict) and "error" in result:
                     st.error(f"❌ 계산 오류: {result['error']}")
                 else:
+                    # [★수정] 메모리 활용: 인자 전달 간소화
                     render_results_section(
                         result, 
-                        EstimateCalculator(data_manager), 
-                        st.session_state.advertiser_name,
-                        st.session_state.product_name,
-                        st.session_state.recommended_segments
+                        EstimateCalculator(data_manager)
                     )
                     
-                    render_report_button(
-                        result,
-                        st.session_state.advertiser_name,
-                        st.session_state.product_name,
-                        st.session_state.recommended_segments
-                    )
+                    # [★수정] 메모리 활용: 리포트 버튼에는 스냅샷된 result만 전달
+                    render_report_button(result)
         
         with col2:
             render_sidebar_links()

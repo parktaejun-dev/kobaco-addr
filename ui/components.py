@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import streamlit.components.v1 as components
 import base64
+import time # 팝업 재실행을 위해 필요
 
 def create_metric_cards(summary):
     """요약 지표 카드를 생성합니다."""
@@ -106,17 +107,14 @@ def create_budget_inputs(available_channels, total_budget, default_allocations):
 def render_sidebar_links():
     """사이드바 링크 렌더링"""
     
-    # [★수정] CSS 코드 모두 제거
-    
     st.header("🔗 바로가기")
     
-    # [★수정] type="primary"만 유지하여 색상 강조
     st.link_button("🤖 AI에게 질문하기 (NotebookLM)", 
                   "https://notebooklm.google.com/notebook/ab573898-2bb6-4034-8694-bc1c08d480c7", 
                   width='stretch',
                   type="primary")
     st.link_button("📄 Addressable 소개자료 다운로드", 
-                  "https.google.com/file/d/1iyZCKQSYvrxazfxaz4F5Eh2ejjfWbZUw/view?usp=sharing",
+                  "https://drive.google.com/file/d/1iyZCKQSYvrxazfxaz4F5Eh2ejjfWbZUw/view?usp=sharing",
                   width='stretch',
                   type="primary")
                   
@@ -127,11 +125,16 @@ def render_sidebar_links():
     width='stretch',
     type="primary")
 
-def render_report_button(result, advertiser_name, product_name, recommended_segments):
+# [★수정] 메모리 활용: 인자를 result 하나만 받도록 변경
+def render_report_button(result):
     """HTML 리포트 생성 버튼 렌더링"""
-    # [★수정] width='stretch'
     if st.button("📄 AI 광고 전략 제안서 생성하기", type="primary", width='stretch'):
         try:
+            # [★수정] 스냅샷된 result 객체에서 정보를 꺼내 사용
+            advertiser_name = result.get('advertiser_name', 'N/A')
+            product_name = result.get('product_name', 'N/A')
+            recommended_segments = result.get('recommended_segments', [])
+
             from reports.html_generator import generate_html_report
             html_content = generate_html_report(
                 result, 
@@ -142,6 +145,8 @@ def render_report_button(result, advertiser_name, product_name, recommended_segm
             )
             
             b64_html = base64.b64encode(html_content.encode('utf-8')).decode('utf-8')
+            
+            unique_key = f"popup_{time.time()}"
             
             components.html(
                 f"""
@@ -159,6 +164,7 @@ def render_report_button(result, advertiser_name, product_name, recommended_segm
                 """,
                 height=0,
                 width=0,
+                key=unique_key
             )
         except ImportError as ie:
             st.error(f"❌ 리포트 생성 실패 (ImportError): {ie}. 'reports/html_generator.py' 파일에 'generate_html_report' 함수가 있는지 확인하세요.")

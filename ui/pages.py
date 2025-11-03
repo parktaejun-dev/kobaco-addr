@@ -24,19 +24,17 @@ def render_admin_login():
 
 def render_product_info_section():
     """제품 정보 입력 섹션"""
-    # [★문구 수정]
-    st.header("📋 기본 정보 입력")
+    st.header("📋 광고 캠페인 기본 정보")
     st.caption("광고 제품명과 URL 주소를 입력해주시면, AI가 적합한 타깃을 추천해 드립니다.")
-    advertiser_name = st.text_input("광고주*", placeholder="예: OO전자", key="advertiser_name")
+    advertiser_name = st.text_input("광고주*", placeholder="예: (주)OO전자", key="advertiser_name")
     product_name = st.text_input("제품명*", placeholder="예: 로봇청소기(URL 사용 실패시 제품명으로 검색합니다.)", key="product_name")
-    website_url = st.text_input("제품 URL*", placeholder="상품설명 등이 포함된 URL, 정확성이 향상됩니다.", key="website_url")
+    website_url = st.text_input("제품 URL*", placeholder="https://example.com 상품설명 등이 포함된 URL, 정확성이 향상됩니다.", key="website_url")
     return advertiser_name, product_name, website_url
 
 def render_ad_settings_section(data_manager):
     """광고 설정 섹션"""
-    # [★문구 수정]
-    st.header("🎯 초수/타기팅 설정")
-    st.caption("30초는 15초 대비 CPV가 2배로 책정됩니다.")
+    st.header("🎯 타기팅 & 광고 조건 설정")
+    st.caption("타깃이 명확할수록 광고 효율이 높아집니다.")
     ad_col1, ad_col2 = st.columns(2)
     
     with ad_col1:
@@ -45,10 +43,8 @@ def render_ad_settings_section(data_manager):
         ad_duration = duration_options[selected_duration]
     
     with ad_col2:
-        # [★수정] st.write(" ")를 추가하여 selectbox와의 수직 정렬을 맞춥니다.
         st.write(" ") 
         
-        # [★수정] st.checkbox를 st.toggle로 변경하여 시각적 디자인을 개선합니다.
         chk_col1, chk_col2 = st.columns(2)
         with chk_col1:
             audience_targeting = st.toggle("오디언스 타기팅", value=True)
@@ -65,12 +61,10 @@ def render_ad_settings_section(data_manager):
             available_channels = channels_data['channel_name'].tolist()
             region_selections = create_region_selectors(available_channels, surcharges_data)
     
-    # [★수정] custom_targeting 변수 반환 값에서 제거
     return ad_duration, audience_targeting, region_targeting, region_selections
 
 def render_budget_section(data_manager):
     """예산 설정 섹션"""
-    # [★문구 수정]
     st.header("💰 예산 배분 계획")
     st.caption("월 예산을 입력해주세요. 채널별로 예상 노출량과 최종 단가를 자동 계산합니다.")
     total_budget = st.number_input(
@@ -100,7 +94,8 @@ def render_budget_section(data_manager):
     
     return None, None, None, None, False
 
-def render_results_section(result, calculator, advertiser_name, product_name, recommended_segments):
+# [★수정] 메모리 활용: 함수 인자 간소화
+def render_results_section(result, calculator):
     """결과 표시 섹션"""
     st.header("📊 AI 전략 분석 결과")
     create_metric_cards(result['summary'])
