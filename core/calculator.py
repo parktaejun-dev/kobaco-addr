@@ -25,6 +25,10 @@ class EstimateCalculator:
         
         if self.channels_df is None:
             return {"error": "채널 데이터를 로드할 수 없습니다."}
+        
+        # [★수정] 논타겟팅 여부를 미리 계산
+        # (오디언스 타겟팅과 지역 타겟팅을 모두 사용하지 않는 경우)
+        is_non_targeting = not audience_targeting and not region_targeting
 
         for channel_name in selected_channels:
             budget_mw = channel_budgets.get(channel_name, 0)
@@ -55,6 +59,7 @@ class EstimateCalculator:
             
             if self.bonuses_df is not None:
                 
+                # --- 기본 보너스 ---
                 basic_bonus = self.bonuses_df[
                     (self.bonuses_df['bonus_type'] == 'basic') &
                     (self.bonuses_df['channel_name'] == channel_name)
@@ -62,6 +67,7 @@ class EstimateCalculator:
                 if not basic_bonus.empty:
                     total_bonus_rate += basic_bonus['rate'].sum()
 
+                # --- 기간 보너스 ---
                 duration_bonus = self.bonuses_df[
                     (self.bonuses_df['bonus_type'] == 'duration') &
                     (self.bonuses_df['channel_name'] == channel_name) &
@@ -70,6 +76,7 @@ class EstimateCalculator:
                 if not duration_bonus.empty:
                     total_bonus_rate += duration_bonus['rate'].max()
 
+                # --- 볼륨 보너스 ---
                 volume_bonus = self.bonuses_df[
                     (self.bonuses_df['bonus_type'] == 'volume') &
                     (self.bonuses_df['channel_name'] == channel_name) &
@@ -78,12 +85,28 @@ class EstimateCalculator:
                 if not volume_bonus.empty:
                     total_bonus_rate += volume_bonus['rate'].max()
                 
+                # --- 프로모션 보너스 ---
                 promo_bonus = self.bonuses_df[
                     (self.bonuses_df['bonus_type'] == 'promotion') &
                     (self.bonuses_df['channel_name'] == channel_name)
                 ]
                 if not promo_bonus.empty:
                     total_bonus_rate += promo_bonus['rate'].sum()
+
+                # [★수정] 하드코딩된 MBC 보너스 로직 제거
+                # if (channel_name == 'MBC' and 
+                #     not audience_targeting and 
+                #     not region_targeting):
+                #     total_bonus_rate += 0.15 
+
+                # [★수정] 데이터 기반 논타겟팅 보너스 로직 추가
+                if is_non_targeting:
+                    non_targeting_bonus = self.bonuses_df[
+                        (self.bonuses_df['channel_name'] == channel_name) &
+                        (self.bonuses_df['condition_type'] == 'non_targeting')
+                    ]
+                    if not non_targeting_bonus.empty:
+                        total_bonus_rate += non_targeting_bonus['rate'].sum()
             
             total_surcharge_rate = 0.0
             
@@ -143,7 +166,7 @@ class EstimateCalculator:
             "total_impressions": round(total_guaranteed_impressions),
             "average_cpv": average_cpv,
             "ad_duration": ad_duration,
-            "duration_months": duration # [★수정] 집행 기간(개월) 추가
+            "duration_months": duration
         }
 
         results['summary'] = summary

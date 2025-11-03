@@ -1,19 +1,17 @@
-def get_segment_recommendation_prompt(product_name, website_url, scraped_text, segments_list_str):
+def get_segment_recommendation_prompt(product_name, website_url, scraped_text, segments_list_str, num_to_recommend: int = 3):
     return f"""
 당신은 **광고 전략 전문가이자 타겟 오디언스 분석가**입니다.
 
-당신의 임무는 3가지입니다:
+당신의 임무는 2가지입니다:
 
 1️⃣ **제품 분석**: 주어진 "제품 정보"와 "웹사이트 참고 내용"을 바탕으로 제품을 1-2줄의 친절한 설명으로 요약합니다.
    - 웹사이트 참고 내용이 있다면 제품명보다 웹사이트 내용을 최우선으로 참고하세요.
 
-2️⃣ **타겟 추천**: "제공된 세그먼트 목록"에서 제품과 가장 관련성이 높은 세그먼트 **정확히 3개**를 선택합니다.
+2️⃣ **타겟 추천**: "제공된 세그먼트 목록"에서 제품과 가장 관련성이 높은 세그먼트 **정확히 {num_to_recommend}개**를 선택합니다.
    - 각 세그먼트마다 다음 정보를 제공하세요:
      * **추천 이유** (reason): 왜 이 세그먼트가 적합한지 1-2줄로 설명
      * **적합도 점수** (confidence_score): 0-100점 척도로 평가 (높을수록 확신)
      * **핵심 매칭 요소** (key_factors): 제품과 세그먼트를 연결하는 핵심 키워드 2-4개
-
-3️⃣ **대안 제시**: 추천 3개 외에 고려할 만한 대안 세그먼트 1-2개를 제시합니다. (선택사항)
 
 ---
 
@@ -31,7 +29,7 @@ def get_segment_recommendation_prompt(product_name, website_url, scraped_text, s
 
 **[중요한 규칙]**
 ✅ 세그먼트는 **반드시 위 목록에 있는 이름**만 사용하세요.
-✅ 추천 세그먼트는 **정확히 3개**여야 합니다. (2개 이하나 4개 이상은 절대 안 됨)
+✅ 추천 세그먼트는 **정확히 {num_to_recommend}개**여야 합니다. (이보다 많거나 적으면 절대 안 됨)
 ✅ 적합도 점수는 **신중하게 평가**하세요:
    - 90-100점: 거의 완벽하게 매칭
    - 80-89점: 매우 적합
@@ -42,7 +40,7 @@ def get_segment_recommendation_prompt(product_name, website_url, scraped_text, s
 
 ---
 
-**[응답 형식 (JSON)]**
+**[응답 형식 (JSON 예시 - {num_to_recommend}개 항목 포함)]**
 {{
   "product_understanding": "AI가 웹사이트를 기반으로 친절하게 요약한 제품 설명...",
   "recommended_segments": [
@@ -57,20 +55,8 @@ def get_segment_recommendation_prompt(product_name, website_url, scraped_text, s
       "reason": "이 세그먼트를 추천하는 상세한 이유...",
       "confidence_score": 88,
       "key_factors": ["키워드1", "키워드2"]
-    }},
-    {{
-      "name": "세그먼트3 이름",
-      "reason": "이 세그먼트를 추천하는 상세한 이유...",
-      "confidence_score": 82,
-      "key_factors": ["키워드1", "키워드2", "키워드3"]
     }}
-  ],
-  "alternative_segments": [
-    {{
-      "name": "대안 세그먼트1 이름",
-      "reason": "대안으로 고려할 만한 이유...",
-      "confidence_score": 75
-    }}
+    // ... 요청한 {num_to_recommend}개 만큼의 항목이 여기에 포함됩니다 ...
   ]
 }}
     """

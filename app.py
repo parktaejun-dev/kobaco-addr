@@ -26,8 +26,7 @@ def initialize_data():
 
 def main():
     st.set_page_config(
-        # [★문구 수정]
-        page_title="KOBATA AI🚀",
+        page_title="KOBA-TA (Target Advisor)",
         page_icon="🚀",
         layout="wide"
     )
@@ -57,30 +56,41 @@ def main():
 
 
     if page == "✨ 고객용 페이지":
-        # [★문구 수정]
-        st.title("KOBATA(Target Advisor)x AI🚀")
+        st.title("KOBATA(Target Advisor)xAI")
         col1, col2 = st.columns([2, 1])
         
         with col1:
             advertiser_name, product_name, website_url = render_product_info_section()
             
-            # [★문구 수정]
+            # [★수정] AI 추천 개수 입력을 위한 슬라이더 추가
+            num_recommendations = st.slider(
+                "🎯 AI 추천 세그먼트 개수", 
+                min_value=1, 
+                max_value=10, 
+                value=3,  # 기본값 3
+                step=1, 
+                key="num_recommendations"
+            )
+            
             if st.button("🤖 AI 타겟 분석 요청", type="primary", width='stretch'):
                 st.session_state.recommended_segments = []
                 recommender = AISegmentRecommender(data_manager)
-                st.session_state.recommended_segments = recommender.recommend_segments(product_name, website_url)
+                # [★수정] num_recommendations 값을 recommender로 전달
+                st.session_state.recommended_segments = recommender.recommend_segments(
+                    product_name, 
+                    website_url,
+                    num_recommendations
+                )
             
             if st.session_state.recommended_segments:
                 st.header("🎯 AI 타겟 분석 결과")
                 recommender = AISegmentRecommender(data_manager)
                 recommender.display_recommendations(st.session_state.recommended_segments)
 
-            # [★수정] custom_targeting 변수 제거
             ad_duration, audience_targeting, region_targeting, region_selections = render_ad_settings_section(data_manager)
             
             total_budget, channel_budgets, duration, available_channels, is_valid_budget = render_budget_section(data_manager)
 
-            # [★문구 수정]
             if st.button("🧮 AI 최적화 플랜 생성하기", type="primary", width='stretch'):
                 is_valid_fields, error_message = validate_required_fields(advertiser_name, product_name)
                 
@@ -99,10 +109,9 @@ def main():
                             region_selections=region_selections,
                             audience_targeting=audience_targeting,
                             ad_duration=ad_duration,
-                            custom_targeting=False  # [★수정] UI에서 제거되었으므로 False로 고정
+                            custom_targeting=False
                         )
                         
-                        # [★수정] 메모리 활용: 계산 시점의 모든 상태를 '스냅샷'으로 저장
                         if isinstance(estimate_result, dict) and "error" not in estimate_result:
                             estimate_result['advertiser_name'] = advertiser_name
                             estimate_result['product_name'] = product_name
@@ -115,13 +124,11 @@ def main():
                 if isinstance(result, dict) and "error" in result:
                     st.error(f"❌ 계산 오류: {result['error']}")
                 else:
-                    # [★수정] 메모리 활용: 인자 전달 간소화
                     render_results_section(
                         result, 
                         EstimateCalculator(data_manager)
                     )
                     
-                    # [★수정] 메모리 활용: 리포트 버튼에는 스냅샷된 result만 전달
                     render_report_button(result)
         
         with col2:

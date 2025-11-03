@@ -34,7 +34,8 @@ class AISegmentRecommender:
             st.error(f"❌ Gemini API 설정 오류: {str(e)}")
             self.gemini_available = False
     
-    def recommend_segments(self, product_name: str, website_url: str) -> List[Dict]:
+    # [★수정] num_recommendations 인자 추가 (기본값 3)
+    def recommend_segments(self, product_name: str, website_url: str, num_recommendations: int = 3) -> List[Dict]:
         
         if not product_name.strip() and not website_url.strip():
             st.error("❌ '제품명' 또는 '제품 URL*'을 입력해주세요.")
@@ -44,7 +45,7 @@ class AISegmentRecommender:
             st.error("❌ Gemini AI를 사용할 수 없습니다.")
             return []
             
-        st.info(f"🔍 '{product_name or website_url}'에 대한 AI 타겟 분석을 시작합니다...")
+        st.info(f"🔍 '{product_name or website_url}'에 대한 AI 타겟 분석을 시작합니다... (총 {num_recommendations}개 추천)")
         
         scraped_text = ""
         if website_url:
@@ -54,10 +55,14 @@ class AISegmentRecommender:
                     st.warning("⚠️ 웹사이트 내용을 자동으로 읽어오는 데 실패했습니다. 제품명/URL로만 분석합니다.")
         
         try:
-            # [★수정] _get_available_segments_info가 수정되어 '추천 광고주' 정보가 포함됨
+            # [★수정] _get_available_segments_info가 전체 세그먼트를 반환하도록 (원래 로직)
             available_segments_info = self._get_available_segments_info()
             
-            ai_response = self._recommend_with_gemini(product_name, website_url, scraped_text, available_segments_info) 
+            # [★수정] AI 호출을 한 번만 하도록 (원래 로직)
+            ai_response = self._recommend_with_gemini(
+                product_name, website_url, scraped_text, 
+                available_segments_info, num_to_recommend=num_recommendations
+            ) 
             
             if not ai_response:
                 segments_from_ai = []
@@ -89,7 +94,8 @@ class AISegmentRecommender:
                     seg['confidence_score'] = enriched_info_map[seg_name]['confidence_score']
                     seg['key_factors'] = enriched_info_map[seg_name]['key_factors']
             
-            num_to_pad = 3 - len(recommended_segments)
+            # [★수정] num_recommendations 값을 기준으로 fallback 로직 수정
+            num_to_pad = num_recommendations - len(recommended_segments)
             if num_to_pad > 0:
                 existing_names = [seg['name'] for seg in recommended_segments]
                 fallback_segments = [seg for seg in available_segments_info if seg['name'] not in existing_names]
@@ -101,7 +107,8 @@ class AISegmentRecommender:
                     recommended_segments.append(fallback_seg)
             
             recommended_segments.sort(key=lambda x: x.get('confidence_score', 0), reverse=True)
-            return recommended_segments[:3]
+            # [★수정] num_recommendations 개수만큼 반환
+            return recommended_segments[:num_recommendations]
         except Exception as e:
             st.error(f"❌ 세그먼트 추천 중 오류: {str(e)}")
             return []
@@ -124,17 +131,15 @@ class AISegmentRecommender:
         except:
             return ""
     
-    def _recommend_with_gemini(self, product_name: str, website_url: str, scraped_text: str, available_segments_info: List[Dict]) -> Dict:
+    def _recommend_with_gemini(self, product_name: str, website_url: str, scraped_text: str, available_segments_info: List[Dict], num_to_recommend: int) -> Dict:
         if not available_segments_info:
             st.error("❌ 세그먼트 데이터를 찾을 수 없습니다.")
             return {}
         
-        # [★수정] 프롬프트에 '추천 광고주' 정보 포함
         segments_with_desc = []
         for seg in available_segments_info:
             seg_str = f"- {seg['name']} (설명: {seg['description']}"
             if seg.get('recommended_advertisers'):
-                # 프롬프트에 들어갈 때 줄바꿈(GIGO)을 쉼표로 변경
                 clean_advertisers = seg['recommended_advertisers'].replace('\n', ', ')
                 seg_str += f", 추천 광고주: {clean_advertisers}"
             seg_str += ")"
@@ -142,7 +147,10 @@ class AISegmentRecommender:
         
         segments_list_str = "\n".join(segments_with_desc)
         
-        prompt = get_segment_recommendation_prompt(product_name, website_url, scraped_text, segments_list_str)
+        prompt = get_segment_recommendation_prompt(
+            product_name, website_url, scraped_text, segments_list_str, 
+            num_to_recommend=num_to_recommend
+        )
         
         try:
             with st.spinner("🤖 AI가 제품을 분석하고 최적의 타겟을 추천 중입니다..."):
@@ -181,7 +189,7 @@ class AISegmentRecommender:
                 'name': segment.get('name', ''),
                 'description': segment.get('description', ''),
                 'full_path': segment.get('full_path', ''),
-                'recommended_advertisers': segment.get('recommended_advertisers', '')  # [★수정] 추천 광고주 필드 추가
+                'recommended_advertisers': segment.get('recommended_advertisers', '')
             })
         return segments_info
     
@@ -248,7 +256,7 @@ class AISegmentRecommender:
                 if segment.get('description'):
                     st.write(f"**📋 설명:** {segment['description']}")
                 
-                # [★수정] 사용자 요청으로 '추천 광고주' 항목 표시 제거 (주석 처리)
+                # '추천 광고주' 항목은 이전에 제거 요청됨
                 # if segment.get('recommended_advertisers'):
                 #     st.write(f"**🎯 추천 광고주:** {segment['recommended_advertisers']}")
 
