@@ -1,9 +1,9 @@
 {
   "version": "2025.4Q",
-  "total_count": 92,
+  "total_count": 140,
   "categories": [
     {
-      "major_category": "모바일Seg.",
+      "major_category": "모바일Seg",
       "segments": [
         {
           "mid_category": "데모그래픽",
@@ -75,7 +75,7 @@
             },
             {
               "name": "소상공인 및 자영업자",
-              "description": "자신의 브랜드와 가게를 운영하며,\n효율적 사업관리 탐색",
+              "description": "자신의 브랜드와 가게를 운영하며,\n효율적 사업관리 \n탐색",
               "recommended_advertisers": "프랜차이즈, 통신, 금융,\n정부 캠페인"
             },
             {
@@ -169,81 +169,124 @@
           "mid_category": "상품",
           "items": [
             {
-              "name": "가전렌탈"
+              "name": "가전렌탈",
+              "description": "고품질 생활가전을 합리적인 비용으로 이용하려는 소비자",
+              "recommended_advertisers": "가전렌탈사, 대형마트, 신용카드사"
             },
             {
-              "name": "건강가전"
+              "name": "건강가전",
+              "description": "건강관리와 웰빙을 위한 스마트 가전 제품 구매자",
+              "recommended_advertisers": "건강가전 브랜드, 헬스케어 앱, 건강기능식품"
             },
             {
-              "name": "계절가전"
+              "name": "계절가전",
+              "description": "더위와 추위를 쾌적하게 보내기 위한 계절별 필수 가전 구매자",
+              "recommended_advertisers": "에어컨/히터 브랜드, 대형전자제품매장, 할부금융"
             },
             {
-              "name": "생활가전"
+              "name": "생활가전",
+              "description": "일상의 편의를 높이는 주방, 청소, 미용 등 생활 필수 가전 구매자",
+              "recommended_advertisers": "종합가전브랜드, 온라인전자제품몰, 홈쇼핑"
             },
             {
-              "name": "침구/가구"
+              "name": "침구/가구",
+              "description": "수면의 질과 주거공간의 편의 \n및 인테리어를 중시하는 구매자",
+              "recommended_advertisers": "온라인가구쇼핑몰, 침구브랜드, 인테리어 앱"
             },
             {
-              "name": "보험"
+              "name": "보험",
+              "description": "미래의 건강, 노후, 재산을 위한 다양한 보험 상품 탐색자",
+              "recommended_advertisers": "생명/손해보험사, 보험 비교 앱, 금융플랫폼"
             },
             {
-              "name": "부동산"
+              "name": "부동산",
+              "description": "주택 구매, 임대, 투자에 관심이 있는 소비자",
+              "recommended_advertisers": "부동산 중개 플랫폼, 주택담보대출, 분양앱"
             },
             {
-              "name": "은행/카드"
+              "name": "은행/카드",
+              "description": "금융 거래, 대출, 결제 등 일상적인 금융 서비스 이용자",
+              "recommended_advertisers": "은행, 카드사, 핀테크 앱, 선결제 서비스"
             },
             {
-              "name": "주식/가상화폐 투자"
+              "name": "주식/가상화폐 투자",
+              "description": "활발한 투자 활동을 하는 개인 투자자",
+              "recommended_advertisers": "증권사, 투자앱, 가상화폐 거래소, 경제미디어"
             },
             {
-              "name": "네일/헤어/화장품"
+              "name": "네일/헤어/화장품",
+              "description": "꾸준한 뷰티 케어와 메이크업 제품 구매에 적극적인 소비자",
+              "recommended_advertisers": "화장품 브랜드, 헤어살롱, 뷰티체인점, 화장품 구독서비스"
             },
             {
-              "name": "성형/시술/뷰티"
+              "name": "성형/시술/뷰티",
+              "description": "피부 관리, 성형, 시술 등 전문 미용 서비스에 관심 있는 소비자",
+              "recommended_advertisers": "성형외과, 피부과 클리닉, 에스테틱 샵, 고급 뷰티기기"
             },
             {
-              "name": "건강기능식품"
+              "name": "건강기능식품",
+              "description": "건강 유지와 영양 보충을 위해 건강기능식품을 구매하는 소비자",
+              "recommended_advertisers": "건강기능식품 브랜드, 온라인약국, 홈쇼핑"
             },
             {
-              "name": "신선식품"
+              "name": "신선식품",
+              "description": "신선한 농수산물과 식재료를 정기적으로 구매하는 소비자",
+              "recommended_advertisers": "신선식품 배송 서비스, 대형마트, 장보기 앱"
             },
             {
-              "name": "즉석/가공식품"
+              "name": "즉석/가공식품",
+              "description": "간편하고 \n빠른 식사 솔루션을 선호하는 바쁜 현대인",
+              "recommended_advertisers": "즉석식품 브랜드, 라면, 통조림, 배달앱"
             },
             {
-              "name": "패스트푸드"
+              "name": "패스트푸드",
+              "description": "빠르고 간편한 외식 및 배달 음식을 즐기는 소비자",
+              "recommended_advertisers": "패스트푸드 프랜차이즈, 배달 전문 앱, 탄산음료"
             },
             {
-              "name": "남성의류/잡화"
+              "name": "남성의류/잡화",
+              "description": "패션에 관심 많고 정기적으로 의류 및 잡화를 구매하는 남성",
+              "recommended_advertisers": "남성 의류 브랜드, 오프라인 매장, 잡화 액세서리 브랜드"
             },
             {
-              "name": "여성의류/잡화"
+              "name": "여성의류/잡화",
+              "description": "트렌드에 민감하고 다양한 스타일의 의류 및 잡화 구매에 활발한 여성",
+              "recommended_advertisers": "여성 의류 브랜드, 쇼핑몰, 패션 구독 서비스"
             },
             {
-              "name": "자동차매매/렌터카"
+              "name": "자동차매매/렌터카",
+              "description": "자동차 구매, 렌트 또는 리스에 관심이 있는 소비자",
+              "recommended_advertisers": "자동차 제조사, 중고차 플랫폼, 렌터카 회사"
             },
             {
-              "name": "국산차 보유자"
+              "name": "국산차 보유자",
+              "description": "국산 차량을 소유하고 관련 서비스 및 유지보수에 관심 있는 소비자",
+              "recommended_advertisers": "자동차 정비소, 국산차 부품, 카케어 용품, 보험사"
             },
             {
-              "name": "외제차 보유자"
+              "name": "외제차 보유자",
+              "description": "고급 외제 차량을 소유하고 프리미엄 서비스에 관심 있는 소비자",
+              "recommended_advertisers": "외제차 딜러, 고급 카케어, 프리미엄 보험, 명품 주유권"
             },
             {
-              "name": "차량관리/주유/네비게이션"
+              "name": "차량관리/주유/네비게이션",
+              "description": "자동차 유지보수, 주유, 내비게이션 등 \n차량 관련 서비스 이용자",
+              "recommended_advertisers": "주유소, 정비소, 내비게이션 앱, 차량용품 쇼핑몰"
             },
             {
-              "name": "인테리어"
+              "name": "인테리어",
+              "description": "주거 공간의 미적 요소와 기능성을 개선하려는 소비자",
+              "recommended_advertisers": "인테리어 회사, 가구점, 인테리어 소품샵, DIY용품점"
             }
           ]
         }
       ]
     },
     {
-      "major_category": "시청이력Seg.",
+      "major_category": "시청이력Seg",
       "segments": [
         {
           "mid_category": "트렌드",
-          
           "items": [
             {
               "name": "FLEX",
@@ -322,7 +365,7 @@
             },
             {
               "name": "밀레니얼 남성",
-              "description": "20대-30대초 남성\n#컴퓨터 #휴대폰 #자동차 #틱톡 #오디오북",
+              "description": "20대-30대초 남성\n#컴퓨터 #휴대폰 #자동차 #틱톡 \n#오디오북",
               "recommended_advertisers": "컴퓨터, 고사양휴대폰, 고가의 휴대가전, 자동차"
             }
           ]
@@ -367,93 +410,368 @@
             },
             {
               "name": "먹방˙요리",
-              "description": "음식 콘텐츠에 관심이 높은 오디언스",
-              "recommended_advertisers": "음식점, 요리 관련 제품, 배달 서비스"
+              "description": "음식 콘텐츠를 즐기고 실제로 요리나 외식에 관심이 많은 오디언스",
+              "recommended_advertisers": "식품배달앱, 슈퍼마켓, 주방용품, 요리클래스"
             },
             {
               "name": "만화˙애니",
-              "description": "웹툰, 애니메이션 콘텐츠에 관심이 높은 오디언스",
-              "recommended_advertisers": "웹툰/애니 플랫폼, 캐릭터 상품"
+              "description": "만화, 애니메이션 콘텐츠를 즐겨보는 오디언스",
+              "recommended_advertisers": "OTT 플랫폼, 웹툰 앱, 애니 굿즈, 게임"
             },
             {
               "name": "영화",
-              "description": "영화 콘텐츠에 관심이 높은 오디언스",
-              "recommended_advertisers": "영화관, OTT, 영화 관련 서비스"
+              "description": "다양한 장르의 영화를 즐겨보는 오디언스",
+              "recommended_advertisers": "영화관, OTT 서비스, 영화 평론 앱, \n홈시어터"
             },
             {
               "name": "영어",
-              "description": "영어 학습에 관심이 높은 오디언스",
-              "recommended_advertisers": "어학원, 온라인 어학 플랫폼"
+              "description": "영어 학습 콘텐츠에 관심이 많은 오디언스",
+              "recommended_advertisers": "영어학원, 온라인 강의, 언어 학습 앱, 해외여행사"
             },
             {
               "name": " 친환경",
-              "description": "환경 친화적 제품과 서비스에 관심이 높은 오디언스",
-              "recommended_advertisers": "친환경 제품, 에코 브랜드"
+              "description": "환경 보호와 지속 가능성에 관심이 많은 오디언스",
+              "recommended_advertisers": "친환경 제품, 전기차, 재활용, 공정무역 브랜드"
             },
             {
               "name": " 뉴스",
-              "description": "뉴스와 시사에 관심이 높은 오디언스",
-              "recommended_advertisers": "뉴스 플랫폼, 금융서비스"
+              "description": "시사, 경제, 정치 등 뉴스 콘텐츠를 꾸준히 시청하는 오디언스",
+              "recommended_advertisers": "신문사, 보험, 금융상품, 정부광고"
             },
             {
               "name": " 연애˙데이트",
-              "description": "연애와 데이트 관련 콘텐츠에 관심이 높은 오디언스",
-              "recommended_advertisers": "데이팅앱, 문화예술"
+              "description": "연애, 데이트, 관계에 관한 콘텐츠를 즐겨보는 오디언스",
+              "recommended_advertisers": "데이팅 앱, 화장품, 여행지, 식당, 주류"
             },
             {
               "name": " 가족",
-              "description": "가족 중심 생활과 콘텐츠에 관심이 높은 오디언스",
-              "recommended_advertisers": "가족 관련 서비스, 가전, 여행"
+              "description": "가족 중심의 콘텐츠를 즐겨보는 오디언스",
+              "recommended_advertisers": "가족여행, 외식, 교육, 보험, 생활용품"
             },
             {
               "name": "골퍼",
-              "description": "골프에 관심이 높은 오디언스",
-              "recommended_advertisers": "골프용품, 골프장"
+              "description": "골프 경기나 관련 콘텐츠를 즐겨보는 오디언스",
+              "recommended_advertisers": "골프용품, 골프장, 스포츠 의류, 골프 여행"
             },
             {
               "name": "낚시매니아",
-              "description": "낚시에 관심이 높은 오디언스",
-              "recommended_advertisers": "낚시용품, 낚시 관련 서비스"
+              "description": "낚시 관련 콘텐츠를 즐겨보는 오디언스",
+              "recommended_advertisers": "낚시용품, 아웃도어 의류, 레저용품, 차량"
             },
             {
               "name": "MZ세대",
-              "description": "밀레니얼과 Z세대를 포함한 젊은 세대 오디언스",
-              "recommended_advertisers": "트렌드 상품, 디지털 서비스"
+              "description": "밀레니얼과 Z세대 특성의 콘텐츠를 소비하는 오디언스",
+              "recommended_advertisers": "SNS, 스트리밍 서비스, 패스트패션, 배달앱, 테크기기"
             },
             {
               "name": "트로트팬덤",
-              "description": "트로트 음악 팬덤을 이루고 있는 오디언스",
-              "recommended_advertisers": "음악 스트리밍, 공연"
+              "description": "트로트 음악과 스타를 좋아하는 오디언스",
+              "recommended_advertisers": "음원사, 공연, 음반, 지상파 예능"
             },
             {
               "name": "음악매니아",
-              "description": "음악에 관심이 높은 오디언스",
-              "recommended_advertisers": "음악 스트리밍, 콘서트"
+              "description": "다양한 장르의 음악 콘텐츠를 즐겨보는 오디언스",
+              "recommended_advertisers": "음원 스트리밍 서비스, \n콘서트, 이어폰/스피커"
             },
             {
               "name": " 자동차관심족",
-              "description": "자동차에 관심이 높은 오디언스",
-              "recommended_advertisers": "자동차 브랜드, 자동차 관련 서비스"
+              "description": "자동차 리뷰, 경기 등 콘텐츠를 즐겨보는 오디언스",
+              "recommended_advertisers": "자동차 브랜드, 중고차 플랫폼, 튜닝, 보험"
             },
             {
               "name": "얼리어답터",
-              "description": "새로운 기술과 제품을 먼저 받아들이는 오디언스",
-              "recommended_advertisers": "신기술 제품, IT 서비스"
+              "description": "새로 출시된 기술/제품 관련 콘텐츠에 관심 많은 오디언스",
+              "recommended_advertisers": "스마트기기, 테크 Gadget, IT제품, 크라우드펀딩"
             },
             {
               "name": " 술매니아",
-              "description": "주류에 관심이 높은 오디언스",
-              "recommended_advertisers": "주류, 주점, 음식점"
+              "description": "술과 관련된 콘텐츠(제조, 리뷰 등)를 즐겨보는 오디언스",
+              "recommended_advertisers": "주류 브랜드, 숙취해소제, 안주배달, 펍"
             },
             {
               "name": " 캠핑족",
-              "description": "캠핑에 관심이 높은 오디언스",
-              "recommended_advertisers": "캠핑용품, 아웃도어 제품"
+              "description": "캠핑, 아웃도어 관련 콘텐츠를 즐겨보는 오디언스",
+              "recommended_advertisers": "캠핑용품, 아웃도어 의류, 레저차량, 여행사"
             },
             {
               "name": "재테크족",
-              "description": "재테크와 자산관리에 관심이 높은 오디언스",
-              "recommended_advertisers": "증박사, 금융 서비스, 투자 앱"
+              "description": "부동산, 주식, 절약 등 재테크 콘텐츠에 관심 많은 오디언스",
+              "recommended_advertisers": "증권사, 부동산 플랫폼, 금융상품, 저축앱"
+            }
+          ]
+        },
+        {
+          "mid_category": "홈쇼핑/가전·디지털",
+          "items": [
+            {
+              "name": "영상_음향가전",
+              "description": "TV, 오디오, 프로젝터 등 홈 엔터테인먼트 기기 구매자",
+              "recommended_advertisers": "전자제품 브랜드, 홈시어터, 오디오 샵"
+            },
+            {
+              "name": "생활가전",
+              "description": "청소, 주방, 세탁 등 일상 생활 편의 가전 구매자",
+              "recommended_advertisers": "생활가전 브랜드, 종합전자제품매장"
+            },
+            {
+              "name": "세탁가전",
+              "description": "세탁기, 건조기 등 의류 관리 가전 구매자",
+              "recommended_advertisers": "세탁가전 브랜드, 생활용품점"
+            },
+            {
+              "name": "계절가전",
+              "description": "선풍기, 난방기, 제습기 등 계절별 가전 구매자",
+              "recommended_advertisers": "계절가전 브랜드, 대형마트"
+            },
+            {
+              "name": "주방가전",
+              "description": "냉장고, 전자레인지, 오븐 등 주방에서 사용하는 \n가전 구매자",
+              "recommended_advertisers": "주방가전 브랜드, 백화점 가전매장"
+            },
+            {
+              "name": "건강가전",
+              "description": "공기청정기, 정수기, 안마의자 등 건강관리 가전 구매자",
+              "recommended_advertisers": "건강가전 브랜드, 헬스케어 회사"
+            },
+            {
+              "name": "프리미엄가전",
+              "description": "고가의 디자인/성능을 가진 프리미엄 라인 가전 구매자",
+              "recommended_advertisers": "프리미엄 가전 브랜드, 명품백화점"
+            },
+            {
+              "name": "가전렌탈",
+              "description": "신제품 사용 선호 또는 비용 부담으로 가전 렌탈 서비스 이용자",
+              "recommended_advertisers": "가전렌탈 전문업체, 대형유통사"
+            },
+            {
+              "name": "PC_노트북_태블릿",
+              "description": "컴퓨팅 기기 및 태블릿 구매자",
+              "recommended_advertisers": "컴퓨터 제조사, IT유통사, 액세서리 브랜드"
+            },
+            {
+              "name": "전자제품",
+              "description": "스마트폰, 카메라, 웨어러블 등 개인용 전자제품 구매자",
+              "recommended_advertisers": "스마트폰 브랜드, 디지털 플라자, 통신사"
+            }
+          ]
+        },
+        {
+          "mid_category": "홈쇼핑/가구·인테리어",
+          "items": [
+            {
+              "name": "가구",
+              "description": "소파, 테이블, 수납장 등 다양한 가구 구매자",
+              "recommended_advertisers": "가구 브랜드, 인테리어 전문점, 온라인 가구몰"
+            },
+            {
+              "name": "인테리어",
+              "description": "벽지, 조명, 소품 등 공간을 꾸미는 인테리어 제품 구매자",
+              "recommended_advertisers": "인테리어 회사, 인테리어 소품샵, DIY스토어"
+            }
+          ]
+        },
+        {
+          "mid_category": "홈쇼핑/보험",
+          "items": [
+            {
+              "name": "생명보험",
+              "description": "사망,疾病, 노후 등을 대비한 생명보험 상품 구매자",
+              "recommended_advertisers": "생명보험사, 보험대리점, 금융플랫폼"
+            },
+            {
+              "name": "손해보험",
+              "description": "자동차, 화재, 상해 등 사고에 대한 손해보험 상품 구매자",
+              "recommended_advertisers": "손해보험사, 자동차 딜러, 온라인보험"
+            }
+          ]
+        },
+        {
+          "mid_category": "홈쇼핑/생활",
+          "items": [
+            {
+              "name": "생활용품",
+              "description": "세제, 화장지, 위생용품 등 일상 생활 소모품 \n구매자",
+              "recommended_advertisers": "생활용품 브랜드, 대형마트, 편의점"
+            },
+            {
+              "name": "자동차_오토바이",
+              "description": "자동차 및 오토바이 본체 구매자",
+              "recommended_advertisers": "자동차/오토바이 제조사, 중고차 플랫폼"
+            }
+          ]
+        },
+        {
+          "mid_category": "홈쇼핑/식품",
+          "items": [
+            {
+              "name": "신선식품",
+              "description": "신선한 농수산물을 정기적으로 구매하는 오디언스",
+              "recommended_advertisers": "신선식품 배송 서비스, 농협, 수산협회"
+            },
+            {
+              "name": "가공식품",
+              "description": "간편조리식, 라면, 통조림 등 가공식품 구매자",
+              "recommended_advertisers": "식품제조사, 종합식품유통사"
+            },
+            {
+              "name": "건강식품",
+              "description": "비타민, 영양제, 유기농 식품 등 건강 기능 식품 구매자",
+              "recommended_advertisers": "건강식품 브랜드, 홈쇼핑, 온라인약국"
+            },
+            {
+              "name": "헬스_다이어트_식품",
+              "description": "다이어트 도움 식품, 식이보충제 등 구매자",
+              "recommended_advertisers": "다이어트 식품 브랜드, 헬스장, 온라인커뮤니티"
+            }
+          ]
+        },
+        {
+          "mid_category": "홈쇼핑/여행\n레져\n스포츠",
+          "items": [
+            {
+              "name": "여행",
+              "description": "국내외 패키지, 항공권, 숙박 등 여행 상품 구매자",
+              "recommended_advertisers": "여행사, 항공사, 호텔, 관광청"
+            },
+            {
+              "name": "헬스바디",
+              "description": "헬스기구, 보충제, 운동복 등 피트니스 관련 제품 구매자",
+              "recommended_advertisers": "헬스기구 브랜드, 스포츠의류, 보충제"
+            },
+            {
+              "name": "아웃도어",
+              "description": "캠핑, 등산, 트레킹 등 아웃도어 활동용품 구매자",
+              "recommended_advertisers": "아웃도어 브랜드, 캠핑용품점, 스포츠유통"
+            },
+            {
+              "name": "스포츠",
+              "description": "구기 종목, 야구, 축구 등 특정 스포츠 용품 구매자",
+              "recommended_advertisers": "스포츠 용품 브랜드, 팀 굿즈, 스포츠매장"
+            }
+          ]
+        },
+        {
+          "mid_category": "홈쇼핑/임신·출산·유아동",
+          "items": [
+            {
+              "name": "유아동 교육",
+              "description": "학습지, 교육용 완구, 유아교육 서비스 구매자",
+              "recommended_advertisers": "교육출판사, 교육기관, 교육용 앱"
+            },
+            {
+              "name": "유아동 의류_잡화",
+              "description": "유아동 의류, 신발, 가방 \n등 패션 잡화 구매자",
+              "recommended_advertisers": "유아동 의류 브랜드, 킹덤, 백화점"
+            },
+            {
+              "name": "유아가구_생활용품",
+              "description": "유아침대, 유아용 의자, 수유용품 등 구매자",
+              "recommended_advertisers": "유아가구 브랜드, 임산부용품점, 대형마트"
+            },
+            {
+              "name": "유아 외출용품",
+              "description": "유모차, 카시트, 베이비 캐리어 등 구매자",
+              "recommended_advertisers": "유아외출용품 브랜드, 육아용품 전문점"
+            },
+            {
+              "name": "임신_출산",
+              "description": "임산부 의류, 출산 준비 용품 구매자",
+              "recommended_advertisers": "임산부 의류 브랜드, 출산용품 전문점, 병원"
+            }
+          ]
+        },
+        {
+          "mid_category": "홈쇼핑/취미_교육_문화",
+          "items": [
+            {
+              "name": "문화",
+              "description": "공연, 전시, 콘서트 티켓 등 문화생활 관련 상품 구매자",
+              "recommended_advertisers": "공연기획사, 티켓예매사, 문화센터"
+            },
+            {
+              "name": "취미_교육",
+              "description": "도서, 음반, 취미용품, 온라인 강의 등 구매자",
+              "recommended_advertisers": "온라인 강의 플랫폼, 서점, 취미용품점"
+            }
+          ]
+        },
+        {
+          "mid_category": "홈쇼핑/패션잡화",
+          "items": [
+            {
+              "name": "여성의류",
+              "description": "여성용 상의, 하의, 아우터 등 의류 구매자",
+              "recommended_advertisers": "여성 의류 브랜드, 쇼핑몰, 패션잡지"
+            },
+            {
+              "name": "남성의류",
+              "description": "남성용 정장, 캐주얼, 아우터 등 의류 구매자",
+              "recommended_advertisers": "남성 의류 브랜드, 멘즈샵, 온라인"
+            },
+            {
+              "name": "언더웨어_잠옷",
+              "description": "속옷, 잠옷, 홈웨어 등 구매자",
+              "recommended_advertisers": "언더웨어 브랜드, 잠옷 전문점, 편집샵"
+            },
+            {
+              "name": "스포츠_아웃도어 의류",
+              "description": "기능성 스포츠웨어, 아웃도어 의류 구매자",
+              "recommended_advertisers": "스포츠/아웃도어 의류 브랜드, 전문매장"
+            },
+            {
+              "name": "유아동 의류_잡화",
+              "description": "유아동 패션 제품 구매자",
+              "recommended_advertisers": "유아동 의류 브랜드, 킹덤, 온라인"
+            },
+            {
+              "name": "신발",
+              "description": "운동화, 구두, \n샌들 등 모든 종류의 신발 구매자",
+              "recommended_advertisers": "신발 브랜드, 신발 전문매장, 오프라인 체인점"
+            },
+            {
+              "name": "여성패션잡화",
+              "description": "여성용 가방, 지갑, 벨트, 액세서리 구매자",
+              "recommended_advertisers": "여성 잡화 브랜드, 액세서리 샵, 백화점"
+            },
+            {
+              "name": "남성패션잡화",
+              "description": "남성용 가방, 지갑, 벨트, 액세서리 구매자",
+              "recommended_advertisers": "남성 잡화 브랜드, 멘즈샵, 온라인"
+            },
+            {
+              "name": "명품브랜드",
+              "description": "고가의 명품 패션 제품 구매자",
+              "recommended_advertisers": "명품 브랜드, 백화점 명품관, 공식 온라인 스토어"
+            }
+          ]
+        },
+        {
+          "mid_category": "홈쇼핑/뷰티",
+          "items": [
+            {
+              "name": "화장품_향수",
+              "description": "스킨케어, 메이크업, 향수 등 화장품 구매자",
+              "recommended_advertisers": "화장품 브랜드, 뷰티체인점, 면세점"
+            },
+            {
+              "name": "헤어_바디_미용기기",
+              "description": "헤어케어 제품, 바디로션, 홈미용 기기 구매자",
+              "recommended_advertisers": "미용기기 브랜드, 헤어살롱, 드럭스토어"
+            }
+          ]
+        },
+        {
+          "mid_category": "홈쇼핑/반려동물",
+          "items": [
+            {
+              "name": "강아지_고양이",
+              "description": "반려견/반려묘 관련 제품 구매 관심이 높은 오디언스",
+              "recommended_advertisers": "펫푸드, 용품, 병원, 보험, 미용"
+            },
+            {
+              "name": "관상어_곤충_소동물",
+              "description": "그 외 반려동물 관련 제품 구매 관심이 높은 오디언스",
+              "recommended_advertisers": "애완동물 용품, 사료, 테라리움"
             }
           ]
         }

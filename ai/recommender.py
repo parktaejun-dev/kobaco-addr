@@ -54,7 +54,11 @@ class AISegmentRecommender:
                     st.warning("⚠️ 웹사이트 내용을 자동으로 읽어오는 데 실패했습니다. 제품명/URL로만 분석합니다.")
         
         try:
-            ai_response = self._recommend_with_gemini(product_name, website_url, scraped_text) 
+            # [★수정] _get_available_segments_info가 수정되어 '추천 광고주' 정보가 포함됨
+            available_segments_info = self._get_available_segments_info()
+            
+            ai_response = self._recommend_with_gemini(product_name, website_url, scraped_text, available_segments_info) 
+            
             if not ai_response:
                 segments_from_ai = []
             else:
@@ -76,7 +80,6 @@ class AISegmentRecommender:
                 for s in segments_from_ai if s.get("name")
             }
             
-            available_segments_info = self._get_available_segments_info()
             recommended_segments = self._get_segments_by_names(segment_names, available_segments_info)
             
             for seg in recommended_segments:
@@ -121,13 +124,22 @@ class AISegmentRecommender:
         except:
             return ""
     
-    def _recommend_with_gemini(self, product_name: str, website_url: str, scraped_text: str) -> Dict:
-        available_segments_info = self._get_available_segments_info()
+    def _recommend_with_gemini(self, product_name: str, website_url: str, scraped_text: str, available_segments_info: List[Dict]) -> Dict:
         if not available_segments_info:
             st.error("❌ 세그먼트 데이터를 찾을 수 없습니다.")
             return {}
         
-        segments_with_desc = [f"- {seg['name']} (설명: {seg['description']})" for seg in available_segments_info]
+        # [★수정] 프롬프트에 '추천 광고주' 정보 포함
+        segments_with_desc = []
+        for seg in available_segments_info:
+            seg_str = f"- {seg['name']} (설명: {seg['description']}"
+            if seg.get('recommended_advertisers'):
+                # 프롬프트에 들어갈 때 줄바꿈(GIGO)을 쉼표로 변경
+                clean_advertisers = seg['recommended_advertisers'].replace('\n', ', ')
+                seg_str += f", 추천 광고주: {clean_advertisers}"
+            seg_str += ")"
+            segments_with_desc.append(seg_str)
+        
         segments_list_str = "\n".join(segments_with_desc)
         
         prompt = get_segment_recommendation_prompt(product_name, website_url, scraped_text, segments_list_str)
@@ -168,7 +180,8 @@ class AISegmentRecommender:
             segments_info.append({
                 'name': segment.get('name', ''),
                 'description': segment.get('description', ''),
-                'full_path': segment.get('full_path', '')
+                'full_path': segment.get('full_path', ''),
+                'recommended_advertisers': segment.get('recommended_advertisers', '')  # [★수정] 추천 광고주 필드 추가
             })
         return segments_info
     
@@ -192,66 +205,61 @@ class AISegmentRecommender:
                         flat_segments.append(segment_copy)
         return flat_segments
     
-    # [★수정] 녹색 바 5개 헬퍼 함수
-    def _get_score_bars(self, score):
-        """100점 만점 점수를 5개 바(bar)로 변환합니다."""
-        # 20점당 1칸
-        num_green = int(round(score / 20.0))
-        num_gray = 5 - num_green
-        bars = "🟩" * num_green + "🔲" * num_gray
-        return bars
-
-    # [★수정] 압축적/시각적 카드 UI를 그리는 헬퍼 함수
-    def _display_segment_card(self, segment, rank):
-        """세그먼트 추천 카드 1개를 그립니다."""
-        score = segment.get('confidence_score', 0)
-        
-        if score >= 90:
-            emoji = "🎯"
-        elif score >= 80:
-            emoji = "✅"
-        elif score >= 70:
-            emoji = "👍"
-        else:
-            emoji = "ℹ️" # 기본 추천
-
-        with st.container(border=True):
-            # 1. 제목 (순위 + 이모지 + 풀패스)
-            st.markdown(f"### {emoji} {rank}. {segment.get('full_path', segment.get('name', 'N/A'))}")
-            
-            # 2. 적합도 (점수 + 녹색 바 5개)
-            bars = self._get_score_bars(score)
-            st.metric(label="AI 적합도 점수", value=f"{score} 점")
-            st.markdown(f"**신뢰도:** {bars}")
-            
-            # 3. 설명 (st.write로 크게)
-            if segment.get('description'):
-                st.write(segment['description']) # st.caption 대신 st.write
-
-            st.divider()
-
-            # 4. 핵심 매칭 요소
-            if segment.get('key_factors'):
-                key_factors_str = ', '.join(segment['key_factors'])
-                st.markdown(f"**🔑 핵심 매칭:** `{key_factors_str}`")
-
-            # 5. 추천 이유
-            if segment.get('reason'):
-                if score >= 60:
-                    st.info(f"**💡 AI 추천:** {segment['reason']}")
-                else:
-                    st.info(f"**ℹ️ 기본 추천:** {segment['reason']}")
-
-    # [★수정] 3열 카드 레이아웃으로 변경
     def display_recommendations(self, recommended_segments: List[Dict]):
+        """추천 결과 표시 (st.expander 사용, UI 수정)"""
         if not recommended_segments:
             st.warning("❌ 추천할 세그먼트를 찾지 못했습니다.")
             return
         
-        # 3열 생성
-        cols = st.columns(len(recommended_segments))
-        
-        for i, col in enumerate(cols):
-            with col:
-                # 각 열에 카드 1개씩 그리기
-                self._display_segment_card(recommended_segments[i], i + 1)
+        st.markdown("""
+        <style>
+        .tag-box {
+            display: inline-block;
+            background-color: #28a745;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            font-weight: bold;
+            margin-right: 5px;
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
+        for i, segment in enumerate(recommended_segments, 1):
+            score = segment.get('confidence_score', 0)
+            
+            title_text = f"**{i}. {segment.get('full_path', segment.get('name', 'N/A'))}**"
+            
+            if score < 60:
+                 title_text += " (기본 추천)"
+
+            with st.expander(title_text, expanded=True):
+                
+                if score >= 60:
+                    st.markdown(f"**적합도: <span style='color:#d9534f; font-weight:bold; font-size: 1.1em;'>{score}점</span>**", unsafe_allow_html=True)
+                    reason_prefix = "💡 AI 추천 사유:"
+                else:
+                    st.markdown(f"**적합도:** {score}점")
+                    reason_prefix = "ℹ️ 기본 추천 사유:"
+                
+                if segment.get('description'):
+                    st.write(f"**📋 설명:** {segment['description']}")
+                
+                # [★수정] 추천 광고주 표시 추가
+                if segment.get('recommended_advertisers'):
+                    st.write(f"**🎯 추천 광고주:** {segment['recommended_advertisers']}")
+
+                if segment.get('key_factors'):
+                    tags_html = "".join([f"<span class='tag-box'>{factor}</span>" for factor in segment['key_factors']])
+                    st.markdown(f"**🔑 핵심 매칭 요소:** {tags_html}", unsafe_allow_html=True)
+
+                st.divider()
+
+                if segment.get('reason'):
+                    if score >= 60:
+                        st.success(f"**{reason_prefix}** {segment['reason']}")
+                    else:
+                        st.info(f"**{reason_prefix}** {segment['reason']}")

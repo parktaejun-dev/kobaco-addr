@@ -111,7 +111,7 @@ def render_sidebar_links():
                   "https://notebooklm.google.com/notebook/ab573898-2bb6-4034-8694-bc1c08d480c7", 
                   width='stretch')
     st.link_button("📄 Addressable 소개자료 다운로드", 
-                  "https://your-google-drive-link-here.com",
+                  "https://drive.google.com/file/d/1iyZCKQSYvrxazfxaz4F5Eh2ejjfWbZUw/view?usp=sharing",
                   width='stretch')
     st.header("📬 이메일 문의")
     st.link_button(
