@@ -101,7 +101,7 @@ def main():
                 advertiser_name, product_name, website_url = render_product_info_section(disabled=is_disabled)
             
             num_recommendations = st.slider(
-                "🎯 AI 추천 세그먼트 개수", 
+                "🎯 AI 추천 세그먼트 개수 설정(5개 기본값 추천)", 
                 min_value=1, 
                 max_value=10, 
                 value=5,  
