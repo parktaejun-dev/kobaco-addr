@@ -195,28 +195,18 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
                 color: #333;
             }
             
-            /* [★수정] 핵심 매칭 요소 p 태그 스타일 (추천 이유와 동일하게) */
             .segment-item p {
                 font-size: 13px;
                 color: #666;
                 margin: 5px 0 0 0;
             }
-            /* [★수정] 핵심 매칭 요소 텍스트 색상만 강조 */
             .segment-item p .key-factors-text {
                 color: #004a9e;
                 font-weight: 700;
             }
 
-            .segment-item .score {
-                display: inline-block;
-                background: #d9534f;
-                color: white;
-                padding: 2px 8px;
-                border-radius: 3px;
-                font-size: 12px;
-                margin-left: 10px;
-                font-weight: 700;
-            }
+            /* [★수정] .score CSS 클래스 제거됨 */
+            
             .footer {
                 margin-top: 30px;
                 text-align: center;
@@ -302,7 +292,8 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
                 h2 {
                     font-size: 18px;
                 }
-                .segment-item strong, .segment-item .score {
+                /* [★수정] 모바일에서도 한 줄로 보이도록 .score 관련 스타일 제거 */
+                .segment-item strong {
                     display: block;
                     margin-left: 0;
                     margin-top: 5px;
@@ -374,7 +365,6 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
                 .segment-item strong {
                     font-size: 10pt;
                 }
-                /* [★수정] 인쇄 시 핵심 요소 스타일 */
                 .segment-item p .key-factors-text {
                     color: #004a9e;
                     font-weight: 700;
@@ -383,10 +373,7 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
                     font-size: 9pt;
                     margin: 3px 0;
                 }
-                .segment-item .score {
-                    font-size: 9pt;
-                    padding: 1px 6px;
-                }
+                /* [★수정] .score 관련 스타일 제거 */
                 .ai-section {
                     padding: 15px;
                 }
@@ -537,19 +524,24 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
             <h2>🎯 AI 타겟 분석 상세</h2>
             <div class="segment-list">
                 {% for segment in recommended_segments %}
+                
                 <div class="segment-item">
                     <strong>
                         {{ loop.index }}. {{ segment.name }}
                     </strong>
-                    {% if segment.confidence_score is defined %}
-                    <span class="score">적합도: {{ segment.confidence_score }}점</span>
-                    {% endif %}
+                    
+                    <p style="margin-top: 5px; margin-bottom: 5px;">
+                        {% if segment.confidence_score is defined %}
+                        <span style="display: inline-block; font-size: 1.1em; font-weight: 700; color: #d9534f; margin-right: 10px;">
+                            [ 적합도: {{ "%.0f"|format(segment.confidence_score) }}점 ]
+                        </span>
+                        {% endif %}
+                        <strong>💡 추천 이유:</strong> {{ segment.reason | default('N/A') }}
+                    </p>
                     
                     {% if segment.key_factors %}
-                    <p><strong>🔑 핵심 매칭 요소:</strong> <span class="key-factors-text">{{ segment.key_factors|join(', ') }}</span></p>
+                    <p style="margin-top: 5px; margin-bottom: 5px;"><strong>🔑 핵심 매칭 요소:</strong> <span class="key-factors-text">{{ segment.key_factors|join(', ') }}</span></p>
                     {% endif %}
-                    
-                    <p><strong>💡 추천 이유:</strong> {{ segment.reason | default('N/A') }}</p>
                 </div>
                 {% endfor %}
             </div>

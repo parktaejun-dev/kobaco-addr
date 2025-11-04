@@ -67,7 +67,7 @@ def main():
                 "🎯 AI 추천 세그먼트 개수", 
                 min_value=1, 
                 max_value=10, 
-                value=3,  # 기본값 3
+                value=5,  # 기본값 5
                 step=1, 
                 key="num_recommendations"
             )
