@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import streamlit.components.v1 as components
 import base64
-import time # [★수정] 팝업 재실행을 위해 필요
+import time 
 
 def create_metric_cards(summary):
     """요약 지표 카드를 생성합니다."""
@@ -51,7 +51,7 @@ def create_results_table(result):
 
         st.dataframe(
             pd.DataFrame(details_data), 
-            use_container_width=True,
+            width='stretch',
             column_config={
                 "채널": st.column_config.TextColumn(width="small"),
                 "예산(원)": st.column_config.TextColumn(width="medium"),
@@ -63,7 +63,8 @@ def create_results_table(result):
             }
         )
 
-def create_region_selectors(available_channels, surcharges_data):
+# [★수정] TypeError 해결: 'disabled' 인자 추가
+def create_region_selectors(available_channels, surcharges_data, disabled: bool = False):
     """채널별 지역 타겟팅 선택기 생성"""
     region_selections = {}
     region_cols = st.columns(len(available_channels))
@@ -82,11 +83,13 @@ def create_region_selectors(available_channels, surcharges_data):
             region_selections[channel] = st.selectbox(
                 f"{channel} 지역",
                 region_options,
-                key=f"region_{channel}"
+                key=f"region_{channel}",
+                disabled=disabled # [★수정]
             )
     return region_selections
 
-def create_budget_inputs(available_channels, total_budget, default_allocations):
+# [★수정] TypeError 해결: 'disabled' 인자 추가
+def create_budget_inputs(available_channels, total_budget, default_allocations, disabled: bool = False):
     """채널별 예산 입력 필드 생성"""
     channel_budgets = {}
     budget_cols = st.columns(len(available_channels))
@@ -99,7 +102,8 @@ def create_budget_inputs(available_channels, total_budget, default_allocations):
                 max_value=total_budget,
                 value=default_budget,
                 step=100,
-                key=f"channel_budget_{channel}"
+                key=f"channel_budget_{channel}",
+                disabled=disabled # [★수정]
             )
             channel_budgets[channel] = channel_budget
     return channel_budgets
@@ -114,7 +118,7 @@ def render_sidebar_links():
                   width='stretch',
                   type="primary")
     st.link_button("📄 Addressable 소개자료 다운로드", 
-                  "https://drive.google.com/file/d/1iyZCKQSYvrxazfxaz4F5Eh2ejjfWbZUw/view?usp=sharing",
+                  "https.://drive.google.com/file/d/1iyZCKQSYvrxazfxaz4F5Eh2ejjfWbZUw/view?usp=sharing",
                   width='stretch',
                   type="primary")
                   
@@ -144,7 +148,6 @@ def render_report_button(result):
             
             b64_html = base64.b64encode(html_content.encode('utf-8')).decode('utf-8')
             
-            # [★수정] key 인자 대신, script 내부에 고유한 값을 주석으로 추가
             unique_val = time.time()
             
             components.html(
@@ -164,7 +167,6 @@ def render_report_button(result):
                 """,
                 height=0,
                 width=0
-                # [★수정] key=unique_key 인자 제거
             )
         except ImportError as ie:
             st.error(f"❌ 리포트 생성 실패 (ImportError): {ie}. 'reports/html_generator.py' 파일에 'generate_html_report' 함수가 있는지 확인하세요.")

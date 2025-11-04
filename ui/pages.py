@@ -22,16 +22,16 @@ def render_admin_login():
             except Exception as e:
                 st.error(f"로그인 오류: {e}")
 
-def render_product_info_section():
+# [★수정] TypeError 해결: 'disabled' 인자 추가
+def render_product_info_section(disabled: bool = False):
     """제품 정보 입력 섹션"""
-    st.header("📋 광고 캠페인 기본 정보")
-    st.caption("광고 제품명과 URL 주소를 입력해주시면, AI가 적합한 타깃을 추천해 드립니다.")
-    advertiser_name = st.text_input("광고주*", placeholder="예: (주)OO전자", key="advertiser_name")
-    product_name = st.text_input("제품명*", placeholder="예: 로봇청소기(URL 사용 실패시 제품명으로 검색합니다.)", key="product_name")
-    website_url = st.text_input("제품 URL*", placeholder="https://example.com 상품설명 등이 포함된 URL, 정확성이 향상됩니다.", key="website_url")
+    advertiser_name = st.text_input("광고주*", placeholder="예: (주)OO전자", key="advertiser_name", disabled=disabled)
+    product_name = st.text_input("제품명*", placeholder="예: 로봇청소기(URL 사용 실패시 제품명으로 검색합니다.)", key="product_name", disabled=disabled)
+    website_url = st.text_input("제품 URL*", placeholder="https://example.com 상품설명 등이 포함된 URL, 정확성이 향상됩니다.", key="website_url", disabled=disabled)
     return advertiser_name, product_name, website_url
 
-def render_ad_settings_section(data_manager):
+# [★수정] TypeError 해결: 'disabled' 인자 추가 및 "신규 광고주" 체크박스 추가
+def render_ad_settings_section(data_manager, disabled: bool = False):
     """광고 설정 섹션"""
     st.header("🎯 타기팅 & 광고 조건 설정")
     st.caption("타깃이 명확할수록 광고 효율이 높아집니다.")
@@ -39,17 +39,19 @@ def render_ad_settings_section(data_manager):
     
     with ad_col1:
         duration_options = {"15초": 15, "30초": 30}
-        selected_duration = st.selectbox("광고 초수", list(duration_options.keys()), index=0)
+        selected_duration = st.selectbox("광고 초수", list(duration_options.keys()), index=0, disabled=disabled)
         ad_duration = duration_options[selected_duration]
     
     with ad_col2:
         st.write(" ") 
         
-        chk_col1, chk_col2 = st.columns(2)
+        chk_col1, chk_col2, chk_col3 = st.columns(3) 
         with chk_col1:
-            audience_targeting = st.toggle("오디언스 타기팅", value=True)
+            audience_targeting = st.toggle("오디언스 타기팅", value=True, disabled=disabled)
         with chk_col2:
-            region_targeting = st.toggle("지역 타기팅")
+            region_targeting = st.toggle("지역 타기팅", disabled=disabled)
+        with chk_col3:
+            is_new_advertiser = st.toggle("신규 광고주", value=False, disabled=disabled)
     
     region_selections = {}
     if region_targeting:
@@ -59,11 +61,12 @@ def render_ad_settings_section(data_manager):
         channels_data = data_manager.load_channels()
         if channels_data is not None:
             available_channels = channels_data['channel_name'].tolist()
-            region_selections = create_region_selectors(available_channels, surcharges_data)
+            region_selections = create_region_selectors(available_channels, surcharges_data, disabled=disabled)
     
-    return ad_duration, audience_targeting, region_targeting, region_selections
+    return ad_duration, audience_targeting, region_targeting, region_selections, is_new_advertiser
 
-def render_budget_section(data_manager):
+# [★수정] TypeError 해결: 'disabled' 인자 추가
+def render_budget_section(data_manager, disabled: bool = False):
     """예산 설정 섹션"""
     st.header("💰 예산 배분 계획")
     st.caption("월 예산을 입력해주세요. 채널별로 예상 노출량과 최종 단가를 자동 계산합니다.")
@@ -73,7 +76,8 @@ def render_budget_section(data_manager):
         max_value=50000,
         value=5000,
         step=100,
-        key="total_budget"
+        key="total_budget",
+        disabled=disabled
     )
     
     channels_data = data_manager.load_channels()
@@ -82,19 +86,18 @@ def render_budget_section(data_manager):
         default_allocations = {'MBC': 0.3, 'EBS': 0.2, 'PP': 0.5}
         
         st.subheader("📊 채널별 예산 배분")
-        channel_budgets = create_budget_inputs(available_channels, total_budget, default_allocations)
+        channel_budgets = create_budget_inputs(available_channels, total_budget, default_allocations, disabled=disabled)
         
         is_valid, allocated_total = validate_budget_allocation(channel_budgets, total_budget)
         if not is_valid:
             st.warning(f"⚠️ 배분된 총액({allocated_total}만원)이 총 예산({total_budget}만원)과 다릅니다.")
         
-        duration = st.slider("📅 광고 기간 (개월)", 1, 12, 3, key="duration")
+        duration = st.slider("📅 광고 기간 (개월)", 1, 12, 3, key="duration", disabled=disabled)
         
         return total_budget, channel_budgets, duration, available_channels, is_valid
     
     return None, None, None, None, False
 
-# [★수정] 메모리 활용: 함수 인자 간소화
 def render_results_section(result, calculator):
     """결과 표시 섹션"""
     st.header("📊 AI 전략 분석 결과")
@@ -105,13 +108,20 @@ def render_results_section(result, calculator):
 def render_sales_policy_page(data_manager):
     """판매정책 관리 페이지"""
     st.title("🔧 판매정책 관리")
-    tab1, tab2, tab3 = st.tabs(["채널 관리", "보너스 정책", "할증 정책"])
+    
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+        "채널 관리", 
+        "보너스 정책", 
+        "할증 정책", 
+        "📊 입력 히스토리",
+        "📈 방문 통계"
+    ])
     
     with tab1:
         st.subheader("채널 기본 요금 관리")
         channels_data = data_manager.load_channels()
         if channels_data is not None:
-            edited_channels = st.data_editor(channels_data, num_rows="dynamic", use_container_width=True)
+            edited_channels = st.data_editor(channels_data, num_rows="dynamic", width='stretch')
             if st.button("💾 채널 데이터 저장"):
                 data_manager.save_data('channels', edited_channels)
                 st.success("✅ 채널 데이터가 저장되었습니다.")
@@ -120,7 +130,7 @@ def render_sales_policy_page(data_manager):
         st.subheader("보너스 정책 관리")
         bonuses_data = data_manager.load_bonuses()
         if bonuses_data is not None:
-            edited_bonuses = st.data_editor(bonuses_data, num_rows="dynamic", use_container_width=True)
+            edited_bonuses = st.data_editor(bonuses_data, num_rows="dynamic", width='stretch')
             if st.button("💾 보너스 데이터 저장"):
                 data_manager.save_data('bonuses', edited_bonuses)
                 st.success("✅ 보너스 데이터가 저장되었습니다.")
@@ -129,10 +139,45 @@ def render_sales_policy_page(data_manager):
         st.subheader("할증 정책 관리")
         surcharges_data = data_manager.load_surcharges()
         if surcharges_data is not None:
-            edited_surcharges = st.data_editor(surcharges_data, num_rows="dynamic", use_container_width=True)
+            edited_surcharges = st.data_editor(surcharges_data, num_rows="dynamic", width='stretch')
             if st.button("💾 할증 데이터 저장"):
                 data_manager.save_data('surcharges', edited_surcharges)
                 st.success("✅ 할증 데이터가 저장되었습니다.")
+    
+    with tab4:
+        st.subheader("📊 사용자 입력 히스토리 (비식별화)")
+        history_df = data_manager.load_data('input_history')
+        if history_df is not None:
+            st.dataframe(history_df, width='stretch')
+            if st.button("🔄 히스토리 새로고침"):
+                st.rerun()
+        else:
+            st.info("아직 저장된 입력 히스토리가 없습니다.")
+
+    with tab5:
+        st.subheader("📈 일별 방문 횟수 (세션 기준)")
+        visit_log_df = data_manager.load_data('visit_log')
+        if visit_log_df is not None:
+            try:
+                visit_log_df['timestamp'] = pd.to_datetime(visit_log_df['timestamp'])
+                visit_log_df['date'] = visit_log_df['timestamp'].dt.date
+                
+                daily_counts = visit_log_df['date'].value_counts().sort_index()
+                
+                st.bar_chart(daily_counts, width='stretch')
+                
+                st.divider()
+                st.subheader("방문 원본 로그 (IP 제외)")
+                st.dataframe(visit_log_df, width='stretch')
+                
+                if st.button("🔄 방문 통계 새로고침"):
+                    st.rerun()
+                    
+            except Exception as e:
+                st.error(f"통계 데이터 처리 중 오류 발생: {e}")
+        else:
+            st.info("아직 저장된 방문 기록이 없습니다.")
+
 
 def render_segment_management_page(data_manager):
     """세그먼트 관리 페이지"""

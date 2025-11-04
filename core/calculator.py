@@ -17,7 +17,8 @@ class EstimateCalculator:
 
     def calculate_estimate(self, selected_channels, channel_budgets, duration, 
                            region_targeting, region_selections, 
-                           audience_targeting, ad_duration, custom_targeting):
+                           audience_targeting, ad_duration, custom_targeting,
+                           is_new_advertiser):
         
         results = {'details': [], 'summary': {}}
         total_budget_won = 0 
@@ -26,8 +27,6 @@ class EstimateCalculator:
         if self.channels_df is None:
             return {"error": "채널 데이터를 로드할 수 없습니다."}
         
-        # [★수정] 논타겟팅 여부를 미리 계산
-        # (오디언스 타겟팅과 지역 타겟팅을 모두 사용하지 않는 경우)
         is_non_targeting = not audience_targeting and not region_targeting
 
         for channel_name in selected_channels:
@@ -85,21 +84,17 @@ class EstimateCalculator:
                 if not volume_bonus.empty:
                     total_bonus_rate += volume_bonus['rate'].max()
                 
-                # --- 프로모션 보너스 ---
-                promo_bonus = self.bonuses_df[
-                    (self.bonuses_df['bonus_type'] == 'promotion') &
-                    (self.bonuses_df['channel_name'] == channel_name)
-                ]
-                if not promo_bonus.empty:
-                    total_bonus_rate += promo_bonus['rate'].sum()
+                # --- 프로모션 보너스 (신규 광고주) ---
+                if is_new_advertiser:
+                    promo_bonus = self.bonuses_df[
+                        (self.bonuses_df['bonus_type'] == 'promotion') &
+                        (self.bonuses_df['condition_type'] == 'new_advertiser') &
+                        (self.bonuses_df['channel_name'] == channel_name)
+                    ]
+                    if not promo_bonus.empty:
+                        total_bonus_rate += promo_bonus['rate'].sum()
 
-                # [★수정] 하드코딩된 MBC 보너스 로직 제거
-                # if (channel_name == 'MBC' and 
-                #     not audience_targeting and 
-                #     not region_targeting):
-                #     total_bonus_rate += 0.15 
-
-                # [★수정] 데이터 기반 논타겟팅 보너스 로직 추가
+                # --- 논타겟팅 보너스 ---
                 if is_non_targeting:
                     non_targeting_bonus = self.bonuses_df[
                         (self.bonuses_df['channel_name'] == channel_name) &

@@ -10,11 +10,11 @@ from bs4 import BeautifulSoup
 from ai.prompts import (
     get_segment_recommendation_prompt, 
     get_segment_filtering_prompt,
-    get_expansion_and_understanding_prompt # [★수정] 0단계 프롬프트 임포트
+    get_expansion_and_understanding_prompt
 )
 import pandas as pd
 import time # 429 오류(재시도/지연) 방지를 위해 time 임포트
-import re # [★수정] 키워드 추출을 위해 re 임포트
+import re # 키워드 추출을 위해 re 임포트
 
 load_dotenv()
 
@@ -34,17 +34,19 @@ class AISegmentRecommender:
         try:
             genai.configure(api_key=self.api_key)
             try:
-                # [★수정] 404 오류 해결: 'models/' 접두사 제거 (사장님 지시)
-                # 1순위: '가장 빠른 2.0 flash'
-                self.model = genai.GenerativeModel('gemini-2.0-flash')
+                # 1순위: 'gemini 2.5-flash' (사장님 목록의 'models/gemini-flash-latest')
+                self.model = genai.GenerativeModel('models/gemini-flash-latest')
             except:
-                # [★수정] 1순위 실패 시 2순위: 'pro'
-                self.model = genai.GenerativeModel('gemini-2.0-pro')
+                # 2순위: 'pro' (사장님 목록의 'models/gemini-pro-latest')
+                self.model = genai.GenerativeModel('models/gemini-pro-latest')
             self.gemini_available = True
+            
+            # [★수정] 요청사항 1: "AI 모델 로드 성공" 메시지 복원 (정확한 모델명 표시)
             st.success(f"✅ AI 모델 로드 성공: {self.model.model_name}")
+            
         except Exception as e:
             st.error(f"❌ Gemini API 설정 오류: {str(e)}")
-            st.error("ai/recommender.py 32~37 라인의 모델 이름을 'gemini-2.0-flash' / 'gemini-2.0-pro'로 확인하세요.")
+            st.error("ai/recommender.py 32~37 라인의 모델 이름을 check_models.py 목록을 참고하여 수정하세요.")
             self.gemini_available = False
 
     def _generate_with_retry(self, prompt: str, max_retries: int = 3) -> str:
@@ -71,16 +73,20 @@ class AISegmentRecommender:
         
         raise Exception("API 할당량 초과. 모든 재시도 실패.")
 
-    # [★수정] 'AI 확장 키워드' 하이브리드 로직으로 전면 수정
-    def recommend_segments(self, product_name: str, website_url: str, num_recommendations: int = 3) -> List[Dict]:
+    # [★수정] 'AI 확장 키워드' + "AI가 A급 이유 생성" 로직으로 수정
+    def recommend_segments(self, product_name: str, website_url: str, num_recommendations: int = 3) -> (List[Dict], str, List[str]): # [★수정] 반환 타입 변경
         
+        # [★수정] 비식별화 데이터 저장을 위해 함수 초기에 반환 변수 선언
+        product_understanding = ""
+        expanded_keywords = []
+
         if not product_name.strip() and not website_url.strip():
             st.error("❌ '제품명' 또는 '제품 URL*'을 입력해주세요.")
-            return []
+            return [], product_understanding, expanded_keywords # [★수정]
             
         if not self.gemini_available or not self.model:
             st.error("❌ Gemini AI를 사용할 수 없습니다.")
-            return []
+            return [], product_understanding, expanded_keywords # [★수정]
             
         # --- 0-1. URL 스크래핑 ---
         scraped_text = ""
@@ -95,12 +101,15 @@ class AISegmentRecommender:
             all_segments_info = self._get_available_segments_info()
             if not all_segments_info:
                 st.error("❌ 세그먼트 데이터를 로드하지 못했습니다. (data/segments.json)")
-                return []
+                return [], product_understanding, expanded_keywords # [★수정]
             
-            # --- [★수정] 0-2. AI 제품 이해 + '유사 키워드 확장' (0단계) ---
-            product_understanding = ""
-            expanded_keywords = []
-            with st.spinner("🤖 AI 분석 중 (0/2): 제품 분석 및 유사 키워드 확장 중..."):
+            # [★수정] 요청사항 3, 4: 메시지 변경 (개수 제거, 쇼잉 강화)
+            st.info(f"🔍 KOBATA AI 타겟 분석 엔진 가동...")
+
+            # --- 0-2. AI 제품 이해 + '유사 키워드 확장' (0단계) ---
+            # product_understanding = "" # 변수 선언 위치 상단으로 이동
+            # expanded_keywords = []
+            with st.spinner("🤖 KOBATA AI가 제품의 핵심 의미를 분석하고, 연관 타겟을 확장합니다..."):
                 try:
                     expansion_json = self._get_expansion_and_understanding(
                         product_name, website_url, scraped_text
@@ -114,78 +123,65 @@ class AISegmentRecommender:
                 product_understanding = f"제품명: {product_name} (AI 자동 분석 실패)"
                 st.warning("AI가 제품을 자동으로 이해하지 못했습니다. 제품명으로 분석을 시도합니다.")
 
-            # 사용자 입력(제품명)도 확장 키워드에 포함
             if product_name and product_name not in expanded_keywords:
                 expanded_keywords.insert(0, product_name)
 
             st.info(f"**💡 AI가 이해한 제품:** {product_understanding}")
             if expanded_keywords:
-                 # [★요청사항 1] 확인용 메시지 추가 (용어 수정)
                  st.info(f"**🔑 AI가 확장한 검색 키워드:** {', '.join(expanded_keywords)}")
 
-            # --- [★수정] Python: '우선 추천 후보' (A급) 선별 ---
+            # --- 1단계 (Python): '우선 추천 후보' (A급) 선별 ---
             priority_segments, remaining_segments = self._get_priority_segments(
                 expanded_keywords, all_segments_info
             )
             
-            if priority_segments:
-                # [★요청사항 1] 확인용 메시지 추가 (용어 수정)
-                priority_names = [s.get('name', 'N/A') for s in priority_segments]
-                st.success(f"✅ **우선 추천 후보** (키워드 일치) {len(priority_segments)}개를 확보했습니다: \n_{', '.join(priority_names)}_")
+            # [★수정] 요청사항 2: "우선 추천 후보" 확보 메시지 제거
 
-            # --- 1단계: 필터링 (B급 후보 선별) ---
-            # 최종 5개를 원하므로, A급이 2개면 B급은 3개가 필요함
+            # --- 2단계 (AI): 'B급 후보' 필터링 ---
             num_b_class_needed = max(0, num_recommendations - len(priority_segments))
-            # AI에게는 여유있게 B급을 20개 정도 요청 (A급이 0개일 경우 대비)
             num_to_filter = 20 
-            
-            b_class_candidates_ranked = []
+            b_class_candidates = []
 
             if remaining_segments and (num_b_class_needed > 0 or not priority_segments):
-                with st.spinner(f"🤖 AI 분석 중 (1/2): 나머지 {len(remaining_segments)}개 중 후보 선별 중..."):
+                with st.spinner(f"🤖 KOBATA AI가 전체 세그먼트 DB와 1차 대조를 수행합니다..."):
                     candidate_names = self._filter_with_gemini(
                         product_understanding, 
-                        remaining_segments, # A급을 제외한 리스트 전달
+                        remaining_segments, 
                         num_to_filter=num_to_filter
                     )
                     b_class_candidates = self._get_segments_by_names(candidate_names, remaining_segments)
-                
-                # --- 2단계: 재정렬 (B급 후보 순위 매기기) ---
-                if b_class_candidates:
-                    with st.spinner(f"🤖 AI 분석 중 (2/2): 후보 {len(b_class_candidates)}개 정밀 분석 및 순위 결정 중..."):
-                        ai_response = self._recommend_with_gemini(
-                            product_understanding, 
-                            b_class_candidates, # B급 후보 리스트 전달
-                            num_to_recommend=max(num_b_class_needed, 5) # B급 중 최소 5개는 순위를 매기도록 요청
-                        )
-                        
-                        if ai_response and ai_response.get("recommended_segments"):
-                            # B급 후보 리스트 (AI가 정렬)
-                            b_class_candidates_ranked = self._enrich_and_sort_segments(
-                                ai_response.get("recommended_segments"), b_class_candidates
-                            )
             
-            # --- [★수정] Python: A급 + B급 최종 결합 ---
+            # --- 3단계 (AI): A급, B급 모두 모아 최종 재정렬 (AI가 이유 생성) ---
+            final_candidate_list = priority_segments + b_class_candidates
+            if not final_candidate_list:
+                st.warning("⚠️ AI가 추천 후보를 생성하지 못했습니다. 기본 추천을 제공합니다.")
+                final_candidate_list = all_segments_info[:20] 
+
+            all_recommendations = []
+            if final_candidate_list:
+                time.sleep(1) # 429 방지
+                with st.spinner(f"🤖 KOBATA AI가 후보군의 우선순위를 정밀하게 재조정합니다..."):
+                    ai_response = self._recommend_with_gemini(
+                        product_understanding, 
+                        final_candidate_list, 
+                        num_to_recommend=max(num_recommendations, 5)
+                    )
+                    
+                    if ai_response and ai_response.get("recommended_segments"):
+                        all_recommendations = self._enrich_and_sort_segments(
+                            ai_response.get("recommended_segments"), final_candidate_list
+                        )
+            
+            # --- 4단계 (Python): 최종 결합 및 Fallback ---
             final_recommendations = []
             seen_names = set()
 
-            # 1. A급(우선 추천)을 먼저 담는다
-            for seg in priority_segments:
-                if seg['name'] not in seen_names:
-                    # A급은 AI의 2단계 분석을 거치지 않았으므로, 기본 정보만 추가
-                    seg['reason'] = "제품 키워드와 DB의 '추천 광고주' 또는 '설명'이 일치하는 최우선 타겟입니다."
-                    seg['confidence_score'] = 95.0 # A급은 95점 고정
-                    seg['key_factors'] = expanded_keywords[:3] # AI 확장 키워드
-                    final_recommendations.append(seg)
-                    seen_names.add(seg['name'])
-
-            # 2. B급(AI 추천)을 뒤에 담는다
-            for seg in b_class_candidates_ranked:
+            for seg in all_recommendations:
                 if seg['name'] not in seen_names:
                     final_recommendations.append(seg)
                     seen_names.add(seg['name'])
 
-            # 3. Fallback 로직 (A급+B급이 5개 미만일 경우)
+            # Fallback 로직
             num_to_pad = num_recommendations - len(final_recommendations)
             if num_to_pad > 0:
                 existing_names = {seg['name'] for seg in final_recommendations}
@@ -198,14 +194,14 @@ class AISegmentRecommender:
                     fallback_seg['key_factors'] = ["기본 추천"]
                     final_recommendations.append(fallback_seg)
             
-            st.success(f"✅ AI 타겟 분석 완료! (총 {len(final_recommendations)}개 후보 중 상위 {num_recommendations}개)")
+            st.success(f"✅ KOBATA AI 타겟 분석 완료!")
             
-            # A급이 1,2순위로 정렬된 리스트에서 5개(기본값)를 잘라 반환
-            return final_recommendations[:num_recommendations]
+            # [★수정] 비식별화 데이터를 반환
+            return final_recommendations[:num_recommendations], product_understanding, expanded_keywords
 
         except Exception as e:
             st.error(f"❌ 세그먼트 추천 중 오류: {str(e)}")
-            return []
+            return [], product_understanding, expanded_keywords # [★수정]
     
     def _fetch_url_content(self, url: str) -> str:
         try:
@@ -226,28 +222,21 @@ class AISegmentRecommender:
             return ""
 
     def _get_expansion_and_understanding(self, product_name: str, website_url: str, scraped_text: str) -> Dict:
-        """
-        (★수정) 0단계: 제품 이해 + 키워드 확장
-        """
+        """ 0단계: 제품 이해 + 키워드 확장 """
         prompt = get_expansion_and_understanding_prompt(
             product_name, website_url, scraped_text
         )
-        
         try:
             raw_response_text = self._generate_with_retry(prompt)
         except Exception as e:
             st.error(f"❌ Gemini API 0단계(키워드 확장) 호출 실패: {str(e)}")
             return {}
-        
         try:
             cleaned_text = raw_response_text.strip().replace("```json\n", "").replace("\n```", "").strip()
             parsed_data = json.loads(cleaned_text)
-            
             if not isinstance(parsed_data, dict) or "product_understanding" not in parsed_data:
                 raise ValueError("AI 응답이 0단계 JSON 형식이 아닙니다.")
-            
             return parsed_data
-        
         except json.JSONDecodeError:
             st.error(f"❌ AI가 0단계에서 유효하지 않은 JSON 형식으로 응답했습니다: {cleaned_text}")
             return {}
@@ -256,9 +245,7 @@ class AISegmentRecommender:
             return {}
 
     def _filter_with_gemini(self, product_understanding: str, remaining_segments: List[Dict], num_to_filter: int) -> List[str]:
-        """
-        (기존) 1단계: 필터링. B급 후보 선별
-        """
+        """ 1단계: 필터링. B급 후보 선별 """
         if not remaining_segments or num_to_filter <= 0:
             return []
         
@@ -273,26 +260,20 @@ class AISegmentRecommender:
             segments_list_str, 
             num_to_filter=num_to_filter
         )
-        
         try:
             raw_response_text = self._generate_with_retry(prompt)
         except Exception as e:
             st.error(f"❌ Gemini API 1단계(필터링) 호출 실패: {str(e)}")
             return []
-        
         try:
             cleaned_text = raw_response_text.strip().replace("```json\n", "").replace("\n```", "").strip()
             parsed_data = json.loads(cleaned_text)
-            
             if not isinstance(parsed_data, dict) or "candidate_segments" not in parsed_data:
                 raise ValueError("AI 응답이 1단계 JSON 형식이 아닙니다. ('candidate_segments' 키 부재)")
-            
             candidate_names = parsed_data.get("candidate_segments", [])
             if not isinstance(candidate_names, list):
                  raise ValueError("AI 응답 'candidate_segments'가 리스트 형식이 아닙니다.")
-                 
             return [str(name) for name in candidate_names] 
-        
         except json.JSONDecodeError:
             st.error(f"❌ AI가 1단계에서 유효하지 않은 JSON 형식으로 응답했습니다: {cleaned_text}")
             return []
@@ -301,16 +282,13 @@ class AISegmentRecommender:
             return []
 
     def _recommend_with_gemini(self, product_understanding: str, candidate_segments_info: List[Dict], num_to_recommend: int) -> Dict:
-        """
-        (기존) 2단계: 재정렬. B급 후보 리스트를 받아 순위 결정
-        """
+        """ 2단계: 재정렬. A+B 후보 리스트를 받아 순위 결정 """
         if not candidate_segments_info:
             return {}
         
         segments_with_desc = []
         for seg in candidate_segments_info: 
             seg_str = f"- {seg.get('name', 'N/A')} (설명: {seg.get('description', 'N/A')}"
-            
             advertisers = seg.get('recommended_advertisers')
             if advertisers and pd.notna(advertisers):
                 clean_advertisers = str(advertisers).replace('\n', ', ')
@@ -325,13 +303,11 @@ class AISegmentRecommender:
             segments_list_str, 
             num_to_recommend=num_to_recommend
         )
-        
         try:
             raw_response_text = self._generate_with_retry(prompt)
         except Exception as e:
             st.error(f"❌ Gemini API 2단계(재정렬) 호출 실패: {str(e)}")
             return {}
-        
         try:
             cleaned_text = raw_response_text.strip().replace("```json\n", "").replace("\n```", "").strip()
             parsed_data = json.loads(cleaned_text)
@@ -343,7 +319,7 @@ class AISegmentRecommender:
             return {}
     
     def _enrich_and_sort_segments(self, segments_from_ai: List[Dict], candidate_segments: List[Dict]) -> List[Dict]:
-        """ (★신규) 2단계 AI 응답을 정렬 및 병합하는 헬퍼 """
+        """ 2단계 AI 응답(A+B)을 정렬 및 병합하는 헬퍼 """
         
         enriched_info_map = {
             s.get("name"): {
@@ -365,7 +341,6 @@ class AISegmentRecommender:
                     seg_copy['key_factors'] = enriched_info_map[name]['key_factors']
                 all_recommendations.append(seg_copy)
 
-        # 점수(숫자)로 정렬
         all_recommendations.sort(key=lambda x: float(x.get('confidence_score', 0)), reverse=True)
         return all_recommendations
 
@@ -373,51 +348,47 @@ class AISegmentRecommender:
         """이름 리스트를 받아서 전체 세그먼트 정보가 담긴 리스트 반환"""
         recommended_segments = []
         available_names_map = {seg['name']: seg for seg in available_segments}
-        
         for name in segment_names:
             if name in available_names_map:
                 recommended_segments.append(available_names_map[name].copy())
         return recommended_segments
     
-    # [★수정] '우선 추천 후보'(A급)를 선별하고, 나머지를 반환하는 헬퍼
     def _get_priority_segments(self, expanded_keywords: List[str], all_segments_info: List[Dict]) -> (List[Dict], List[Dict]):
+        """ '우선 추천 후보'(A급)를 선별하고, 나머지를 반환하는 헬퍼 """
         if not expanded_keywords:
             return [], all_segments_info
 
         priority_segments = []
         remaining_segments = []
-        priority_names = set() # 중복 방지
-
-        # 키워드 목록을 소문자로 변환 (대소문자 미구분)
-        lower_keywords = [kw.lower() for kw in expanded_keywords]
+        priority_names = set() 
+        lower_keywords = [kw.lower() for kw in expanded_keywords if kw and len(kw) > 1]
+        
+        if not lower_keywords: 
+             return [], all_segments_info
 
         for segment in all_segments_info:
             found = False
-            # 'name', 'description', 'recommended_advertisers'를 모두 소문자로 검사
             seg_name = str(segment.get('name', '')).lower()
             seg_desc = str(segment.get('description', '')).lower()
             seg_adv = str(segment.get('recommended_advertisers', '')).lower()
-            
             search_text = f"{seg_name} {seg_desc} {seg_adv}"
 
             for keyword in lower_keywords:
                 if keyword in search_text:
-                    # 원본 세그먼트의 이름(대소문자 구분)으로 중복 체크
                     original_name = segment.get('name')
                     if original_name not in priority_names:
                         priority_segments.append(segment)
                         priority_names.add(original_name)
                     found = True
-                    break # 이 세그먼트는 A급 확정이므로 다음 키워드 검사 불필요
+                    break 
             
             if not found:
                 remaining_segments.append(segment)
 
         return priority_segments, remaining_segments
 
-    # [★신규] segments.json에서 DB 키워드 목록을 추출하는 헬퍼
     def _extract_db_keywords(self, all_segments_info: List[Dict]) -> Set[str]:
-        # 이 함수는 이전 버전과 동일하게 유지
+        """ segments.json에서 DB 키워드 목록을 추출하는 헬퍼 """
         keywords = set()
         for segment in all_segments_info:
             name = segment.get('name')
