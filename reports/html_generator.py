@@ -307,7 +307,7 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
             @media print {
                 @page {
                     size: A4;
-                    margin: 0.8cm; 
+                    margin: 0.7cm; /* [★수정] 여백 소폭 축소 */
                 }
                 body {
                     margin: 0;
@@ -321,12 +321,12 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
                     border: none;
                     box-shadow: none;
                     padding: 0;
-                    display: flex; 
-                    flex-direction: column; 
-                    min-height: 98vh; 
+                    /* [★수정] flex 대신 block으로 변경하여 푸터가 1페이지에 고정되는 현상 수정 */
+                    display: block; 
+                    min-height: 0; /* [★수정] min-height 제거 */
                 }
                 .main-content {
-                    flex-grow: 1; 
+                    flex-grow: 0; /* [★수정] flex-grow 제거 */
                 }
 
                 .header h1 {
@@ -337,13 +337,13 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
                 }
                 h2 {
                     font-size: 15px; 
-                    margin-top: 10px; 
+                    margin-top: 8px; /* [★수정] 상단 마진 소폭 축소 */
                     padding-bottom: 3px; 
                     border-bottom-width: 1px;
                 }
                 .info-table, .summary, .results-table, .segment-list, .ai-section {
-                    margin-top: 8px; 
-                    margin-bottom: 8px; 
+                    margin-top: 6px; /* [★수정] 마진 소폭 축소 */
+                    margin-bottom: 6px; /* [★수정] 마진 소폭 축소 */
                 }
                 .info-table th, .info-table td {
                     padding: 5px; 
@@ -351,7 +351,7 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
                 }
                 .summary {
                     gap: 8px; 
-                    margin-bottom: 10px; 
+                    margin-bottom: 8px; /* [★수정] 마진 소폭 축소 */
                 }
                 .summary-item {
                     padding: 8px; 
@@ -398,7 +398,7 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
                 }
                 
                 .footer {
-                    margin-top: 10px; 
+                    margin-top: 15px; /* [★수정] 푸터가 내용과 붙지 않도록 상단 마진 확보 */
                     padding-top: 8px; 
                     font-size: 8pt;
                     flex-shrink: 0; 
@@ -562,7 +562,7 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
                         
                         <p class="segment-detail-row">
                             <strong>💡 추천 이유:</strong> {{ segment.reason | default('N/A') }}
-                        </p>
+                        </deta>
                     </div>
                     
                     {% endfor %}
