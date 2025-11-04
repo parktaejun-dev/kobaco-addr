@@ -2,7 +2,7 @@
 import streamlit as st
 import google.generativeai as genai
 import os
-from typing import List, Dict
+from typing import List, Dict, Set
 import json
 from dotenv import load_dotenv
 import requests 
@@ -10,10 +10,11 @@ from bs4 import BeautifulSoup
 from ai.prompts import (
     get_segment_recommendation_prompt, 
     get_segment_filtering_prompt,
-    get_product_understanding_prompt # [★수정] 0단계 프롬프트 임포트
+    get_mapping_and_understanding_prompt # [★수정] 0단계 프롬프트 임포트
 )
 import pandas as pd
 import time # 429 오류(재시도/지연) 방지를 위해 time 임포트
+import re # [★수정] 키워드 추출을 위해 re 임포트
 
 load_dotenv()
 
@@ -54,26 +55,23 @@ class AISegmentRecommender:
         retries = 0
         while retries < max_retries:
             try:
-                # [★참고] generate_content() 함수를 사용 중입니다.
                 response = self.model.generate_content(prompt)
                 if not response or not response.text:
                     raise ValueError("Gemini API에서 빈 응답을 받았습니다.")
                 return response.text # 성공 시 응답 텍스트 반환
             
             except Exception as e:
-                # 429 오류이고, 재시도 횟수가 남았을 때
                 if "429 Resource exhausted" in str(e) and retries < max_retries - 1:
                     retries += 1
-                    wait_time = 2 ** retries # 2초, 4초, 8초...
+                    wait_time = 2 ** retries 
                     st.warning(f"⚠️ API 할당량(429) 초과. {wait_time}초 후 재시도... ({retries}/{max_retries})")
                     time.sleep(wait_time)
                 else:
-                    # 429가 아니거나, 마지막 재시도 실패 시 에러 발생
                     raise e 
         
         raise Exception("API 할당량 초과. 모든 재시도 실패.")
 
-    # [★수정] 로직 순서 변경: 0단계(이해) -> 1단계(필터링) -> 2단계(재정렬)
+    # [★수정] '시맨틱 하이브리드' 로직으로 전면 수정
     def recommend_segments(self, product_name: str, website_url: str, num_recommendations: int = 3) -> List[Dict]:
         
         if not product_name.strip() and not website_url.strip():
@@ -93,62 +91,77 @@ class AISegmentRecommender:
                     st.warning("⚠️ 웹사이트 내용을 자동으로 읽어오는 데 실패했습니다. 제품명/URL로만 분석합니다.")
 
         try:
-            # 1. 모든 세그먼트 정보 로드
+            # 1. 모든 세그먼트 정보 및 DB 키워드 로드
             all_segments_info = self._get_available_segments_info()
             if not all_segments_info:
                 st.error("❌ 세그먼트 데이터를 로드하지 못했습니다. (data/segments.json)")
                 return []
             
-            # --- [★신규] 0-2. AI 제품 이해 (0단계) ---
+            db_keywords_set = self._extract_db_keywords(all_segments_info)
+            db_keywords_list_str = ", ".join(sorted(list(db_keywords_set)))
+
+            
+            # --- [★수정] 0-2. AI 제품 이해 + 키워드 매핑 (0단계) ---
             product_understanding = ""
-            with st.spinner("🤖 AI 분석 중 (0/2): 제품 분석 및 이해 중..."):
+            mapped_keywords = []
+            with st.spinner("🤖 AI 분석 중 (0/2): 제품 분석 및 DB 키워드 매핑 중..."):
                 try:
-                    understanding_json = self._get_product_understanding(
-                        product_name, website_url, scraped_text
+                    mapping_json = self._get_mapping_and_understanding(
+                        product_name, website_url, scraped_text, db_keywords_list_str
                     )
-                    product_understanding = understanding_json.get("product_understanding", "")
+                    product_understanding = mapping_json.get("product_understanding", "")
+                    mapped_keywords = mapping_json.get("mapped_keywords", [])
                 except Exception as e:
-                    st.warning(f"⚠️ AI 제품 이해 실패: {e}")
+                    st.warning(f"⚠️ AI 0단계(매핑) 실패: {e}")
             
             if not product_understanding:
                 product_understanding = f"제품명: {product_name} (AI 자동 분석 실패)"
                 st.warning("AI가 제품을 자동으로 이해하지 못했습니다. 제품명으로 분석을 시도합니다.")
 
-            # [★수정] 제품 이해 결과를 *먼저* 표시
             st.info(f"**💡 AI가 이해한 제품:** {product_understanding}")
+            if mapped_keywords:
+                 st.info(f"**🔑 AI가 매핑한 DB 키워드:** {', '.join(mapped_keywords)}")
 
-            # --- 1단계: 필터링 (140개 -> 40개) ---
-            num_to_filter = 40 
-            with st.spinner(f"🤖 AI 분석 중 (1/2): {len(all_segments_info)}개 중 {num_to_filter}개 후보 선별 중..."):
-                candidate_names = self._filter_with_gemini(
-                    product_understanding, # [★수정] 제품 이해 결과 전달
-                    all_segments_info, 
-                    num_to_filter=num_to_filter
-                )
+            # --- [★수정] Python: 'A급 후보' 선별 ---
+            a_class_segments, remaining_segments = self._get_a_class_segments(
+                mapped_keywords, all_segments_info
+            )
             
-            if not candidate_names:
-                st.warning("⚠️ AI가 1단계 후보를 선별하지 못했습니다. 관련성 높은 40개를 임의로 사용합니다.")
-                candidate_segments_info = all_segments_info[:num_to_filter] 
-            else:
-                candidate_segments_info = self._get_segments_by_names(candidate_names, all_segments_info)
+            if a_class_segments:
+                st.success(f"✅ 'A급 후보' {len(a_class_segments)}개를 우선 확보했습니다.")
+
+            # --- 1단계: 필터링 (B급 후보 선별) ---
+            num_to_filter = max(0, 40 - len(a_class_segments)) # 40개를 채우기 위한 B급 후보 수
+            b_class_candidates = []
             
-            st.info(f"✅ 1단계 분석 완료. {len(candidate_segments_info)}개 후보 선별.")
+            if remaining_segments and num_to_filter > 0:
+                with st.spinner(f"🤖 AI 분석 중 (1/2): 나머지 {len(remaining_segments)}개 중 B급 후보 선별 중..."):
+                    candidate_names = self._filter_with_gemini(
+                        product_understanding, 
+                        remaining_segments, # [★수정] A급을 제외한 리스트 전달
+                        num_to_filter=num_to_filter
+                    )
+                    b_class_candidates = self._get_segments_by_names(candidate_names, remaining_segments)
+            
+            # --- 2단계: 재정렬 (A급 + B급) ---
+            
+            # [★수정] A급 후보(사장님 정답) + B급 후보(AI 추천) = 최종 후보군
+            final_candidate_list = a_class_segments + b_class_candidates
+            
+            if not final_candidate_list:
+                st.warning("⚠️ AI가 추천 후보를 생성하지 못했습니다. 기본 추천을 제공합니다.")
+                final_candidate_list = all_segments_info[:20] # 비상시 전체에서 20개
 
-            # 429 오류 방지를 위한 1초 "숨 고르기"
-            time.sleep(1) 
-
-            # --- 2단계: 재정렬 (40개 -> 3개) ---
-            with st.spinner(f"🤖 AI 분석 중 (2/2): {len(candidate_segments_info)}개 후보 정밀 분석 및 순위 결정 중..."):
+            with st.spinner(f"🤖 AI 분석 중 (2/2): A/B급 후보 {len(final_candidate_list)}개 정밀 분석 및 순위 결정 중..."):
                 ai_response = self._recommend_with_gemini(
-                    product_understanding, # [★수정] 제품 이해 결과 전달
-                    candidate_segments_info,
+                    product_understanding, 
+                    final_candidate_list, # [★수정] A+B 리스트 전달
                     num_to_recommend=num_recommendations
                 )
 
             if not ai_response:
                 segments_from_ai = []
             else:
-                # [★수정] 2단계에서는 제품 이해를 생성/표시하지 않음 (0단계에서 완료)
                 segments_from_ai = ai_response.get("recommended_segments", [])
 
             if not segments_from_ai:
@@ -167,7 +180,7 @@ class AISegmentRecommender:
             
             all_recommendations = []
             for name in segment_names_from_ai:
-                seg_data = next((s for s in candidate_segments_info if s.get('name') == name), None)
+                seg_data = next((s for s in final_candidate_list if s.get('name') == name), None)
                 if seg_data:
                     seg_copy = seg_data.copy()
                     if name in enriched_info_map:
@@ -179,7 +192,7 @@ class AISegmentRecommender:
             # (★정렬 버그 수정★) 점수(숫자)로 다시 정렬
             all_recommendations.sort(key=lambda x: float(x.get('confidence_score', 0)), reverse=True)
             
-            # --- (기존 로직 재사용) 중복 제거 및 Fallback ---
+            # --- 중복 제거 및 Fallback ---
             final_recommendations = []
             seen_names = set()
             for seg in all_recommendations:
@@ -191,6 +204,7 @@ class AISegmentRecommender:
             num_to_pad = num_recommendations - len(final_recommendations)
             if num_to_pad > 0:
                 existing_names = [seg['name'] for seg in final_recommendations]
+                # [★수정] Fallback 후보는 A급, B급이 아닌 *전체* 리스트에서 찾아야 함
                 fallback_segments = [seg for seg in all_segments_info if seg['name'] not in existing_names]
                 
                 for i in range(min(num_to_pad, len(fallback_segments))):
@@ -226,18 +240,18 @@ class AISegmentRecommender:
         except:
             return ""
 
-    def _get_product_understanding(self, product_name: str, website_url: str, scraped_text: str) -> Dict:
+    def _get_mapping_and_understanding(self, product_name: str, website_url: str, scraped_text: str, db_keywords_list_str: str) -> Dict:
         """
-        (★신규) 0단계: 제품 이해. AI가 제품을 분석하여 JSON 반환
+        (★신규) 0단계: 제품 이해 + 키워드 매핑
         """
-        prompt = get_product_understanding_prompt(
-            product_name, website_url, scraped_text
+        prompt = get_mapping_and_understanding_prompt(
+            product_name, website_url, scraped_text, db_keywords_list_str
         )
         
         try:
             raw_response_text = self._generate_with_retry(prompt)
         except Exception as e:
-            st.error(f"❌ Gemini API 0단계(제품 이해) 호출 실패: {str(e)}")
+            st.error(f"❌ Gemini API 0단계(매핑) 호출 실패: {str(e)}")
             return {}
         
         try:
@@ -245,7 +259,7 @@ class AISegmentRecommender:
             parsed_data = json.loads(cleaned_text)
             
             if not isinstance(parsed_data, dict) or "product_understanding" not in parsed_data:
-                raise ValueError("AI 응답이 0단계 JSON 형식이 아닙니다. ('product_understanding' 키 부재)")
+                raise ValueError("AI 응답이 0단계 JSON 형식이 아닙니다.")
             
             return parsed_data
         
@@ -256,21 +270,21 @@ class AISegmentRecommender:
             st.error(f"❌ AI 0단계 응답 파싱 오류: {str(e)}")
             return {}
 
-    def _filter_with_gemini(self, product_understanding: str, all_segments_info: List[Dict], num_to_filter: int) -> List[str]:
+    def _filter_with_gemini(self, product_understanding: str, remaining_segments: List[Dict], num_to_filter: int) -> List[str]:
         """
-        (★수정) 1단계: 필터링. 제품 이해(str)를 받아서 후보 이름(list) 추출
+        (★수정) 1단계: 필터링. B급 후보 선별
         """
-        if not all_segments_info:
+        if not remaining_segments or num_to_filter <= 0:
             return []
         
         segments_with_desc = [
             f"- {seg.get('name', 'N/A')} (설명: {seg.get('description', 'N/A')})"
-            for seg in all_segments_info
+            for seg in remaining_segments
         ]
         segments_list_str = "\n".join(segments_with_desc)
         
         prompt = get_segment_filtering_prompt(
-            product_understanding, # [★수정] 제품 이해 결과 전달
+            product_understanding, 
             segments_list_str, 
             num_to_filter=num_to_filter
         )
@@ -292,7 +306,7 @@ class AISegmentRecommender:
             if not isinstance(candidate_names, list):
                  raise ValueError("AI 응답 'candidate_segments'가 리스트 형식이 아닙니다.")
                  
-            return [str(name) for name in candidate_names] # 이름 리스트 반환
+            return [str(name) for name in candidate_names] 
         
         except json.JSONDecodeError:
             st.error(f"❌ AI가 1단계에서 유효하지 않은 JSON 형식으로 응답했습니다: {cleaned_text}")
@@ -303,7 +317,7 @@ class AISegmentRecommender:
 
     def _recommend_with_gemini(self, product_understanding: str, candidate_segments_info: List[Dict], num_to_recommend: int) -> Dict:
         """
-        (★수정) 2단계: 재정렬. 제품 이해(str)와 후보 리스트(list)를 받아 최종 추천(dict)
+        (★수정) 2단계: 재정렬. A+B 후보 리스트를 받아 최종 순위 결정
         """
         if not candidate_segments_info:
             return {}
@@ -322,7 +336,7 @@ class AISegmentRecommender:
         segments_list_str = "\n".join(segments_with_desc)
         
         prompt = get_segment_recommendation_prompt(
-            product_understanding, # [★수정] 제품 이해 결과 전달
+            product_understanding, 
             segments_list_str, 
             num_to_recommend=num_to_recommend
         )
@@ -353,6 +367,61 @@ class AISegmentRecommender:
                 recommended_segments.append(available_names_map[name].copy())
         return recommended_segments
     
+    # [★신규] 'A급 후보'를 선별하고, 나머지를 반환하는 헬퍼
+    def _get_a_class_segments(self, mapped_keywords: List[str], all_segments_info: List[Dict]) -> (List[Dict], List[Dict]):
+        if not mapped_keywords:
+            return [], all_segments_info
+
+        a_class_segments = []
+        remaining_segments = []
+        a_class_names = set() # 중복 방지
+
+        for segment in all_segments_info:
+            found = False
+            seg_name = segment.get('name', '')
+            seg_desc = segment.get('description', '')
+            seg_adv = str(segment.get('recommended_advertisers', ''))
+
+            # 'name', 'description', 'recommended_advertisers' 중 하나라도 매핑된 키워드를 포함하면 A급
+            for keyword in mapped_keywords:
+                if (keyword in seg_name) or (keyword in seg_desc) or (keyword in seg_adv):
+                    if seg_name not in a_class_names:
+                        a_class_segments.append(segment)
+                        a_class_names.add(seg_name)
+                    found = True
+                    break # 이 세그먼트는 A급 확정이므로 다음 키워드 검사 불필요
+            
+            if not found:
+                remaining_segments.append(segment)
+
+        return a_class_segments, remaining_segments
+
+    # [★신규] segments.json에서 DB 키워드 목록을 추출하는 헬퍼
+    def _extract_db_keywords(self, all_segments_info: List[Dict]) -> Set[str]:
+        keywords = set()
+        for segment in all_segments_info:
+            # 1. 'name' 자체를 키워드로 추가
+            name = segment.get('name')
+            if name and pd.notna(name):
+                keywords.add(name.strip())
+
+            # 2. 'recommended_advertisers'를 파싱하여 키워드로 추가
+            advertisers = segment.get('recommended_advertisers')
+            if advertisers and pd.notna(advertisers):
+                # "자동차 브랜드, 여행사/관광청" -> "자동차 브랜드", "여행사", "관광청"
+                # "자동차"와 "브랜드"로 분리하는 것은 너무 과할 수 있음
+                # 쉼표, 슬래시, 줄바꿈 기준으로 분리
+                split_keywords = re.split(r'[,/\n]', str(advertisers))
+                for kw in split_keywords:
+                    cleaned_kw = kw.strip()
+                    if cleaned_kw and len(cleaned_kw) > 1: # 한 글자짜리 버리기
+                        keywords.add(cleaned_kw)
+        
+        # '생명보험', '손해보험' 같은 구체적인 키워드만 남김
+        # (예: '및', '등', '고객' 같은 일반 명사 제외 - 여기서는 길이로만 간단히 필터링)
+        return {kw for kw in keywords if len(kw) > 1}
+
+
     def _get_available_segments_info(self) -> List[Dict]:
         """새 4-Depth JSON 구조를 파싱하도록 수정"""
         if 'data' not in self.segments_data or not isinstance(self.segments_data['data'], list):
