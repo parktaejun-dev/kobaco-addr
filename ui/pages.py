@@ -1,6 +1,8 @@
+# ui/pages.py (수정 완료된 전체 코드)
 import streamlit as st
 import pandas as pd
 import json
+import os
 from ui.components import create_metric_cards, create_results_table, create_budget_inputs, create_region_selectors
 from utils.validators import validate_budget_allocation, validate_required_fields
 
@@ -27,7 +29,7 @@ def render_product_info_section(disabled: bool = False):
     """제품 정보 입력 섹션"""
     advertiser_name = st.text_input("광고주*", placeholder="예: (주)OO전자", key="advertiser_name", disabled=disabled)
     product_name = st.text_input("제품명*", placeholder="예: 로봇청소기(URL 사용 실패시 제품명으로 검색합니다.)", key="product_name", disabled=disabled)
-    website_url = st.text_input("제품 URL*", placeholder="https://example.com 상품설명 등이 포함된 URL, 정확성이 향상됩니다.", key="website_url", disabled=disabled)
+    website_url = st.text_input("제품 URL*", placeholder="https.example.com 상품설명 등이 포함된 URL, 정확성이 향상됩니다.", key="website_url", disabled=disabled)
     return advertiser_name, product_name, website_url
 
 # [★수정] TypeError 해결: 'disabled' 인자 추가 및 "신규 광고주" 체크박스 추가
@@ -106,15 +108,13 @@ def render_results_section(result, calculator):
     create_results_table(result)
 
 def render_sales_policy_page(data_manager):
-    """판매정책 관리 페이지"""
+    """판매정책 관리 페이지 (✨ [수정] 통계 탭 제거)"""
     st.title("🔧 판매정책 관리")
     
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    tab1, tab2, tab3 = st.tabs([
         "채널 관리", 
         "보너스 정책", 
-        "할증 정책", 
-        "📊 입력 히스토리",
-        "📈 방문 통계"
+        "할증 정책"
     ])
     
     with tab1:
@@ -143,40 +143,6 @@ def render_sales_policy_page(data_manager):
             if st.button("💾 할증 데이터 저장"):
                 data_manager.save_data('surcharges', edited_surcharges)
                 st.success("✅ 할증 데이터가 저장되었습니다.")
-    
-    with tab4:
-        st.subheader("📊 사용자 입력 히스토리 (비식별화)")
-        history_df = data_manager.load_data('input_history')
-        if history_df is not None:
-            st.dataframe(history_df, width='stretch')
-            if st.button("🔄 히스토리 새로고침"):
-                st.rerun()
-        else:
-            st.info("아직 저장된 입력 히스토리가 없습니다.")
-
-    with tab5:
-        st.subheader("📈 일별 방문 횟수 (세션 기준)")
-        visit_log_df = data_manager.load_data('visit_log')
-        if visit_log_df is not None:
-            try:
-                visit_log_df['timestamp'] = pd.to_datetime(visit_log_df['timestamp'])
-                visit_log_df['date'] = visit_log_df['timestamp'].dt.date
-                
-                daily_counts = visit_log_df['date'].value_counts().sort_index()
-                
-                st.bar_chart(daily_counts, width='stretch')
-                
-                st.divider()
-                st.subheader("방문 원본 로그 (IP 제외)")
-                st.dataframe(visit_log_df, width='stretch')
-                
-                if st.button("🔄 방문 통계 새로고침"):
-                    st.rerun()
-                    
-            except Exception as e:
-                st.error(f"통계 데이터 처리 중 오류 발생: {e}")
-        else:
-            st.info("아직 저장된 방문 기록이 없습니다.")
 
 
 def render_segment_management_page(data_manager):
@@ -204,3 +170,101 @@ def render_segment_management_page(data_manager):
         with col2:
             if st.button("🔄 데이터 새로고침"):
                 st.rerun()
+
+def render_stats_page(data_manager):
+    """
+    ( ✨ [수정] data_manager.load_data() 사용 및 '광고주명' 통계 제거 )
+    방문 통계와 입력 이력 통계를 보여주는 관리자 페이지를 렌더링합니다.
+    """
+    st.title("📊 통계 분석")
+    st.info("고객용 페이지의 방문 기록과 AI 분석 요청 이력을 확인합니다.")
+
+    # --- 1. 데이터 리셋 기능 ---
+    with st.expander("⚠️ 통계 데이터 리셋하기 (주의)"):
+        st.warning("이 버튼을 누르면 모든 방문 기록(visit_log.csv)과 AI 추천 입력 이력(input_history.csv)이 영구적으로 삭제됩니다. (내용만 초기화됩니다.)")
+        
+        if st.button("모든 통계 데이터 리셋 실행", type="primary"):
+            try:
+                # input_history.csv 리셋 (헤더만 남김)
+                input_path = os.path.join(data_manager.data_dir, data_manager.file_paths['input_history'])
+                with open(input_path, 'r', encoding='utf-8') as f:
+                    input_header = f.readline().strip() 
+                with open(input_path, 'w', encoding='utf-8') as f:
+                    f.write(input_header + '\n') 
+                
+                # visit_log.csv 리셋 (헤더만 남김)
+                visit_path = os.path.join(data_manager.data_dir, data_manager.file_paths['visit_log'])
+                with open(visit_path, 'r', encoding='utf-8') as f:
+                    visit_header = f.readline().strip() 
+                with open(visit_path, 'w', encoding='utf-8') as f:
+                    f.write(visit_header + '\n') 
+
+                st.success("통계 데이터가 성공적으로 리셋되었습니다. 페이지를 새로고침합니다.")
+                st.cache_data.clear() # 판다스 캐시 비우기
+                st.rerun() 
+
+            except Exception as e:
+                st.error(f"데이터 리셋 중 오류 발생: {e}")
+
+    st.divider()
+
+    # --- 2. 데이터 로드 (오류 해결) ---
+    try:
+        input_df = data_manager.load_data('input_history')
+        visit_df = data_manager.load_data('visit_log')
+        
+    except FileNotFoundError:
+        st.error("데이터 파일을 찾을 수 없습니다. (data/input_history.csv or data/visit_log.csv)")
+        return
+    except Exception as e:
+        st.error(f"데이터 로딩 오류: {e}")
+        return
+
+    # --- 3. 방문자 통계 (시각화 + Raw Data) ---
+    st.header("👥 방문자 통계 (visit_log.csv)")
+    if visit_df is not None:
+        st.metric("총 방문 횟수 (페이지 로드)", len(visit_df))
+        if not visit_df.empty:
+            try:
+                # [시각화]
+                visit_df['timestamp'] = pd.to_datetime(visit_df['timestamp'])
+                st.subheader("일별 방문 트렌드")
+                daily_visits = visit_df.set_index('timestamp').resample('D').size()
+                st.bar_chart(daily_visits)
+                
+                # [Raw Data]
+                with st.expander("전체 방문 기록 데이터 보기"):
+                    st.dataframe(visit_df)
+                    
+            except Exception as e:
+                st.warning(f"방문로그 시간 분석 중 오류: {e}")
+        else:
+            st.info("방문 기록이 없습니다.")
+    else:
+        st.info("방문 기록이 없습니다.")
+
+
+    # --- 4. 입력 이력 통계 (시각화 + Raw Data) ---
+    st.header("📝 입력 이력 통계 (input_history.csv)")
+    if input_df is not None:
+        st.metric("총 AI 분석 요청 건수", len(input_df))
+        if not input_df.empty: 
+            
+            # [시각화]
+            st.subheader("요청 예산(total_budget) 분포")
+            try:
+                budget_df = pd.to_numeric(input_df['total_budget'], errors='coerce').dropna()
+                if not budget_df.empty:
+                    st.bar_chart(budget_df.value_counts())
+                else:
+                    st.info("기록된 예산 데이터가 없습니다.")
+            except Exception as e:
+                st.error(f"예산 분포 차트 생성 중 오류: {e}")
+            
+            # [Raw Data]
+            with st.expander("전체 입력 이력 데이터 보기 (비식별화)"):
+                st.dataframe(input_df) 
+        else:
+            st.info("AI 분석 요청 이력이 없습니다.")
+    else:
+        st.info("AI 분석 요청 이력이 없습니다.")

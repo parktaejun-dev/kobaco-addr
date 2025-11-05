@@ -1,4 +1,4 @@
-# app.py
+# app.py (수정 완료된 전체 코드)
 import streamlit as st
 import time
 from core.data_manager import DataManager
@@ -11,7 +11,8 @@ from ui.pages import (
     render_budget_section,
     render_results_section,
     render_sales_policy_page,
-    render_segment_management_page
+    render_segment_management_page,
+    render_stats_page  # 통계 페이지 임포트
 )
 from ui.components import render_sidebar_links, render_report_button
 from utils.validators import validate_budget_allocation, validate_required_fields
@@ -60,7 +61,13 @@ def main():
         with st.sidebar:
             st.title("📺 KOBACO (Admin)")
             st.success("🔐 관리자 모드")
-            page = st.radio("메뉴 선택", ["✨ 고객용 페이지", "판매정책 관리", "세그먼트 관리"])
+            
+            page = st.radio("메뉴 선택", 
+                            ["✨ 고객용 페이지", 
+                             "판매정책 관리", 
+                             "세그먼트 관리", 
+                             "📊 통계 분석"]) # 통계 메뉴
+            
             if st.button("로그아웃"):
                 st.session_state.authenticated = False
                 st.session_state.admin_mode = False
@@ -94,7 +101,6 @@ def main():
         col1, col2 = st.columns([2, 1])
         
         with col1:
-            # [★수정] TypeError 해결: disabled 인자를 container가 아닌 render_ 함수로 전달
             with st.container(border=True):
                 st.header("📋 광고 캠페인 기본 정보")
                 st.caption("광고 제품명과 URL 주소를 입력해주시면, AI가 적합한 타깃을 추천해 드립니다.")
@@ -132,11 +138,9 @@ def main():
                 recommender = AISegmentRecommender(data_manager)
                 recommender.display_recommendations(st.session_state.recommended_segments)
 
-            # [★수정] TypeError 해결: disabled 인자를 container가 아닌 render_ 함수로 전달
             with st.container(border=True):
                 ad_duration, audience_targeting, region_targeting, region_selections, is_new_advertiser = render_ad_settings_section(data_manager, disabled=is_disabled)
             
-            # [★수정] TypeError 해결: disabled 인자를 container가 아닌 render_ 함수로 전달
             with st.container(border=True):
                 total_budget, channel_budgets, duration, available_channels, is_valid_budget = render_budget_section(data_manager, disabled=is_disabled)
 
@@ -153,8 +157,8 @@ def main():
                             understanding = st.session_state.get('product_understanding', '')
                             keywords = st.session_state.get('expanded_keywords', [])
                             
+                            # ✨ [수정] 'advertiser_name'을 저장하지 않습니다.
                             history_data = {
-                                'advertiser_name': advertiser_name, 
                                 'product_understanding': understanding,
                                 'expanded_keywords': ", ".join(keywords), 
                                 'total_budget': total_budget,
@@ -214,8 +218,13 @@ def main():
         
     elif page == "판매정책 관리":
         render_sales_policy_page(data_manager)
+        
     elif page == "세그먼트 관리":
         render_segment_management_page(data_manager)
+
+    elif page == "📊 통계 분석":
+        render_stats_page(data_manager)
+
 
 if __name__ == "__main__":
     main()
