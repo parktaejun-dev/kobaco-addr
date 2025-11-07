@@ -86,7 +86,7 @@ def main():
         with st.expander("ℹ️ KOBATA 시스템 개요 및 통계 수집 동의 (필수)", expanded=not st.session_state.consent_given):
             st.info("""
             **KOBATA(Target Advisor)란?**
-            KOBACO의 Addressable TV 광고 집행을 위한 AI 기반 타겟 분석 및 견적 시뮬레이션 시스템입니다.
+            KOBACO의 **Addressable TV 광고 집행**을 위한 AI 기반 타겟 분석 및 견적 시뮬레이션 시스템입니다.
             
             **서비스 개선을 위한 통계 수집 안내**
             더 나은 서비스 제공을 위해 **비식별화된** 통계 데이터를 수집하며, 통계적 목적으로만 활용됩니다.
