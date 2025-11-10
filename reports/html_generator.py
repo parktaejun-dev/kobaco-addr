@@ -58,7 +58,7 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>KOBACO AI 광고 최적화 플랜</title>
+        <title>{{ advertiser_name }}을 위한 KOBACO AI 광고 최적화 플랜</title>
         <style>
             @font-face {
                 font-family: 'NanumGothic';
@@ -451,7 +451,7 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
         <div class="container">
             <div class="main-content">
                 <div class="header">
-                    <h1>AI 광고 최적화 플랜</h1>
+                    <h1>{{ advertiser_name }}을 위한 AI 광고 최적화 플랜</h1>
                     <img src="data:image/png;base64,{{ logo_b64 }}" class="logo" alt="KOBACO Logo">
                 </div>
                 
