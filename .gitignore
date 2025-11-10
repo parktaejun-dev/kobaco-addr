@@ -25,9 +25,13 @@ Thumbs.db
 # 로그 파일
 *.log
 
-# 사용자 데이터 및 로그 (설정 파일 제외)
+# 사용자 데이터 및 로그 (템플릿 파일 제외)
 data/input_history.csv
 data/visit_log.csv
+data/channels.csv
+data/bonuses.csv
+data/surcharges.csv
+data/segments.json
 
 # 임시 파일
 *.tmp

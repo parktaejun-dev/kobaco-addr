@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import json
 import os
+import shutil
 from datetime import datetime # [★추가]
 
 class DataManager:
@@ -10,8 +11,35 @@ class DataManager:
         if not os.path.exists(self.data_dir):
             os.makedirs(self.data_dir)
 
+        # [★신규] 템플릿 파일에서 실제 데이터 파일 초기화
+        self._initialize_data_files()
+
     def get_file_path(self, file_type, format='csv'):
         return os.path.join(self.data_dir, f"{file_type}.{format}")
+
+    def _initialize_data_files(self):
+        """
+        [★신규] 템플릿 파일에서 실제 데이터 파일을 초기화합니다.
+        실제 파일이 없고 템플릿 파일이 있으면 복사합니다.
+        """
+        template_files = {
+            'channels.csv': 'channels.csv.template',
+            'bonuses.csv': 'bonuses.csv.template',
+            'surcharges.csv': 'surcharges.csv.template',
+            'segments.json': 'segments.json.template'
+        }
+
+        for actual_file, template_file in template_files.items():
+            actual_path = os.path.join(self.data_dir, actual_file)
+            template_path = os.path.join(self.data_dir, template_file)
+
+            # 실제 파일이 없고 템플릿이 있으면 복사
+            if not os.path.exists(actual_path) and os.path.exists(template_path):
+                try:
+                    shutil.copy2(template_path, actual_path)
+                    print(f"✅ Initialized {actual_file} from template")
+                except Exception as e:
+                    print(f"❌ Failed to initialize {actual_file}: {e}")
 
     def load_data(self, file_type, dtype=None):
         file_path = self.get_file_path(file_type, format='csv')
