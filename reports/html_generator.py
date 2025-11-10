@@ -23,6 +23,41 @@ def get_image_base_64(image_path):
         print(f"Image loading error: {e}")
         return None
 
+def get_josa(name, josa_type='object'):
+    """
+    한국어 이름 뒤에 올바른 조사를 반환합니다.
+
+    Args:
+        name: 이름 문자열
+        josa_type: 'object' (을/를), 'subject' (이/가), 'topic' (은/는)
+
+    Returns:
+        올바른 조사 문자열
+    """
+    if not name:
+        return ''
+
+    last_char = name[-1]
+
+    # 한글인지 확인
+    if '가' <= last_char <= '힣':
+        # 받침 확인: (유니코드 - 0xAC00) % 28
+        # 0이면 받침 없음, 아니면 받침 있음
+        code = ord(last_char) - 0xAC00
+        has_jongseong = (code % 28) != 0
+    else:
+        # 한글이 아닌 경우 (영어, 숫자 등) - 받침 있는 것으로 간주
+        has_jongseong = True
+
+    if josa_type == 'object':
+        return '을' if has_jongseong else '를'
+    elif josa_type == 'subject':
+        return '이' if has_jongseong else '가'
+    elif josa_type == 'topic':
+        return '은' if has_jongseong else '는'
+    else:
+        return ''
+
 def generate_html_report(result, advertiser_name, product_name, recommended_segments, ai_strategy_comment=""):
     summary = result['summary']
     details = result['details']
@@ -52,13 +87,16 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
         'total_bonus_rate_percent': f"{total_bonus_rate_percent:.1f}%"
     }
 
+    # 광고주명 뒤에 올바른 조사 계산
+    josa = get_josa(advertiser_name, 'object')
+
     html_template = """
     <!DOCTYPE html>
     <html lang="ko">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>{{ advertiser_name }}을 위한 KOBACO AI 광고 최적화 플랜</title>
+        <title>{{ advertiser_name }}{{ josa }} 위한 KOBACO AI 광고 최적화 플랜</title>
         <style>
             @font-face {
                 font-family: 'NanumGothic';
@@ -95,6 +133,10 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
                 font-size: 28px;
                 color: #004a9e;
                 margin: 0;
+                font-weight: 700;
+            }
+            .header h1 .advertiser-name {
+                color: #d9534f;
                 font-weight: 700;
             }
             .header .logo {
@@ -330,7 +372,12 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
                 }
 
                 .header h1 {
-                    font-size: 20px; 
+                    font-size: 20px;
+                }
+                .header h1 .advertiser-name {
+                    color: #d9534f !important;
+                    -webkit-print-color-adjust: exact;
+                    color-adjust: exact;
                 }
                 .header .logo {
                     max-height: 30px; 
@@ -451,7 +498,7 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
         <div class="container">
             <div class="main-content">
                 <div class="header">
-                    <h1>{{ advertiser_name }}을 위한 AI 광고 최적화 플랜</h1>
+                    <h1><span class="advertiser-name">{{ advertiser_name }}</span>{{ josa }} 위한 AI 광고 최적화 플랜</h1>
                     <img src="data:image/png;base64,{{ logo_b64 }}" class="logo" alt="KOBACO Logo">
                 </div>
                 
@@ -593,6 +640,7 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
         summary_details=summary_details,
         recommended_segments=recommended_segments,
         ai_strategy_comment=ai_strategy_comment,
+        josa=josa,
         nanum_bold_b64=nanum_bold_b64,
         nanum_regular_b64=nanum_regular_b64,
         logo_b64=logo_b64
