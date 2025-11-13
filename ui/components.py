@@ -118,7 +118,7 @@ def render_sidebar_links():
                   width='stretch',
                   type="primary")
     st.link_button("📄 Addressable 소개자료 다운로드", 
-                  "https.://drive.google.com/file/d/1iyZCKQSYvrxazfxaz4F5Eh2ejjfWbZUw/view?usp=sharing",
+                  "https://drive.google.com/file/d/1iyZCKQSYvrxazfxaz4F5Eh2ejjfWbZUw/view?usp=sharing",
                   width='stretch',
                   type="primary")
                   
