@@ -1,0 +1,7 @@
+Django>=5.0
+djangorestframework
+google-generativeai
+python-dotenv
+requests
+beautifulsoup4
+pandas

@@ -5,9 +5,14 @@ __pycache__/
 *.pyd
 .Python
 
+# Django
+*.sqlite3
+db.sqlite3
+
 # 환경 변수 파일 (API 키 보호)
 .env
 *.env
+backend/.env
 
 # Streamlit 비밀 설정
 .streamlit/secrets.toml
@@ -24,6 +29,8 @@ Thumbs.db
 
 # 로그 파일
 *.log
+backend.log
+frontend.log
 
 # 사용자 데이터 및 로그 (설정 파일 제외)
 data/input_history.csv
@@ -32,3 +39,9 @@ data/visit_log.csv
 # 임시 파일
 *.tmp
 *.bak
+
+# Frontend
+frontend/node_modules/
+frontend/build/
+.npm
+npm-debug.log*
