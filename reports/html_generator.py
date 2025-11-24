@@ -523,13 +523,6 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
                     </tr>
                 </table>
 
-                {% if ai_strategy_comment %}
-                <div class="ai-section">
-                    <h2>AI 광고 전략 총평</h2>
-                    <p>{{ ai_strategy_comment | safe }}</p>
-                </div>
-                {% endif %}
-
                 <h2>📊 종합 성과 요약 (월 기준)</h2>
                 <div class="summary">
                     <div class="summary-item">
