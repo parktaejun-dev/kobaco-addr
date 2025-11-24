@@ -615,7 +615,14 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
                     {% endfor %}
                 </div>
                 {% endif %}
-            </div> 
+
+                {% if ai_strategy_comment %}
+                <h2>💬 AI 종합의견</h2>
+                <div class="ai-section">
+                    <p>{{ ai_strategy_comment }}</p>
+                </div>
+                {% endif %}
+            </div>
             <div class="footer">
                 <div class="contact-info">
                     <strong>[제안서 문의] KOBACO 전략마케팅국 크로스세일즈팀</strong><br>

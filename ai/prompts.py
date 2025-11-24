@@ -119,3 +119,33 @@ def get_segment_recommendation_prompt(product_understanding: str, segments_list_
   ]
 }}
     """
+
+def get_summary_comment_prompt(product_name: str, advertiser_name: str, recommended_segments: list, total_budget: int, total_impressions: int) -> str:
+    """
+    광고 제안서 하단에 표시할 AI 종합의견 생성 프롬프트
+    - 짤막하게 2-3줄로 요약
+    """
+    segments_text = ", ".join([seg.get('name', '') for seg in recommended_segments[:3]])
+
+    return f"""
+당신은 **광고 전략 전문가**입니다.
+
+아래 정보를 바탕으로 광고 캠페인에 대한 **짤막한 종합의견**을 작성하세요.
+
+[광고 정보]
+- 광고주명: {advertiser_name}
+- 제품명: {product_name}
+- 총 월 예산: {total_budget:,}원
+- 예상 월 노출수: {total_impressions:,.0f}회
+- 추천 타겟 세그먼트(상위 3개): {segments_text}
+
+[요구사항]
+✅ **2-3줄 이내**로 간결하게 작성
+✅ 선택된 타겟 세그먼트가 제품에 적합한 이유를 중심으로 설명
+✅ 예상 성과(노출수)에 대한 긍정적이고 전문적인 코멘트 포함
+✅ 친절하고 전문적인 톤으로 작성
+✅ 다른 텍스트 없이 **의견만** 출력 (JSON 형식 불필요)
+
+[응답 예시]
+선택하신 타겟 세그먼트는 {product_name}의 핵심 고객층과 매우 잘 부합합니다. 특히 {segments_text} 타겟은 제품의 가치를 가장 잘 이해하고 반응할 수 있는 오디언스입니다. 월 {total_impressions:,.0f}회의 보장 노출을 통해 효과적인 브랜드 인지도 향상을 기대할 수 있습니다.
+    """
