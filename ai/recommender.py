@@ -8,9 +8,10 @@ from dotenv import load_dotenv
 import requests 
 from bs4 import BeautifulSoup 
 from ai.prompts import (
-    get_segment_recommendation_prompt, 
+    get_segment_recommendation_prompt,
     get_segment_filtering_prompt,
-    get_expansion_and_understanding_prompt
+    get_expansion_and_understanding_prompt,
+    get_summary_comment_prompt
 )
 import pandas as pd
 import time # 429 오류(재시도/지연) 방지를 위해 time 임포트
@@ -487,3 +488,24 @@ class AISegmentRecommender:
                         st.success(f"**{reason_prefix}** {segment['reason']}")
                     else:
                         st.info(f"**{reason_prefix}** {segment['reason']}")
+
+    def generate_summary_comment(self, product_name: str, advertiser_name: str, recommended_segments: list, total_budget: int, total_impressions: int) -> str:
+        """광고 제안서 하단에 표시할 AI 종합의견 생성"""
+        if not self.gemini_available or not self.model:
+            return "AI 모델을 사용할 수 없어 종합의견을 생성하지 못했습니다."
+
+        try:
+            prompt = get_summary_comment_prompt(
+                product_name=product_name,
+                advertiser_name=advertiser_name,
+                recommended_segments=recommended_segments,
+                total_budget=total_budget,
+                total_impressions=total_impressions
+            )
+
+            summary_comment = self._generate_with_retry(prompt)
+            return summary_comment.strip()
+
+        except Exception as e:
+            st.warning(f"⚠️ AI 종합의견 생성 중 오류 발생: {e}")
+            return ""
