@@ -380,11 +380,8 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
                     flex-grow: 0;
                 }
 
-                .header {
-                    margin-bottom: 4px;
-                }
                 .header h1 {
-                    font-size: 18px;
+                    font-size: 20px;
                 }
                 .header h1 .advertiser-name {
                     color: #d9534f !important;
@@ -392,84 +389,83 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
                     color-adjust: exact;
                 }
                 .header .logo {
-                    max-height: 25px;
+                    max-height: 30px;
                 }
                 h2 {
-                    font-size: 14px;
-                    margin-top: 4px;
-                    margin-bottom: 3px;
-                    padding-bottom: 2px;
+                    font-size: 15px;
+                    margin-top: 8px;
+                    padding-bottom: 3px;
                     border-bottom-width: 1px;
                 }
                 .info-table, .summary, .results-table, .segment-list, .ai-section {
-                    margin-top: 3px;
-                    margin-bottom: 3px;
+                    margin-top: 6px;
+                    margin-bottom: 6px;
                 }
                 .info-table th, .info-table td {
-                    padding: 3px;
-                    font-size: 8.5pt;
+                    padding: 5px;
+                    font-size: 9pt;
                 }
                 .summary {
-                    gap: 5px;
-                    margin-bottom: 3px;
+                    gap: 8px;
+                    margin-bottom: 8px;
                 }
                 .summary-item {
-                    padding: 5px;
+                    padding: 8px;
                 }
                 .summary-item h3 {
-                    font-size: 10px;
-                    margin-bottom: 2px;
+                    font-size: 11px;
+                    margin-bottom: 4px;
                 }
                 .summary-item p {
-                    font-size: 14px;
+                    font-size: 16px;
                 }
                 .results-table th, .results-table td {
-                    padding: 3px;
-                    font-size: 8.5pt;
+                    padding: 4px;
+                    font-size: 9pt;
                 }
                 .segment-list {
-                    padding: 5px;
+                    padding: 8px;
                 }
                 .segment-item {
-                    padding-bottom: 3px;
-                    margin-bottom: 3px;
+                    padding-bottom: 4px;
+                    margin-bottom: 4px;
                 }
                 .segment-item strong {
-                    font-size: 9pt;
+                    font-size: 10pt;
                 }
                 .segment-item p .key-factors-text {
                     color: #004a9e;
                     font-weight: 700;
                 }
                 .segment-item p {
-                    font-size: 8.5pt;
-                    margin: 2px 0 0 0;
+                    font-size: 9pt;
+                    margin: 3px 0 0 0;
                 }
                 .segment-item p.segment-detail-row {
-                    margin: 2px 0 0 15px;
+                    margin: 3px 0 0 20px;
                 }
 
                 .ai-section {
-                    padding: 6px;
+                    padding: 10px;
                     height: auto;
                     min-height: auto;
                 }
                 .ai-section p {
-                    font-size: 8.5pt;
-                    line-height: 1.3;
+                    font-size: 9pt;
+                    line-height: 1.4;
                     margin: 0;
                 }
 
                 .footer {
-                    margin-top: 6px;
-                    padding-top: 4px;
-                    font-size: 7.5pt;
+                    margin-top: 15px;
+                    padding-top: 8px;
+                    font-size: 8pt;
                     flex-shrink: 0;
                 }
                 .footer .contact-info {
-                    margin-top: 3px;
-                    font-size: 8pt;
-                    line-height: 1.2;
+                    margin-top: 5px;
+                    font-size: 9pt;
+                    line-height: 1.3;
                 }
 
                 .print-button {
