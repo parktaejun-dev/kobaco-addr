@@ -72,13 +72,19 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
 
     total_budget_won = summary['total_budget']
     final_total_impressions = summary['total_impressions']
-    base_cpv_total = 10.0
-    total_base_impressions = 0.0
-    total_bonus_rate_percent = 0.0
 
-    if base_cpv_total > 0:
-        total_base_impressions = total_budget_won / base_cpv_total
-    
+    # 채널별 기본 노출수를 합산하여 전체 기본 노출수 계산
+    total_base_impressions = 0.0
+    for detail in details:
+        if detail.get('base_cpv', 0) > 0:
+            base_impressions = detail['budget'] / detail['base_cpv']
+            total_base_impressions += base_impressions
+
+    # 전체 평균 기본 CPV 계산
+    base_cpv_total = total_budget_won / total_base_impressions if total_base_impressions > 0 else 0
+
+    # 전체 보너스율 계산
+    total_bonus_rate_percent = 0.0
     if total_base_impressions > 0:
         total_bonus_rate_percent = ((final_total_impressions / total_base_impressions) - 1) * 100
 
