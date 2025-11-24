@@ -398,8 +398,8 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
                     border-bottom-width: 1px;
                 }
                 .info-table, .summary, .results-table, .segment-list, .ai-section {
-                    margin-top: 6px;
-                    margin-bottom: 6px;
+                    margin-top: 5px;
+                    margin-bottom: 5px;
                 }
                 .info-table th, .info-table td {
                     padding: 5px;
@@ -424,7 +424,7 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
                     font-size: 9pt;
                 }
                 .segment-list {
-                    padding: 8px;
+                    padding: 7px;
                 }
                 .segment-item {
                     padding-bottom: 4px;
