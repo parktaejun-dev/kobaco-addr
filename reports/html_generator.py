@@ -359,30 +359,32 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
             @media print {
                 @page {
                     size: A4;
-                    margin: 0.7cm; /* [★수정] 여백 소폭 축소 */
+                    margin: 0.4cm;
                 }
                 body {
                     margin: 0;
                     padding: 0;
                     max-width: 100%;
                     background-color: #ffffff !important;
-                    font-size: 9pt; 
+                    font-size: 9pt;
                 }
-                
+
                 .container {
                     border: none;
                     box-shadow: none;
                     padding: 0;
-                    /* [★수정] flex 대신 block으로 변경하여 푸터가 1페이지에 고정되는 현상 수정 */
-                    display: block; 
-                    min-height: 0; /* [★수정] min-height 제거 */
+                    display: block;
+                    min-height: 0;
                 }
                 .main-content {
-                    flex-grow: 0; /* [★수정] flex-grow 제거 */
+                    flex-grow: 0;
                 }
 
+                .header {
+                    margin-bottom: 4px;
+                }
                 .header h1 {
-                    font-size: 20px;
+                    font-size: 18px;
                 }
                 .header h1 .advertiser-name {
                     color: #d9534f !important;
@@ -390,83 +392,84 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
                     color-adjust: exact;
                 }
                 .header .logo {
-                    max-height: 30px; 
+                    max-height: 25px;
                 }
                 h2 {
-                    font-size: 15px; 
-                    margin-top: 8px; /* [★수정] 상단 마진 소폭 축소 */
-                    padding-bottom: 3px; 
+                    font-size: 14px;
+                    margin-top: 4px;
+                    margin-bottom: 3px;
+                    padding-bottom: 2px;
                     border-bottom-width: 1px;
                 }
                 .info-table, .summary, .results-table, .segment-list, .ai-section {
-                    margin-top: 6px; /* [★수정] 마진 소폭 축소 */
-                    margin-bottom: 6px; /* [★수정] 마진 소폭 축소 */
+                    margin-top: 3px;
+                    margin-bottom: 3px;
                 }
                 .info-table th, .info-table td {
-                    padding: 5px; 
-                    font-size: 9pt;
+                    padding: 3px;
+                    font-size: 8.5pt;
                 }
                 .summary {
-                    gap: 8px; 
-                    margin-bottom: 8px; /* [★수정] 마진 소폭 축소 */
+                    gap: 5px;
+                    margin-bottom: 3px;
                 }
                 .summary-item {
-                    padding: 8px; 
+                    padding: 5px;
                 }
                 .summary-item h3 {
-                    font-size: 11px; 
-                    margin-bottom: 4px; 
+                    font-size: 10px;
+                    margin-bottom: 2px;
                 }
                 .summary-item p {
-                    font-size: 16px; 
+                    font-size: 14px;
                 }
                 .results-table th, .results-table td {
-                    padding: 4px; 
-                    font-size: 9pt;
+                    padding: 3px;
+                    font-size: 8.5pt;
                 }
                 .segment-list {
-                    padding: 8px; 
+                    padding: 5px;
                 }
                 .segment-item {
-                    padding-bottom: 4px; 
-                    margin-bottom: 4px; 
+                    padding-bottom: 3px;
+                    margin-bottom: 3px;
                 }
                 .segment-item strong {
-                    font-size: 10pt;
+                    font-size: 9pt;
                 }
                 .segment-item p .key-factors-text {
                     color: #004a9e;
                     font-weight: 700;
                 }
                 .segment-item p {
-                    font-size: 9pt;
-                    margin: 3px 0 0 0; 
+                    font-size: 8.5pt;
+                    margin: 2px 0 0 0;
                 }
                 .segment-item p.segment-detail-row {
-                    margin: 3px 0 0 20px; 
+                    margin: 2px 0 0 15px;
                 }
-                
+
                 .ai-section {
-                    padding: 10px;
+                    padding: 6px;
                     height: auto;
                     min-height: auto;
                 }
                 .ai-section p {
-                    font-size: 9pt;
-                    line-height: 1.4;
+                    font-size: 8.5pt;
+                    line-height: 1.3;
                     margin: 0;
                 }
-                
+
                 .footer {
-                    margin-top: 15px; /* [★수정] 푸터가 내용과 붙지 않도록 상단 마진 확보 */
-                    padding-top: 8px; 
-                    font-size: 8pt;
-                    flex-shrink: 0; 
+                    margin-top: 6px;
+                    padding-top: 4px;
+                    font-size: 7.5pt;
+                    flex-shrink: 0;
                 }
                 .footer .contact-info {
-                    margin-top: 5px; 
-                    font-size: 9pt; 
-                    line-height: 1.3; 
+                    margin-top: 3px;
+                    font-size: 8pt;
+                    line-height: 1.2;
                 }
 
                 .print-button {
