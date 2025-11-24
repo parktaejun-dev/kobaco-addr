@@ -137,13 +137,38 @@ def render_report_button(result):
             product_name = result.get('product_name', 'N/A')
             recommended_segments = result.get('recommended_segments', [])
 
+            # AI 종합의견 생성
+            ai_strategy_comment = ""
+            if recommended_segments:
+                try:
+                    from core.data_manager import DataManager
+                    from ai.recommender import AISegmentRecommender
+
+                    data_manager = DataManager()
+                    recommender = AISegmentRecommender(data_manager)
+
+                    total_budget = result.get('summary', {}).get('total_budget', 0)
+                    total_impressions = result.get('summary', {}).get('total_impressions', 0)
+
+                    with st.spinner("🤖 AI 종합의견 생성 중..."):
+                        ai_strategy_comment = recommender.generate_summary_comment(
+                            product_name=product_name,
+                            advertiser_name=advertiser_name,
+                            recommended_segments=recommended_segments,
+                            total_budget=total_budget,
+                            total_impressions=total_impressions
+                        )
+                except Exception as e:
+                    st.warning(f"⚠️ AI 종합의견 생성 실패: {e}")
+                    ai_strategy_comment = ""
+
             from reports.html_generator import generate_html_report
             html_content = generate_html_report(
-                result, 
-                advertiser_name, 
-                product_name, 
+                result,
+                advertiser_name,
+                product_name,
                 recommended_segments,
-                ai_strategy_comment=""
+                ai_strategy_comment=ai_strategy_comment
             )
             
             b64_html = base64.b64encode(html_content.encode('utf-8')).decode('utf-8')
