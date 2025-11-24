@@ -359,7 +359,7 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
             @media print {
                 @page {
                     size: A4;
-                    margin: 0.4cm;
+                    margin: 0.5cm;
                 }
                 body {
                     margin: 0;
