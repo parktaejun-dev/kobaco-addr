@@ -291,6 +291,9 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
                 padding: 25px;
                 margin-top: 15px;
                 border-radius: 5px;
+                height: auto;
+                min-height: auto;
+                overflow: visible;
             }
             .ai-section h2 {
                 margin-top: 0;
@@ -300,7 +303,8 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
                 font-size: 15px;
                 line-height: 1.6;
                 color: #333;
-                white-space: pre-wrap; 
+                white-space: pre-wrap;
+                margin: 0;
             }
             
             @media (max-width: 600px) {
@@ -438,10 +442,13 @@ def generate_html_report(result, advertiser_name, product_name, recommended_segm
                 
                 .ai-section {
                     padding: 10px;
+                    height: auto;
+                    min-height: auto;
                 }
                 .ai-section p {
-                    font-size: 9pt; 
-                    line-height: 1.4; 
+                    font-size: 9pt;
+                    line-height: 1.4;
+                    margin: 0;
                 }
                 
                 .footer {
