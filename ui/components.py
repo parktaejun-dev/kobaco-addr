@@ -35,8 +35,18 @@ def create_results_table(result):
     if details_data:
         total_budget_won = summary['total_budget']
         final_total_impressions = summary['total_impressions']
-        base_cpv_total = 10.0 
-        total_base_impressions = total_budget_won / base_cpv_total if base_cpv_total > 0 else 0
+
+        # 채널별 기본 노출수를 합산하여 전체 기본 노출수 계산
+        total_base_impressions = 0.0
+        for detail in result['details']:
+            if detail.get('base_cpv', 0) > 0:
+                base_impressions = detail['budget'] / detail['base_cpv']
+                total_base_impressions += base_impressions
+
+        # 전체 평균 기본 CPV 계산
+        base_cpv_total = total_budget_won / total_base_impressions if total_base_impressions > 0 else 0
+
+        # 전체 보너스율 계산
         total_bonus_rate_percent = ((final_total_impressions / total_base_impressions) - 1) * 100 if total_base_impressions > 0 else 0
 
         details_data.append({
