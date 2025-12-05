@@ -1,0 +1,9 @@
+{
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "/api/index.py" }
+  ],
+  "env": {
+    "GEMINI_API_KEY": "@gemini_api_key",
+    "DATABASE_URL": "@neon_database_url"
+  }
+}
