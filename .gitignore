@@ -1,34 +1,47 @@
-# Python 캐시
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# 환경 변수 파일 (API 키 보호)
-.env
-*.env
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
 
-# Streamlit 비밀 설정
-.streamlit/secrets.toml
+# testing
+/coverage
 
-# OS 생성 파일
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
 .DS_Store
-Thumbs.db
+*.pem
 
-# IDE 설정
-.vscode/
-.idea/
-*.swp
-*.swo
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
 
-# 로그 파일
-*.log
+# env files (can opt-in for committing if needed)
+.env*
 
-# 사용자 데이터 및 로그 (설정 파일 제외)
-data/input_history.csv
-data/visit_log.csv
+# vercel
+.vercel
 
-# 임시 파일
-*.tmp
-*.bak
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# python
+__pycache__/
+*.py[cod]
+*$py.class
+kobata.db
