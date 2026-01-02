@@ -209,8 +209,12 @@ def get_policies(current_user: AdminUser = Depends(get_current_user), session: S
 
 # Setup initial admin if not exists (for demo)
 @app.on_event("startup")
-def create_initial_admin():
-    from api.db import engine
+def on_startup():
+    from api.db import create_db_and_tables, engine
+    # 1. Create tables first
+    create_db_and_tables()
+
+    # 2. Create admin user
     with Session(engine) as session:
         user = session.exec(select(AdminUser).where(AdminUser.username == "admin")).first()
         if not user:

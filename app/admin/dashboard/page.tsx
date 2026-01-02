@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('policies');
@@ -11,6 +12,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     const token = localStorage.getItem('admin_token');
     if (!token) {
+      toast.error("로그인이 필요합니다.");
       router.push('/admin/login');
       return;
     }
