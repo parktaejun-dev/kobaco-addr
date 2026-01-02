@@ -1,6 +1,7 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface ProductFormProps {
   onRecommendation: (data: any) => void;
@@ -12,8 +13,34 @@ export default function ProductForm({ onRecommendation, isLoading }: ProductForm
   const [websiteUrl, setWebsiteUrl] = useState('');
   const [numRecommendations, setNumRecommendations] = useState(5);
 
+  // Load from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('kobata_form');
+    if (saved) {
+      try {
+        const { productName, websiteUrl, numRecommendations } = JSON.parse(saved);
+        if (productName) setProductName(productName);
+        if (websiteUrl) setWebsiteUrl(websiteUrl);
+        if (numRecommendations) setNumRecommendations(numRecommendations);
+      } catch (e) {
+        console.error("Failed to load saved form", e);
+      }
+    }
+  }, []);
+
+  // Save to localStorage on change
+  useEffect(() => {
+    localStorage.setItem('kobata_form', JSON.stringify({
+      productName, websiteUrl, numRecommendations
+    }));
+  }, [productName, websiteUrl, numRecommendations]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!productName.trim()) {
+        toast.error("제품명을 입력해주세요.");
+        return;
+    }
     onRecommendation({ productName, websiteUrl, numRecommendations });
   };
 

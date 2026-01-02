@@ -1,15 +1,47 @@
+import { Download } from 'lucide-react';
+import { downloadReport } from '@/lib/api';
+import { toast } from 'sonner';
+
 interface ResultDashboardProps {
   result: any;
+  requestData?: any;
 }
 
-export default function ResultDashboard({ result }: ResultDashboardProps) {
+export default function ResultDashboard({ result, requestData }: ResultDashboardProps) {
   if (!result || !result.summary) return null;
 
   const { summary, details, summary_comment } = result;
 
+  const handleDownload = async () => {
+    if(!requestData) return;
+    try {
+        const blob = await downloadReport(requestData);
+        const url = window.URL.createObjectURL(new Blob([blob]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `report_${new Date().toISOString()}.pdf`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        toast.success("리포트 다운로드 완료");
+    } catch(e) {
+        toast.error("리포트 생성 실패");
+    }
+  }
+
   return (
     <div className="space-y-6 mt-8">
-      <h2 className="text-2xl font-bold">📊 시뮬레이션 결과</h2>
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">📊 시뮬레이션 결과</h2>
+         {requestData && (
+            <button
+                onClick={handleDownload}
+                className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-700"
+            >
+                <Download size={16} /> 리포트 다운로드
+            </button>
+        )}
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white p-6 rounded-xl border shadow-sm text-center">

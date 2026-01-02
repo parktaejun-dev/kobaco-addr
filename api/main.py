@@ -1,15 +1,34 @@
-from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks
+from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks, status
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session, select
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
 from api.db import get_session
-from api.models import Channel, Bonus, Surcharge, VisitLog, InputHistory
+from api.models import Channel, Bonus, Surcharge, VisitLog, InputHistory, AdminUser, Segment
 from api.services.calculator import EstimateCalculator
 from api.services.recommender import AISegmentRecommender
+from api.auth import create_access_token, get_current_user, verify_password, get_password_hash, ACCESS_TOKEN_EXPIRE_MINUTES
+from datetime import timedelta
+from fastapi.responses import StreamingResponse
+from reportlab.pdfgen import canvas
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+import io
 
 app = FastAPI(title="KOBATA API", docs_url="/api/docs", openapi_url="/api/openapi.json")
 
+# Register a Korean font if available, else default
+try:
+    pdfmetrics.registerFont(TTFont('NanumGothic', 'NanumGothic.ttf'))
+    FONT_NAME = 'NanumGothic'
+except:
+    FONT_NAME = 'Helvetica'
+
 # --- Pydantic Schemas for Request/Response ---
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
 
 class RecommendationRequest(BaseModel):
     product_name: str
@@ -121,3 +140,82 @@ def log_input(req: LogInputRequest, session: Session = Depends(get_session)):
     session.add(history)
     session.commit()
     return {"status": "logged"}
+
+@app.post("/api/report/download")
+def download_report(req: EstimateRequest):
+    buffer = io.BytesIO()
+    p = canvas.Canvas(buffer)
+
+    # Title
+    p.setFont(FONT_NAME, 20)
+    p.drawString(100, 800, "KOBA-TA Estimate Report")
+
+    p.setFont(FONT_NAME, 12)
+    p.drawString(100, 770, f"Advertiser: {req.advertiser_name or 'Unknown'}")
+    p.drawString(100, 750, f"Product: {req.product_name or 'Unknown'}")
+
+    # Calculate estimate again to be sure (or trust frontend pass, but re-calc is safer)
+    # Ideally we should re-use the service logic.
+    # For now, let's just print basic info from request
+
+    y = 700
+    p.drawString(100, y, f"Total Budget: {sum(req.channel_budgets.values()):,.0f} (x10,000 KRW)")
+    y -= 20
+    p.drawString(100, y, f"Duration: {req.duration} months")
+    y -= 20
+
+    p.drawString(100, y, "Selected Channels:")
+    y -= 20
+    for ch, budget in req.channel_budgets.items():
+        if budget > 0:
+            p.drawString(120, y, f"- {ch}: {budget} (x10,000 KRW)")
+            y -= 20
+
+    p.showPage()
+    p.save()
+
+    buffer.seek(0)
+    return StreamingResponse(buffer, media_type="application/pdf", headers={"Content-Disposition": "attachment; filename=report.pdf"})
+
+
+# --- Admin Auth & Endpoints ---
+
+@app.post("/api/token", response_model=Token)
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), session: Session = Depends(get_session)):
+    user = session.exec(select(AdminUser).where(AdminUser.username == form_data.username)).first()
+    if not user or not verify_password(form_data.password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.username}, expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
+
+@app.get("/api/admin/segments")
+def get_segments(current_user: AdminUser = Depends(get_current_user), session: Session = Depends(get_session)):
+    segments = session.exec(select(Segment)).all()
+    return segments
+
+@app.get("/api/admin/policies")
+def get_policies(current_user: AdminUser = Depends(get_current_user), session: Session = Depends(get_session)):
+    channels = session.exec(select(Channel)).all()
+    bonuses = session.exec(select(Bonus)).all()
+    surcharges = session.exec(select(Surcharge)).all()
+    return {"channels": channels, "bonuses": bonuses, "surcharges": surcharges}
+
+# Setup initial admin if not exists (for demo)
+@app.on_event("startup")
+def create_initial_admin():
+    from api.db import engine
+    with Session(engine) as session:
+        user = session.exec(select(AdminUser).where(AdminUser.username == "admin")).first()
+        if not user:
+            # Default password: admin
+            hashed_pw = get_password_hash("admin")
+            admin = AdminUser(username="admin", password_hash=hashed_pw)
+            session.add(admin)
+            session.commit()

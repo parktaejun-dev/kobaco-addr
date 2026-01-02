@@ -55,3 +55,10 @@ export const logInput = async (data: any) => {
      console.error("Failed to log input", e);
   }
 }
+
+export const downloadReport = async (data: any) => {
+    const res = await api.post('/api/report/download', data, {
+        responseType: 'blob',
+    });
+    return res.data;
+}

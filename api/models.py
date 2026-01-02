@@ -57,3 +57,8 @@ class InputHistory(SQLModel, table=True):
     region_targeting: Optional[str] = None
     is_new_advertiser: bool = False
     channel_budgets_json: Optional[str] = None # Store as JSON string
+
+class AdminUser(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    username: str = Field(index=True, unique=True)
+    password_hash: str
