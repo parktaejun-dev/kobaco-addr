@@ -210,8 +210,21 @@ def download_report(req: EstimateRequest):
 
 @app.post("/api/token", response_model=Token)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), session: Session = Depends(get_session)):
+    # Debug: Check if any admin exists
+    # all_admins = session.exec(select(AdminUser)).all()
+    # print(f"DEBUG: Found {len(all_admins)} admins")
+
     user = session.exec(select(AdminUser).where(AdminUser.username == form_data.username)).first()
-    if not user or not verify_password(form_data.password, user.password_hash):
+    if not user:
+        print(f"Login failed: User {form_data.username} not found")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    if not verify_password(form_data.password, user.password_hash):
+        print(f"Login failed: Password mismatch for {form_data.username}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",

@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
-from passlib.context import CryptContext
+import bcrypt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlmodel import Session, select
@@ -14,14 +14,23 @@ SECRET_KEY = os.getenv("SECRET_KEY", "supersecretkey") # Change in prod
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/token")
 
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    # Ensure bytes
+    if isinstance(plain_password, str):
+        plain_password = plain_password.encode('utf-8')
+    if isinstance(hashed_password, str):
+        hashed_password = hashed_password.encode('utf-8')
 
-def get_password_hash(password):
-    return pwd_context.hash(password)
+    return bcrypt.checkpw(plain_password, hashed_password)
+
+def get_password_hash(password: str) -> str:
+    if isinstance(password, str):
+        password = password.encode('utf-8')
+    # Generate salt and hash
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(password, salt).decode('utf-8')
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
