@@ -3,6 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session, select
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
+from contextlib import asynccontextmanager
 from api.db import get_session
 from api.models import Channel, Bonus, Surcharge, VisitLog, InputHistory, AdminUser, Segment
 from api.services.calculator import EstimateCalculator
@@ -15,7 +16,33 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 import io
 
-app = FastAPI(title="KOBATA API", docs_url="/api/docs", openapi_url="/api/openapi.json")
+# --- Lifespan Manager ---
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: Create tables and default admin
+    from api.db import create_db_and_tables, engine
+    create_db_and_tables()
+
+    with Session(engine) as session:
+        user = session.exec(select(AdminUser).where(AdminUser.username == "admin")).first()
+        if not user:
+            # Default password: admin
+            hashed_pw = get_password_hash("admin")
+            admin = AdminUser(username="admin", password_hash=hashed_pw)
+            session.add(admin)
+            session.commit()
+    yield
+    # Shutdown logic if any
+
+# --- App Init ---
+
+app = FastAPI(
+    title="KOBATA API",
+    docs_url="/api/docs",
+    openapi_url="/api/openapi.json",
+    lifespan=lifespan
+)
 
 # Register a Korean font if available, else default
 try:
@@ -108,19 +135,14 @@ def get_estimate(req: EstimateRequest, session: Session = Depends(get_session)):
 
 @app.post("/api/log/visit")
 def log_visit(req: LogVisitRequest, background_tasks: BackgroundTasks, session: Session = Depends(get_session)):
-    def _log():
-        # In a real app, use a new session for background task or ensure thread safety
-        # Since we are using dependency injection, it's safer to just do it here quickly
+    # For serverless, waiting is safer than BackgroundTasks if execution cuts off immediately
+    # But usually Vercel waits for response. To be safe, we do it synchronously here.
+    try:
         log = VisitLog(ip_address=req.ip_address)
         session.add(log)
         session.commit()
-
-    # For serverless, background tasks might be cut off if execution ends.
-    # But for standard FastAPI, this is fine. Vercel functions have timeout limits.
-    # It's better to await DB op here for serverless safety unless using a queue.
-    log = VisitLog(ip_address=req.ip_address)
-    session.add(log)
-    session.commit()
+    except Exception as e:
+        print(f"Log visit error: {e}")
     return {"status": "logged"}
 
 @app.post("/api/log/input")
@@ -206,20 +228,3 @@ def get_policies(current_user: AdminUser = Depends(get_current_user), session: S
     bonuses = session.exec(select(Bonus)).all()
     surcharges = session.exec(select(Surcharge)).all()
     return {"channels": channels, "bonuses": bonuses, "surcharges": surcharges}
-
-# Setup initial admin if not exists (for demo)
-@app.on_event("startup")
-def on_startup():
-    from api.db import create_db_and_tables, engine
-    # 1. Create tables first
-    create_db_and_tables()
-
-    # 2. Create admin user
-    with Session(engine) as session:
-        user = session.exec(select(AdminUser).where(AdminUser.username == "admin")).first()
-        if not user:
-            # Default password: admin
-            hashed_pw = get_password_hash("admin")
-            admin = AdminUser(username="admin", password_hash=hashed_pw)
-            session.add(admin)
-            session.commit()
