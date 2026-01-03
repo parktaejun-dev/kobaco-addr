@@ -26,12 +26,17 @@ async def lifespan(app: FastAPI):
 
     with Session(engine) as session:
         user = session.exec(select(AdminUser).where(AdminUser.username == "admin")).first()
+        # Always force reset password to 'admin' to ensure login works after auth logic changes
+        new_hashed_pw = get_password_hash("admin")
         if not user:
-            # Default password: admin
-            hashed_pw = get_password_hash("admin")
-            admin = AdminUser(username="admin", password_hash=hashed_pw)
+            admin = AdminUser(username="admin", password_hash=new_hashed_pw)
             session.add(admin)
-            session.commit()
+            print("Admin user created.")
+        else:
+            user.password_hash = new_hashed_pw
+            session.add(user)
+            print("Admin password reset to 'admin'.")
+        session.commit()
     yield
     # Shutdown logic if any
 
