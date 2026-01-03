@@ -37,6 +37,7 @@ async def lifespan(app: FastAPI):
 
 # --- App Init ---
 
+# Trigger deployment
 app = FastAPI(
     title="KOBATA API",
     docs_url="/api/docs",
