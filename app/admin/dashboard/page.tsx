@@ -29,6 +29,11 @@ export default function AdminDashboard() {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setData(res.data);
+        } else if (activeTab === 'settings') {
+             const res = await axios.get('/api/admin/settings', {
+                headers: { Authorization: `Bearer ${token}` }
+             });
+             setData(res.data);
         }
       } catch (e) {
         console.error(e);
@@ -42,6 +47,26 @@ export default function AdminDashboard() {
   const handleLogout = () => {
       localStorage.removeItem('admin_token');
       router.push('/admin/login');
+  }
+
+  const handleSettingsSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const token = localStorage.getItem('admin_token');
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+
+    try {
+        await axios.post('/api/admin/settings', {
+            gemini_api_key: formData.get('gemini_api_key'),
+            deepseek_api_key: formData.get('deepseek_api_key'),
+            active_model: formData.get('active_model')
+        }, {
+             headers: { Authorization: `Bearer ${token}` }
+        });
+        toast.success("Settings saved successfully");
+    } catch (e) {
+        toast.error("Failed to save settings");
+    }
   }
 
   return (
@@ -64,6 +89,12 @@ export default function AdminDashboard() {
                  className={`pb-2 px-2 font-medium ${activeTab === 'segments' ? 'border-b-2 border-black' : 'text-gray-500'}`}
             >
                 Segments
+            </button>
+            <button
+                 onClick={() => setActiveTab('settings')}
+                 className={`pb-2 px-2 font-medium ${activeTab === 'settings' ? 'border-b-2 border-black' : 'text-gray-500'}`}
+            >
+                ⚙️ AI Settings
             </button>
         </div>
 
@@ -107,6 +138,54 @@ export default function AdminDashboard() {
                         </tbody>
                     </table>
                 </div>
+            </div>
+        )}
+
+        {activeTab === 'settings' && data && (
+            <div className="bg-white p-6 rounded-lg border shadow-sm max-w-2xl">
+                <h3 className="font-bold mb-6 text-lg">AI Model Configuration</h3>
+                <form onSubmit={handleSettingsSave} className="space-y-6">
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Active Model</label>
+                        <select
+                            name="active_model"
+                            defaultValue={data.active_model || 'gemini'}
+                            className="w-full px-3 py-2 border rounded-md bg-white"
+                        >
+                            <option value="gemini">Google Gemini (Flash/Pro)</option>
+                            <option value="deepseek">DeepSeek (OpenAI Compatible)</option>
+                        </select>
+                        <p className="text-xs text-gray-500 mt-1">Select which AI model to use for analysis.</p>
+                    </div>
+
+                    <div className="border-t pt-4">
+                        <label className="block text-sm font-medium mb-1">DeepSeek API Key</label>
+                        <input
+                            type="password"
+                            name="deepseek_api_key"
+                            placeholder={data.deepseek_api_key || "sk-..."}
+                            className="w-full px-3 py-2 border rounded-md"
+                        />
+                         <p className="text-xs text-gray-500 mt-1">Required if Active Model is DeepSeek.</p>
+                    </div>
+
+                    <div className="border-t pt-4">
+                        <label className="block text-sm font-medium mb-1">Gemini API Key</label>
+                        <input
+                            type="password"
+                            name="gemini_api_key"
+                            placeholder={data.gemini_api_key || "AIza..."}
+                            className="w-full px-3 py-2 border rounded-md"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Required if Active Model is Gemini.</p>
+                    </div>
+
+                    <div className="pt-4">
+                        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 font-medium">
+                            Save Settings
+                        </button>
+                    </div>
+                </form>
             </div>
         )}
       </div>

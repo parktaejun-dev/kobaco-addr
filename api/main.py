@@ -5,7 +5,7 @@ from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
 from contextlib import asynccontextmanager
 from api.db import get_session
-from api.models import Channel, Bonus, Surcharge, VisitLog, InputHistory, AdminUser, Segment
+from api.models import Channel, Bonus, Surcharge, VisitLog, InputHistory, AdminUser, Segment, SystemSettings
 from api.services.calculator import EstimateCalculator
 from api.services.recommender import AISegmentRecommender
 from api.auth import create_access_token, get_current_user, verify_password, get_password_hash, ACCESS_TOKEN_EXPIRE_MINUTES
@@ -88,6 +88,11 @@ class LogInputRequest(BaseModel):
     region_targeting: Optional[str]
     is_new_advertiser: bool
     channel_budgets: Dict[str, float]
+
+class SettingsUpdate(BaseModel):
+    gemini_api_key: Optional[str] = None
+    deepseek_api_key: Optional[str] = None
+    active_model: Optional[str] = None
 
 # --- Endpoints ---
 
@@ -228,3 +233,33 @@ def get_policies(current_user: AdminUser = Depends(get_current_user), session: S
     bonuses = session.exec(select(Bonus)).all()
     surcharges = session.exec(select(Surcharge)).all()
     return {"channels": channels, "bonuses": bonuses, "surcharges": surcharges}
+
+@app.get("/api/admin/settings")
+def get_settings(current_user: AdminUser = Depends(get_current_user), session: Session = Depends(get_session)):
+    settings_db = session.exec(select(SystemSettings)).all()
+    settings_dict = {s.key: s.value for s in settings_db}
+    # Mask keys for security
+    if 'gemini_api_key' in settings_dict:
+        settings_dict['gemini_api_key'] = '********' + settings_dict['gemini_api_key'][-4:] if len(settings_dict['gemini_api_key']) > 4 else '****'
+    if 'deepseek_api_key' in settings_dict:
+        settings_dict['deepseek_api_key'] = '********' + settings_dict['deepseek_api_key'][-4:] if len(settings_dict['deepseek_api_key']) > 4 else '****'
+
+    return settings_dict
+
+@app.post("/api/admin/settings")
+def update_settings(update: SettingsUpdate, current_user: AdminUser = Depends(get_current_user), session: Session = Depends(get_session)):
+    def set_val(key, val):
+        if not val: return
+        setting = session.exec(select(SystemSettings).where(SystemSettings.key == key)).first()
+        if not setting:
+            setting = SystemSettings(key=key, value=val)
+            session.add(setting)
+        else:
+            setting.value = val
+            session.add(setting)
+
+    set_val('gemini_api_key', update.gemini_api_key)
+    set_val('deepseek_api_key', update.deepseek_api_key)
+    set_val('active_model', update.active_model)
+    session.commit()
+    return {"status": "updated"}

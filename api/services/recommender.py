@@ -11,55 +11,92 @@ from api.ai.prompts import (
     get_summary_comment_prompt
 )
 from sqlmodel import Session, select
-from api.models import Segment
+from api.models import Segment, SystemSettings
 import time
 import re
+from openai import OpenAI
 
 class AISegmentRecommender:
     def __init__(self, session: Session):
         self.session = session
         self.segments = self.session.exec(select(Segment)).all()
-        self.api_key = os.getenv('GEMINI_API_KEY')
+        self.settings = {s.key: s.value for s in self.session.exec(select(SystemSettings)).all()}
+
+        self.active_model = self.settings.get('active_model', 'gemini')
+        self.gemini_key = self.settings.get('gemini_api_key') or os.getenv('GEMINI_API_KEY')
+        self.deepseek_key = self.settings.get('deepseek_api_key') or os.getenv('DEEPSEEK_API_KEY')
+
         self.model = None
         self.gemini_available = False
-        self._initialize_gemini()
+        self.deepseek_available = False
 
-    def _initialize_gemini(self):
-        if not self.api_key:
-            print("Gemini API Key not set.")
-            return
-        try:
-            genai.configure(api_key=self.api_key)
+        self._initialize_ai()
+
+    def _initialize_ai(self):
+        if self.active_model == 'deepseek':
+            if self.deepseek_key:
+                try:
+                    self.openai_client = OpenAI(
+                        api_key=self.deepseek_key,
+                        base_url="https://api.deepseek.com"
+                    )
+                    self.deepseek_available = True
+                except Exception as e:
+                    print(f"DeepSeek Init Error: {e}")
+
+        # Fallback or Primary Gemini
+        if self.gemini_key:
             try:
-                self.model = genai.GenerativeModel('models/gemini-flash-latest')
-            except:
-                self.model = genai.GenerativeModel('models/gemini-pro-latest')
-            self.gemini_available = True
-        except Exception as e:
-            print(f"Gemini API initialization error: {e}")
-            self.gemini_available = False
+                genai.configure(api_key=self.gemini_key)
+                try:
+                    self.model = genai.GenerativeModel('models/gemini-flash-latest')
+                except:
+                    self.model = genai.GenerativeModel('models/gemini-pro-latest')
+                self.gemini_available = True
+            except Exception as e:
+                print(f"Gemini API initialization error: {e}")
+                self.gemini_available = False
 
     def _generate_with_retry(self, prompt: str, max_retries: int = 3) -> str:
-        retries = 0
-        while retries < max_retries:
+        # 1. DeepSeek attempt if active and available
+        if self.active_model == 'deepseek' and self.deepseek_available:
             try:
-                response = self.model.generate_content(prompt)
-                if not response or not response.text:
-                    raise ValueError("Empty response from Gemini")
-                return response.text
+                response = self.openai_client.chat.completions.create(
+                    model="deepseek-chat",
+                    messages=[
+                        {"role": "system", "content": "You are a helpful AI assistant for TV ad targeting. Respond in JSON format where applicable."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    stream=False
+                )
+                return response.choices[0].message.content
             except Exception as e:
-                if "429" in str(e) and retries < max_retries - 1:
-                    retries += 1
-                    time.sleep(2 ** retries)
-                else:
-                    raise e
-        raise Exception("API Quota Exceeded")
+                print(f"DeepSeek Error: {e}, falling back to Gemini if available.")
+
+        # 2. Gemini fallback or primary
+        if self.gemini_available and self.model:
+            retries = 0
+            while retries < max_retries:
+                try:
+                    response = self.model.generate_content(prompt)
+                    if not response or not response.text:
+                        raise ValueError("Empty response from Gemini")
+                    return response.text
+                except Exception as e:
+                    if "429" in str(e) and retries < max_retries - 1:
+                        retries += 1
+                        time.sleep(2 ** retries)
+                    else:
+                        raise e
+            raise Exception("Gemini API Quota Exceeded")
+
+        raise Exception("No AI model available.")
 
     def recommend_segments(self, product_name: str, website_url: str, num_recommendations: int = 3) -> Dict[str, Any]:
         product_understanding = ""
         expanded_keywords = []
 
-        if not self.gemini_available or not self.model:
+        if not self.gemini_available and not self.deepseek_available:
             return {"error": "AI unavailable", "product_understanding": "", "expanded_keywords": [], "recommendations": []}
 
         # 0. URL Scraping
@@ -172,7 +209,9 @@ class AISegmentRecommender:
         prompt = get_expansion_and_understanding_prompt(product_name, website_url, scraped_text)
         try:
             raw = self._generate_with_retry(prompt)
-            cleaned = raw.strip().replace("```json\n", "").replace("\n```", "").strip()
+            # Cleanup markdown json
+            cleaned = re.sub(r'^```json\s*', '', raw.strip(), flags=re.MULTILINE)
+            cleaned = re.sub(r'\s*```$', '', cleaned, flags=re.MULTILINE)
             return json.loads(cleaned)
         except:
             return {}
@@ -183,7 +222,8 @@ class AISegmentRecommender:
         prompt = get_segment_filtering_prompt(product_understanding, segments_str, num_to_filter)
         try:
             raw = self._generate_with_retry(prompt)
-            cleaned = raw.strip().replace("```json\n", "").replace("\n```", "").strip()
+            cleaned = re.sub(r'^```json\s*', '', raw.strip(), flags=re.MULTILINE)
+            cleaned = re.sub(r'\s*```$', '', cleaned, flags=re.MULTILINE)
             data = json.loads(cleaned)
             return [str(n) for n in data.get("candidate_segments", [])]
         except:
@@ -201,7 +241,8 @@ class AISegmentRecommender:
         prompt = get_segment_recommendation_prompt(product_understanding, segments_str, num_to_recommend)
         try:
             raw = self._generate_with_retry(prompt)
-            cleaned = raw.strip().replace("```json\n", "").replace("\n```", "").strip()
+            cleaned = re.sub(r'^```json\s*', '', raw.strip(), flags=re.MULTILINE)
+            cleaned = re.sub(r'\s*```$', '', cleaned, flags=re.MULTILINE)
             return json.loads(cleaned)
         except:
             return {}
@@ -260,7 +301,7 @@ class AISegmentRecommender:
         return info
 
     def generate_summary_comment(self, product_name, advertiser_name, recommended_segments, total_budget, total_impressions):
-        if not self.gemini_available or not self.model: return ""
+        if not self.gemini_available and not self.deepseek_available: return ""
         try:
             prompt = get_summary_comment_prompt(product_name, advertiser_name, recommended_segments, total_budget, total_impressions)
             raw = self._generate_with_retry(prompt)
