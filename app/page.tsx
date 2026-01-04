@@ -15,7 +15,7 @@ export default async function Home() {
   
   // Try fetching from Sanity, fallback silently if fails (e.g. no project ID)
   try {
-      if (client.config().projectId !== 'dummy_project_id') {
+      if (client.config().projectId !== 'dummy-project-id') {
           const data = await client.fetch(`*[_type == "homePage"][0].hero`);
           if (data) hero = { ...FALLBACK_HERO, ...data };
       }
