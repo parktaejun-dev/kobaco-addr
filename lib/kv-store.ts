@@ -5,47 +5,49 @@ import path from 'path';
 const CONTENT_DIR = path.join(process.cwd(), 'content');
 const POLICY_DIR = path.join(process.cwd(), 'policy');
 
-// Use KV_URL (Vercel default) or REDIS_URL
-const REDIS_URL = process.env.KV_URL || process.env.REDIS_URL;
+// Priority: REDIS_URL -> KV_URL
+const REDIS_URL = process.env.REDIS_URL || process.env.KV_URL;
 
 let client: ReturnType<typeof createClient> | null = null;
 
 async function getClient() {
+    // If client exists and is ready, reuse it
     if (client && client.isOpen) return client;
 
-    if (!REDIS_URL) {
-        // console.log('⚠️ No Redis URL found. Using local file system only.');
-        return null;
-    }
+    // If no URL is provided, we can't use Redis
+    if (!REDIS_URL) return null;
 
     try {
-        client = createClient({
-            url: REDIS_URL,
-            socket: {
-                // Prepare for serverless environment connection issues
-                reconnectStrategy: retries => Math.min(retries * 50, 1000)
-            }
-        });
+        // Create a new client instance
+        // Reusing the global variable ensures we don't create too many connections
+        if (!client) {
+            client = createClient({
+                url: REDIS_URL
+            });
+            client.on('error', (err) => console.error('Redis Client Error', err));
+        }
 
-        client.on('error', (err) => console.error('Redis Client Error', err));
+        // Connect if not already connected
+        if (!client.isOpen) {
+            await client.connect();
+            console.log('✅ Redis connected');
+        }
 
-        await client.connect();
-        console.log('✅ Redis connected via standard redis client');
         return client;
     } catch (e) {
-        console.error('❌ Failed to create/connect Redis client:', e);
-        return null;
+        console.error('❌ Failed to connect Redis:', e);
+        return null; // Fallback to FS
     }
 }
 
 type StoreType = 'content' | 'policy';
 
 /**
- * Get JSON data from Redis (preferred) or File System (fallback).
+ * Get JSON data
  */
 export async function getJSON(type: StoreType, id: string): Promise<any> {
     const key = `${type}:${id}`;
-    const redis = await getClient();
+    const redis = await getClient(); // Get connected client
 
     // 1. Try Redis
     if (redis) {
@@ -59,7 +61,7 @@ export async function getJSON(type: StoreType, id: string): Promise<any> {
         }
     }
 
-    // 2. Fallback to File System (Seed data)
+    // 2. Fallback to File System
     try {
         let filePath = '';
         if (type === 'policy') {
@@ -71,26 +73,24 @@ export async function getJSON(type: StoreType, id: string): Promise<any> {
         }
 
         if (fs.existsSync(filePath)) {
-            const fileContent = fs.readFileSync(filePath, 'utf-8');
-            return JSON.parse(fileContent);
+            return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
         }
     } catch (e) {
-        // Silent error for FS issues
-        // console.error(`[FS] Read Error for ${id}:`, e);
+        // Ignore
     }
 
     return null;
 }
 
 /**
- * Save JSON data to Redis (and try FS if local).
+ * Save JSON data
  */
 export async function setJSON(type: StoreType, id: string, data: any): Promise<void> {
     const key = `${type}:${id}`;
     const jsonString = JSON.stringify(data);
     const redis = await getClient();
 
-    // 1. Write to Redis (Primary)
+    // 1. Write to Redis
     if (redis) {
         try {
             await redis.set(key, jsonString);
@@ -98,11 +98,9 @@ export async function setJSON(type: StoreType, id: string, data: any): Promise<v
         } catch (e) {
             console.error(`[Redis] Set Error for ${key}:`, e);
         }
-    } else {
-        console.warn(`[Redis] Not configured (or failed), skipping write for ${key}`);
     }
 
-    // 2. Write to File System (Local Dev Sync only)
+    // 2. Write to FS (Local Sync)
     try {
         let filePath = '';
         if (type === 'policy') {
@@ -117,9 +115,8 @@ export async function setJSON(type: StoreType, id: string, data: any): Promise<v
 
         fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
     } catch (e: any) {
-        // Ignore Read-Only errors in Vercel
         if (e.code !== 'EROFS' && e.code !== 'EACCES') {
-            // console.error(`[FS] Write Error for ${id}:`, e);
+            // console.error(`[FS] Write Error:`, e);
         }
     }
 }
