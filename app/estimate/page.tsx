@@ -321,10 +321,7 @@ export default function EstimatePage() {
                         }`}>
                         {formData.is_new_advertiser === opt.value && <div className="w-2 h-2 bg-white rounded-full" />}
                       </div>
-                      <span className="flex items-center gap-1">
-                        <span className="text-lg leading-none">{formData.is_new_advertiser === opt.value ? '☑' : '☐'}</span>
-                        {opt.label}
-                      </span>
+                      {opt.label}
                     </button>
                   ))}
                 </div>
