@@ -10,10 +10,10 @@
   },
   "dependencies": {
     "@fontsource/pretendard": "^5.2.5",
-    "@vercel/kv": "^3.0.0",
     "axios": "^1.13.2",
     "clsx": "^2.1.1",
     "framer-motion": "^12.23.26",
+    "ioredis": "^5.8.2",
     "lucide-react": "^0.562.0",
     "next": "16.1.1",
     "react": "19.2.3",
