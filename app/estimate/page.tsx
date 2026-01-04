@@ -129,41 +129,41 @@ export default function EstimatePage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md border-b sticky top-0 z-30">
-        <div className="max-w-5xl mx-auto px-6 h-18 py-4 flex items-center justify-between">
-          <Link href="/" className="font-black text-2xl text-blue-900 tracking-tighter flex items-center gap-2">
-            <span className="bg-blue-900 text-white p-1.5 rounded-lg rotate-3 shadow-lg"><Target size={20} /></span>
-            KOBACO Addressable
+      <header className="bg-white/90 backdrop-blur-md border-b border-slate-200 sticky top-0 z-30">
+        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+          <Link href="/" className="flex items-center">
+            <img
+              src="https://n2wpsx55oxsmnkaa.public.blob.vercel-storage.com/webpage/logo_red.png"
+              alt="KOBACO Addressable TV"
+              className="h-6 md:h-7"
+            />
           </Link>
           <div className="flex items-center gap-6">
             <a
               href="https://drive.google.com/file/d/1iyZCKQSYvrxazfxaz4F5Eh2ejjfWbZUw/view?usp=sharing"
               target="_blank"
-              className="text-sm font-bold text-slate-600 hover:text-blue-600 flex items-center gap-1.5 transition-colors"
+              className="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors"
             >
-              <FileText size={16} className="text-blue-500" /> 소개자료
+              소개자료
             </a>
             <a
               href="https://notebooklm.google.com/notebook/ab573898-2bb6-4034-8694-bc1c08d480c7"
               target="_blank"
-              className="px-4 py-2 bg-blue-50 text-blue-700 rounded-full text-sm font-black hover:bg-blue-100 flex items-center gap-1.5 transition-all shadow-sm"
+              className="px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 transition-all flex items-center gap-2"
             >
-              🤖 AI에게 질문하기 <ExternalLink size={12} />
+              <Sparkles size={14} className="text-slate-300" /> AI 질문하기
             </a>
           </div>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto p-6">
-        <div className="mb-12 text-center space-y-4 pt-8 animate-in fade-in slide-in-from-top-4 duration-700">
-          <div className="inline-block px-4 py-1.5 bg-blue-50 text-blue-600 rounded-full text-xs font-black uppercase tracking-widest mb-2 shadow-sm">AI Analytics Platform</div>
-          <h1 className="text-5xl font-black text-slate-900 tracking-tighter leading-tight">
-            KOBACO 어드레서블 <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-500">견적 시뮬레이터</span>
+      <main className="max-w-4xl mx-auto p-6 pb-24">
+        <div className="mb-12 pt-8">
+          <h1 className="text-4xl sm:text-5xl font-bold text-slate-900 tracking-tight leading-tight mb-4">
+            견적 시뮬레이터
           </h1>
-          <p className="text-lg text-slate-500 font-medium max-w-xl mx-auto">
-            데이터 기반의 Addressable TV 광고 캠페인 견적을 <br />
-            AI가 실시간으로 분석하고 최적화해 드립니다.
+          <p className="text-lg text-slate-600 font-medium max-w-2xl">
+            AI 기반 데이터 분석을 통해 최적의 어드레서블 TV 광고 캠페인을 설계하세요.
           </p>
         </div>
 
@@ -186,7 +186,7 @@ export default function EstimatePage() {
                   value={clientInfo.advertiserName}
                   onChange={e => setClientInfo({ ...clientInfo, advertiserName: e.target.value })}
                   placeholder="예: (주)OO전자"
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-transparent outline-none transition-all"
                 />
               </div>
               <div>
@@ -196,7 +196,7 @@ export default function EstimatePage() {
                   value={clientInfo.productName}
                   onChange={e => setClientInfo({ ...clientInfo, productName: e.target.value })}
                   placeholder="예: 로봇청소기 (URL 실패시 제품명으로 검색)"
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-transparent outline-none transition-all"
                 />
               </div>
               <div>
@@ -206,7 +206,7 @@ export default function EstimatePage() {
                   value={clientInfo.url}
                   onChange={e => setClientInfo({ ...clientInfo, url: e.target.value })}
                   placeholder="https://example.com/product"
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-transparent outline-none transition-all"
                 />
               </div>
             </div>
@@ -238,9 +238,9 @@ export default function EstimatePage() {
                 <button
                   onClick={handleAIAnalysis}
                   disabled={aiLoading || !hasProductInfo}
-                  className={`w-full py-4 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${hasProductInfo
-                    ? "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-md transform hover:-translate-y-1"
-                    : "bg-gray-300 cursor-not-allowed"
+                  className={`w-full py-4 text-white font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${hasProductInfo
+                    ? "bg-slate-900 hover:bg-slate-800 shadow-sm"
+                    : "bg-slate-200 cursor-not-allowed"
                     }`}
                 >
                   {aiLoading ? (
@@ -255,8 +255,8 @@ export default function EstimatePage() {
                   )}
                 </button>
                 {hasProductInfo && !hasAIResult && (
-                  <p className="text-center text-blue-600 text-sm mt-2 font-medium animate-bounce">
-                    👆 위 버튼을 눌러 AI 분석을 시작하세요!
+                  <p className="text-center text-slate-500 text-sm mt-3 font-medium">
+                    위 버튼을 눌러 AI 분석을 시작하세요.
                   </p>
                 )}
               </div>
@@ -283,16 +283,16 @@ export default function EstimatePage() {
 
             <div className="grid md:grid-cols-2 gap-6">
               {/* Ad Duration */}
-              <div className="p-4 border rounded-xl bg-white">
-                <label className="block text-sm font-medium text-gray-500 mb-3">광고 초수</label>
+              <div className="p-5 border border-slate-200 rounded-lg bg-white">
+                <label className="block text-sm font-semibold text-slate-700 mb-3">광고 노출 시간 (초)</label>
                 <div className="flex gap-3">
                   {[15, 30].map((sec) => (
                     <button
                       key={sec}
                       onClick={() => setFormData({ ...formData, ad_duration: sec as 15 | 30 })}
-                      className={`flex-1 py-3 rounded-lg border font-medium transition-all ${formData.ad_duration === sec
-                        ? 'bg-blue-600 text-white border-blue-600'
-                        : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                      className={`flex-1 py-2.5 rounded border text-sm font-semibold transition-all ${formData.ad_duration === sec
+                        ? 'bg-slate-900 text-white border-slate-900'
+                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                         }`}
                     >
                       {sec}초
@@ -302,32 +302,29 @@ export default function EstimatePage() {
               </div>
 
               {/* 집행 이력 질문 (기존 신규 광고주) */}
-              <div className="p-5 border rounded-2xl bg-white shadow-sm">
-                <label className="block text-sm font-black text-slate-700 mb-4">어드레서블 광고 집행 이력이 있으신가요?</label>
+              {/* 집행 이력 질문 */}
+              <div className="p-5 border border-slate-200 rounded-lg bg-white">
+                <label className="block text-sm font-semibold text-slate-700 mb-3">어드레서블 광고 집행 이력</label>
                 <div className="flex gap-3">
                   {[
-                    { label: '없음', value: true },
-                    { label: '있음 (최근 6개월 내)', value: false }
+                    { label: '없음 (신규)', value: true },
+                    { label: '있음', value: false }
                   ].map((opt) => (
                     <button
                       key={opt.label}
                       onClick={() => setFormData({ ...formData, is_new_advertiser: opt.value })}
-                      className={`flex-1 py-3 px-4 rounded-xl border-2 font-bold transition-all flex items-center justify-center gap-2 ${formData.is_new_advertiser === opt.value
-                        ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-100'
-                        : 'bg-white text-slate-500 border-slate-100 hover:border-blue-200'
+                      className={`flex-1 py-2.5 px-4 rounded border text-sm font-semibold transition-all flex items-center justify-center gap-2 ${formData.is_new_advertiser === opt.value
+                        ? 'bg-slate-900 text-white border-slate-900'
+                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                         }`}
                     >
-                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${formData.is_new_advertiser === opt.value ? 'border-white' : 'border-slate-200'
-                        }`}>
-                        {formData.is_new_advertiser === opt.value && <div className="w-2 h-2 bg-white rounded-full" />}
-                      </div>
                       {opt.label}
                     </button>
                   ))}
                 </div>
                 {formData.is_new_advertiser && (
-                  <div className="mt-4 p-3 bg-blue-50 rounded-xl flex items-center gap-2 text-xs font-bold text-blue-600 animate-in fade-in slide-in-from-top-2">
-                    <Sparkles size={14} /> ✨ 신규 광고주 프로모션(보너스)이 적용됩니다.
+                  <div className="mt-3 text-xs font-medium text-blue-700 flex items-center gap-1.5">
+                    <Sparkles size={12} /> 신규 광고주 프로모션 적용 대상입니다.
                   </div>
                 )}
               </div>
@@ -408,7 +405,7 @@ export default function EstimatePage() {
                       }));
                     }}
                     placeholder="예: 5000"
-                    className="w-full px-4 py-4 text-right text-2xl font-black text-blue-600 border-2 border-blue-100 rounded-2x focus:border-blue-500 focus:ring-4 focus:ring-blue-50 outline-none shadow-sm transition-all"
+                    className="w-full px-4 py-4 text-right text-3xl font-black text-slate-900 border-b-2 border-slate-200 focus:border-slate-900 outline-none transition-colors bg-transparent placeholder:text-slate-300"
                   />
                 </div>
 
@@ -445,8 +442,8 @@ export default function EstimatePage() {
               </div>
 
               {/* Duration */}
-              <div className="p-4 border rounded-xl">
-                <label className="block text-sm font-medium text-gray-500 mb-2">📅 광고 기간 (개월)</label>
+              <div className="p-5 border border-slate-200 rounded-lg bg-white">
+                <label className="block text-sm font-semibold text-slate-700 mb-3">📅 광고 집행 기간 (개월)</label>
                 <div className="flex items-center gap-4">
                   <input
                     type="range"
@@ -454,9 +451,9 @@ export default function EstimatePage() {
                     max="12"
                     value={formData.duration}
                     onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) })}
-                    className="flex-1"
+                    className="flex-1 accent-slate-900"
                   />
-                  <span className="font-bold text-blue-600 text-lg w-16 text-right">{formData.duration}개월</span>
+                  <span className="font-bold text-slate-900 text-lg w-16 text-right tabular-nums">{formData.duration}개월</span>
                 </div>
               </div>
             </div>
@@ -472,55 +469,55 @@ export default function EstimatePage() {
               <div className="space-y-6">
                 {/* Summary Cards */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-blue-50 p-4 rounded-xl text-center">
-                    <p className="text-sm text-blue-600 mb-1">총 월 예산</p>
-                    <p className="text-xl font-bold text-blue-900">{result.summary.total_budget.toLocaleString()}원</p>
+                  <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg text-center">
+                    <p className="text-sm text-slate-500 mb-1 font-medium">총 월 예산</p>
+                    <p className="text-xl font-black text-slate-900">{result.summary.total_budget.toLocaleString()}원</p>
                   </div>
-                  <div className="bg-blue-50 p-4 rounded-xl text-center">
-                    <p className="text-sm text-blue-600 mb-1">총 월 노출수</p>
-                    <p className="text-xl font-bold text-blue-900">{result.summary.total_impressions.toLocaleString()}회</p>
+                  <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg text-center">
+                    <p className="text-sm text-slate-500 mb-1 font-medium">총 월 노출수</p>
+                    <p className="text-xl font-black text-slate-900">{result.summary.total_impressions.toLocaleString()}회</p>
                   </div>
-                  <div className="bg-blue-50 p-4 rounded-xl text-center">
-                    <p className="text-sm text-blue-600 mb-1">평균 CPV</p>
-                    <p className="text-xl font-bold text-blue-900">{result.summary.average_cpv.toFixed(1)}원</p>
+                  <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg text-center">
+                    <p className="text-sm text-slate-500 mb-1 font-medium">평균 CPV</p>
+                    <p className="text-xl font-black text-slate-900">{result.summary.average_cpv.toFixed(1)}원</p>
                   </div>
-                  <div className="bg-blue-50 p-4 rounded-xl text-center">
-                    <p className="text-sm text-blue-600 mb-1">광고 초수</p>
-                    <p className="text-xl font-bold text-blue-900">{result.summary.ad_duration}초</p>
+                  <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg text-center">
+                    <p className="text-sm text-slate-500 mb-1 font-medium">광고 초수</p>
+                    <p className="text-xl font-black text-slate-900">{result.summary.ad_duration}초</p>
                   </div>
                 </div>
 
                 {/* Detail Table */}
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto border border-slate-200 rounded-lg">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="bg-gray-100">
-                        <th className="px-4 py-3 text-left font-semibold">채널</th>
-                        <th className="px-4 py-3 text-right font-semibold">예산(원)</th>
-                        <th className="px-4 py-3 text-right font-semibold">기본 CPV</th>
-                        <th className="px-4 py-3 text-right font-semibold">보너스율</th>
-                        <th className="px-4 py-3 text-right font-semibold">노출수</th>
-                        <th className="px-4 py-3 text-right font-semibold">최종 CPV</th>
+                      <tr className="bg-slate-50 border-b border-slate-200">
+                        <th className="px-4 py-3 text-left font-semibold text-slate-700">채널</th>
+                        <th className="px-4 py-3 text-right font-semibold text-slate-700">예산(원)</th>
+                        <th className="px-4 py-3 text-right font-semibold text-slate-700">기본 CPV</th>
+                        <th className="px-4 py-3 text-right font-semibold text-slate-700">보너스율</th>
+                        <th className="px-4 py-3 text-right font-semibold text-slate-700">노출수</th>
+                        <th className="px-4 py-3 text-right font-semibold text-slate-700">최종 CPV</th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-slate-100">
                       {result.details.map((detail) => (
-                        <tr key={detail.channel} className="border-b">
-                          <td className="px-4 py-3 font-medium">{detail.channel}</td>
-                          <td className="px-4 py-3 text-right">{detail.budget.toLocaleString()}</td>
-                          <td className="px-4 py-3 text-right">{detail.base_cpv.toFixed(1)}</td>
-                          <td className="px-4 py-3 text-right text-green-600">{detail.total_bonus_rate.toFixed(1)}%</td>
-                          <td className="px-4 py-3 text-right font-semibold">{detail.guaranteed_impressions.toLocaleString()}</td>
-                          <td className="px-4 py-3 text-right">{detail.final_cpv.toFixed(1)}</td>
+                        <tr key={detail.channel} className="hover:bg-slate-50/50 transition-colors">
+                          <td className="px-4 py-3 font-medium text-slate-900">{detail.channel}</td>
+                          <td className="px-4 py-3 text-right text-slate-600">{detail.budget.toLocaleString()}</td>
+                          <td className="px-4 py-3 text-right text-slate-600">{detail.base_cpv.toFixed(1)}</td>
+                          <td className="px-4 py-3 text-right text-green-600 font-medium">{detail.total_bonus_rate.toFixed(1)}%</td>
+                          <td className="px-4 py-3 text-right font-bold text-slate-900">{detail.guaranteed_impressions.toLocaleString()}</td>
+                          <td className="px-4 py-3 text-right text-slate-600">{detail.final_cpv.toFixed(1)}</td>
                         </tr>
                       ))}
-                      <tr className="bg-gray-50 font-bold">
-                        <td className="px-4 py-3">종합</td>
-                        <td className="px-4 py-3 text-right">{result.summary.total_budget.toLocaleString()}</td>
+                      <tr className="bg-slate-50 font-bold border-t border-slate-200">
+                        <td className="px-4 py-3 text-slate-900">종합</td>
+                        <td className="px-4 py-3 text-right text-slate-900">{result.summary.total_budget.toLocaleString()}</td>
                         <td className="px-4 py-3 text-right">-</td>
                         <td className="px-4 py-3 text-right">-</td>
                         <td className="px-4 py-3 text-right text-blue-600">{result.summary.total_impressions.toLocaleString()}</td>
-                        <td className="px-4 py-3 text-right">{result.summary.average_cpv.toFixed(1)}</td>
+                        <td className="px-4 py-3 text-right text-slate-900">{result.summary.average_cpv.toFixed(1)}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -529,14 +526,14 @@ export default function EstimatePage() {
                 {/* Print Button */}
                 <button
                   onClick={goToPrint}
-                  className="w-full py-4 bg-green-600 text-white font-bold rounded-xl hover:bg-green-500 transition-all flex items-center justify-center gap-2"
+                  className="w-full py-4 bg-slate-900 text-white font-bold rounded-lg hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-sm"
                 >
                   <Printer size={20} />
-                  📄 AI 광고 전략 제안서 생성하기
+                  견적서 출력하기
                 </button>
 
-                <div className="bg-gray-100 p-4 rounded-lg text-sm text-gray-600 flex gap-2">
-                  <AlertCircle size={16} className="text-blue-500 shrink-0 mt-0.5" />
+                <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg text-sm text-slate-600 flex gap-2">
+                  <AlertCircle size={16} className="text-slate-500 shrink-0 mt-0.5" />
                   <span>위 결과는 시뮬레이션이며, 실제 집행 시 인벤토리 상황에 따라 달라질 수 있습니다.</span>
                 </div>
               </div>

@@ -24,21 +24,21 @@ export function AccordionSection({
     const [isOpen, setIsOpen] = useState(defaultOpen);
 
     return (
-        <div className={`border rounded-xl mb-4 overflow-hidden transition-all ${disabled ? 'opacity-50' : ''
+        <div className={`border border-slate-200 rounded-lg mb-4 overflow-hidden bg-white transition-all ${disabled ? 'opacity-50' : ''
             } ${className}`}>
             <button
                 onClick={() => !disabled && setIsOpen(!isOpen)}
                 disabled={disabled}
-                className={`w-full px-6 py-4 flex items-center justify-between text-left transition-colors ${isOpen ? 'bg-blue-50 border-b' : 'bg-white hover:bg-gray-50'
+                className={`w-full px-6 py-5 flex items-center justify-between text-left transition-colors ${isOpen ? 'bg-slate-50 border-b border-slate-200' : 'bg-white hover:bg-slate-50'
                     } ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
             >
                 <div className="flex items-center gap-3">
-                    {icon && <span className="text-blue-600">{icon}</span>}
-                    <span className="font-bold text-gray-900">{title}</span>
+                    {icon && <span className="text-slate-500">{icon}</span>}
+                    <span className="font-semibold text-slate-900 text-lg">{title}</span>
                 </div>
                 <ChevronDown
                     size={20}
-                    className={`text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''
+                    className={`text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''
                         }`}
                 />
             </button>
