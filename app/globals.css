@@ -1,10 +1,21 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f8fafc;
+  /* Base */
+  --background: #ffffff;
+  /* overall white */
+  --surface: #f8fafc;
+  /* soft tinted section background */
   --foreground: #0f172a;
+
+  /* Brand */
   --primary: 215 28% 17%;
-  /* Deep Navy */
+  /* Deep Navy (HSL) */
+  --accent: 217 91% 60%;
+  /* Blue-600 (HSL) */
+
+  /* UI */
+  --border: 214 32% 91%;
 }
 
 @theme inline {
@@ -23,38 +34,74 @@
   body {
     background: var(--background);
     color: var(--foreground);
-    font-family: "Pretendard Variable", "Pretendard", ui-sans-serif, system-ui, -apple-system, sans-serif;
+    font-family: var(--font-sans);
     word-break: keep-all;
     overflow-wrap: break-word;
   }
 }
 
 @layer components {
-
-  /* Section Layout */
   .section-wrap {
     @apply mx-auto max-w-6xl px-4 sm:px-6;
   }
 
   .section-pad {
-    @apply py-16 sm:py-24;
+    @apply py-20 sm:py-28;
   }
 
-  /* Card Components */
+  /* Section rhythm */
+  .section-surface {
+    @apply bg-slate-50;
+  }
+
+  .section-white {
+    @apply bg-white;
+  }
+
+  .section-divider {
+    @apply border-y border-slate-200/70;
+  }
+
+  /* Typography helpers */
+  .text-body {
+    @apply text-slate-700;
+  }
+
+  .text-muted {
+    @apply text-slate-600;
+  }
+
+  /* Cards */
   .card {
     @apply rounded-2xl border border-slate-200 bg-white shadow-sm;
+    box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.06);
   }
 
   .card-hover {
-    @apply transition hover:-translate-y-0.5 hover:shadow-md;
+    @apply transition-shadow duration-200 hover:shadow-md;
   }
 
-  /* Button Styles */
+  /* Buttons (no pill) */
   .btn-primary {
-    @apply inline-flex items-center justify-center rounded-full bg-blue-600 px-8 py-3 text-base font-semibold text-white shadow-sm transition-all hover:bg-blue-700 active:scale-[0.98];
+    @apply inline-flex items-center justify-center rounded-xl bg-blue-600 px-8 py-3 text-base font-semibold text-white transition-colors hover:bg-blue-700;
+    box-shadow: 0 1px 0 rgba(37, 99, 235, 0.12), 0 10px 20px rgba(37, 99, 235, 0.18);
+  }
+
+  .btn-primary:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.18), 0 10px 20px rgba(37, 99, 235, 0.18);
+  }
+
+  .btn-primary:active {
+    transform: translateY(1px);
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center rounded-full border-2 border-slate-300 bg-white px-8 py-3 text-base font-semibold text-slate-700 transition-all hover:border-slate-400 hover:bg-slate-50 active:scale-[0.98];
+    @apply inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-8 py-3 text-base font-semibold text-slate-900 transition-colors hover:bg-slate-50;
+  }
+
+  .btn-secondary:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.08);
   }
 }

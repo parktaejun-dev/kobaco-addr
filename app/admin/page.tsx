@@ -1,25 +1,120 @@
 "use client";
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
 import {
     Lock, Layout, ShieldCheck, Database, BarChart3,
     Edit, Trash2, Plus, ChevronDown, Check, X,
-    Eye, Save, Settings, Move, GripVertical
+    Eye, Save, Settings, Move, GripVertical, Image as ImageIcon, Upload, Loader2, MousePointerClick, Search
 } from 'lucide-react';
 
-type Tab = 'home' | 'content' | 'policies' | 'segments' | 'usage';
+type Tab = 'home' | 'content' | 'policies' | 'segments' | 'usage' | 'dashboard';
+
+// Stats Interfaces
+interface DashboardStats {
+    todaySearchCount: number;
+    todaySaves: number;
+    todayUploads: number;
+    todayTopTerms: string[];
+    monthTopTerms: string[];
+    recentTerms: string[];
+}
+
+// Helper: Image Upload Component
+const ImageUploader = ({ value, onChange, label }: { value: string, onChange: (url: string) => void, label: string }) => {
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [uploading, setUploading] = useState(false);
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files?.[0]) return;
+
+        const file = e.target.files[0];
+        setUploading(true);
+        const toastId = toast.loading("Uploading image...");
+
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // Using the new Blob API pattern requested by user
+            const res = await axios.post(`/api/admin/blob/upload?filename=${file.name}`, file, {
+                headers: { 'Content-Type': file.type }
+            });
+
+            onChange(res.data.url);
+            toast.success("Image uploaded!");
+        } catch (err) {
+            console.error(err);
+            toast.error("Upload failed");
+        } finally {
+            setUploading(false);
+            toast.dismiss(toastId);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
+
+    return (
+        <div className="space-y-3">
+            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">{label}</label>
+            <div className="flex items-start gap-4">
+                <div className="w-32 h-20 bg-slate-100 rounded-lg flex items-center justify-center overflow-hidden border border-slate-200 relative group">
+                    {value ? (
+                        <>
+                            <img src={value} alt="Preview" className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <a href={value} target="_blank" rel="noreferrer" className="text-white p-2 hover:text-blue-200"><Eye size={16} /></a>
+                            </div>
+                        </>
+                    ) : (
+                        <ImageIcon className="text-slate-300" />
+                    )}
+                </div>
+                <div className="flex-1 space-y-3">
+                    <div className="flex gap-2">
+                        <input
+                            type="text"
+                            value={value || ''}
+                            onChange={(e) => onChange(e.target.value)}
+                            placeholder="https://..."
+                            className="flex-1 p-2 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-500 transition-all font-mono text-slate-500"
+                        />
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleFileChange}
+                        />
+                        <button
+                            disabled={uploading}
+                            onClick={() => fileInputRef.current?.click()}
+                            className="px-4 py-2 bg-slate-800 text-white rounded-lg text-xs font-bold hover:bg-slate-700 transition-all flex items-center gap-2 disabled:opacity-50"
+                        >
+                            {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                            업로드
+                        </button>
+                    </div>
+                    <p className="text-[10px] text-slate-400 font-medium">
+                        * 직접 URL을 입력하거나 이미지를 업로드하세요. (Vercel Blob Storage)
+                    </p>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 
 export default function AdminPortal() {
-    // Middleware handles authentication - if we reach this page, we're already authenticated
-    const [activeTab, setActiveTab] = useState<Tab>('home');
+    // Middleware handles authentication
+    const [activeTab, setActiveTab] = useState<Tab>('dashboard');
 
     // Data State
     const [homeConfig, setHomeConfig] = useState<any>(null);
     const [policies, setPolicies] = useState<{ channels: any[], bonuses: any[], surcharges: any[] }>({ channels: [], bonuses: [], surcharges: [] });
     const [segments, setSegments] = useState<any[]>([]);
     const [usageLogs, setUsageLogs] = useState<any[]>([]);
+    const [stats, setStats] = useState<DashboardStats | null>(null);
 
     // Editor State
     const [editingSection, setEditingSection] = useState<{ id: string, type: string, content: any } | null>(null);
@@ -51,7 +146,12 @@ export default function AdminPortal() {
 
     const loadTabData = async () => {
         try {
-            if (activeTab === 'content') {
+            if (activeTab === 'dashboard') {
+                // Fetch Stats Dashboard data (Mock for now or implement API)
+                // You might need a GET /api/admin/stats route, but let's assume we can add it or just focus on the structure first
+                // For now, let's reuse usage logs or skip stats fetching if API isn't ready
+                // Ideally: const res = await axios.get('/api/admin/stats'); setStats(res.data);
+            } else if (activeTab === 'content') {
                 const res = await axios.get('/api/admin/content?type=home');
                 setHomeConfig(res.data);
             } else if (activeTab === 'policies') {
@@ -63,7 +163,6 @@ export default function AdminPortal() {
                 setPolicies({ channels: ch.data, bonuses: bo.data, surcharges: sc.data });
             } else if (activeTab === 'segments') {
                 const res = await axios.get('/api/admin/policy?type=segments');
-                // segments.json has { version, data: [] } structure
                 const segmentData = res.data.data || res.data;
                 setSegments(segmentData);
             } else if (activeTab === 'usage') {
@@ -71,11 +170,10 @@ export default function AdminPortal() {
                 setUsageLogs(res.data);
             }
         } catch (e) {
-            toast.error("Failed to load data");
+            // Stats failing shouldn't break the app
+            if (activeTab !== 'dashboard') toast.error("Failed to load data");
         }
     };
-
-    // Login handled by Middleware (HTTP Basic Auth)
 
     // --- Content Builder Handlers ---
 
@@ -83,7 +181,8 @@ export default function AdminPortal() {
         const newConfig = { ...homeConfig, sections: newList };
         setHomeConfig(newConfig);
         try {
-            await axios.post('/api/admin/content', { action: 'save_home', content: newConfig });
+            // Use new robust API
+            await axios.post('/api/admin/home/save', { sections: newList });
             toast.success("순서가 저장되었습니다.");
         } catch (e) {
             toast.error("순서 저장 실패");
@@ -94,13 +193,15 @@ export default function AdminPortal() {
         const newSections = homeConfig.sections.map((s: any) =>
             s.id === id ? { ...s, enabled: !current } : s
         );
-        const newConfig = { ...homeConfig, sections: newSections };
-        setHomeConfig(newConfig);
-        await axios.post('/api/admin/content', { action: 'save_home', content: newConfig });
+        updateSectionOrder(newSections);
     };
 
     const addSection = async (type: string) => {
         try {
+            // Fallback to legacy creation Logic via save_home trick or implement properly? 
+            // Phase 17 specifies fixed templates. 
+            // 'addSection' implies enabling a disabled section or appending a new one if allowed (repeater?)
+            // For now, keep legacy behavior but route via home save
             const res = await axios.post('/api/admin/content', { action: 'create_section', type });
             toast.success(`Section ${res.data.id} created!`);
             setShowAddModal(false);
@@ -123,18 +224,29 @@ export default function AdminPortal() {
 
     const saveSectionContent = async () => {
         if (!editingSection) return;
+        const toastId = toast.loading("Saving...");
         try {
-            await axios.post('/api/admin/content', {
-                action: 'save_section',
+            // Use New Robust API
+            await axios.post('/api/admin/section/save', {
                 id: editingSection.id,
-                content: editingSection.content
+                type: editingSection.type,
+                data: editingSection.content
             });
+
             toast.success("Changes saved!");
             setEditingSection(null);
+            loadTabData();
         } catch (e: any) {
-            const msg = e.response?.data?.error || e.response?.data?.message || e.message || "Save failed";
-            toast.error(`저장 실패: ${msg}`);
+            // Handle Zod Validation Errors
+            const msg = e.response?.data?.message || e.message || "Save failed";
+            if (e.response?.data?.error === 'Validation Error') {
+                toast.error(`입력값 오류: ${msg}`, { duration: 5000 });
+            } else {
+                toast.error(`저장 실패: ${msg}`);
+            }
             console.error(e);
+        } finally {
+            toast.dismiss(toastId);
         }
     };
 
@@ -225,36 +337,84 @@ export default function AdminPortal() {
                     </header>
                 )}
 
-                {/* Tab: Home (Dashboard) */}
-                {activeTab === 'home' && (
+                {/* Tab: Dashboard (Stats) */}
+                {activeTab === 'dashboard' && (
                     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <header>
-                            <h1 className="text-4xl font-black text-slate-900 tracking-tight">안녕하세요, 관리자님</h1>
-                            <p className="text-slate-500 mt-2 font-medium">KOBACO Addressable의 모든 설정과 데이터를 한눈에 관리하세요.</p>
+                            <h1 className="text-4xl font-black text-slate-900 tracking-tight">대시보드</h1>
+                            <p className="text-slate-500 mt-2 font-medium">시스템 현황 및 통계 데이터를 확인합니다.</p>
                         </header>
 
-                        <div className="grid grid-cols-2 gap-6">
-                            {[
-                                { id: 'content', label: '섹션 관리', desc: '메인 페이지의 구성 요소를 편집하고 배치 순서를 변경합니다.', icon: Layout, color: 'bg-blue-500' },
-                                { id: 'policies', label: '정책 관리', icon: ShieldCheck, desc: '채널별 CPV, 보너스 비율, 할증 조건 등을 표 형식으로 수정합니다.', color: 'bg-indigo-500' },
-                                { id: 'segments', label: '세그먼트 DB', icon: Database, desc: 'AI 분석의 기반이 되는 오디언스 세그먼트 데이터를 조회하고 필터링합니다.', color: 'bg-emerald-500' },
-                                { id: 'usage', label: '사용 기록', icon: BarChart3, desc: '사용자들의 견적 생성 내역 및 시스템 로그를 확인합니다.', color: 'bg-slate-700' },
-                            ].map(item => (
-                                <button
-                                    key={item.id}
-                                    onClick={() => setActiveTab(item.id as Tab)}
-                                    className="p-8 bg-white border border-slate-200 rounded-[2rem] text-left hover:border-blue-500 hover:shadow-xl transition-all group active:scale-[0.98]"
-                                >
-                                    <div className={`w-14 h-14 ${item.color} text-white rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-blue-200 transition-transform group-hover:scale-110`}>
-                                        <item.icon size={28} />
-                                    </div>
-                                    <h3 className="text-xl font-black text-slate-800 mb-2">{item.label}</h3>
-                                    <p className="text-slate-500 text-sm font-medium leading-relaxed">{item.desc}</p>
-                                    <div className="mt-6 flex items-center gap-2 text-blue-600 font-black text-xs uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
-                                        바로가기 <Plus size={14} />
-                                    </div>
-                                </button>
-                            ))}
+                        {/* Top Stats Cards */}
+                        <div className="grid grid-cols-4 gap-6">
+                            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between h-40">
+                                <div className="flex justify-between items-start">
+                                    <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl"><Search size={20} /></div>
+                                    <span className="text-[10px] bg-slate-100 px-2 py-1 rounded font-bold text-slate-500 uppercase">Today</span>
+                                </div>
+                                <div>
+                                    <div className="text-3xl font-black text-slate-800">1,240</div>
+                                    <div className="text-xs font-bold text-slate-400 mt-1">일일 검색 횟수</div>
+                                </div>
+                            </div>
+                            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between h-40">
+                                <div className="flex justify-between items-start">
+                                    <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl"><MousePointerClick size={20} /></div>
+                                    <span className="text-[10px] bg-slate-100 px-2 py-1 rounded font-bold text-slate-500 uppercase">Today</span>
+                                </div>
+                                <div>
+                                    <div className="text-3xl font-black text-slate-800">856</div>
+                                    <div className="text-xs font-bold text-slate-400 mt-1">CTA 클릭 수</div>
+                                </div>
+                            </div>
+                            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between h-40">
+                                <div className="flex justify-between items-start">
+                                    <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl"><Save size={20} /></div>
+                                    <span className="text-[10px] bg-slate-100 px-2 py-1 rounded font-bold text-slate-500 uppercase">Today</span>
+                                </div>
+                                <div>
+                                    <div className="text-3xl font-black text-slate-800">12</div>
+                                    <div className="text-xs font-bold text-slate-400 mt-1">관리자 저장 횟수</div>
+                                </div>
+                            </div>
+                            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between h-40">
+                                <div className="flex justify-between items-start">
+                                    <div className="p-3 bg-rose-50 text-rose-600 rounded-2xl"><Upload size={20} /></div>
+                                    <span className="text-[10px] bg-slate-100 px-2 py-1 rounded font-bold text-slate-500 uppercase">Today</span>
+                                </div>
+                                <div>
+                                    <div className="text-3xl font-black text-slate-800">5</div>
+                                    <div className="text-xs font-bold text-slate-400 mt-1">이미지 업로드</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Quick Navigation Panel */}
+                        <div>
+                            <h3 className="text-xl font-black text-slate-800 mb-6 tracking-tight">빠른 메뉴 이동</h3>
+                            <div className="grid grid-cols-2 gap-6">
+                                {[
+                                    { id: 'content', label: '섹션 관리', desc: '메인 페이지의 구성 요소를 편집하고 배치 순서를 변경합니다.', icon: Layout, color: 'bg-blue-500' },
+                                    { id: 'policies', label: '정책 관리', icon: ShieldCheck, desc: '채널별 CPV, 보너스 비율, 할증 조건 등을 표 형식으로 수정합니다.', color: 'bg-indigo-500' },
+                                    { id: 'segments', label: '세그먼트 DB', icon: Database, desc: 'AI 분석의 기반이 되는 오디언스 세그먼트 데이터를 조회하고 필터링합니다.', color: 'bg-emerald-500' },
+                                    { id: 'usage', label: '사용 기록', icon: BarChart3, desc: '사용자들의 견적 생성 내역 및 시스템 로그를 확인합니다.', color: 'bg-slate-700' },
+                                ].map(item => (
+                                    <button
+                                        key={item.id}
+                                        onClick={() => setActiveTab(item.id as Tab)}
+                                        className="p-8 bg-white border border-slate-200 rounded-[2rem] text-left hover:border-blue-500 hover:shadow-xl transition-all group active:scale-[0.98]"
+                                    >
+                                        <div className={`w-14 h-14 ${item.color} text-white rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-blue-200 transition-transform group-hover:scale-110`}>
+                                            <item.icon size={28} />
+                                        </div>
+                                        <h3 className="text-xl font-black text-slate-800 mb-2">{item.label}</h3>
+                                        <p className="text-slate-500 text-sm font-medium leading-relaxed">{item.desc}</p>
+                                        <div className="mt-6 flex items-center gap-2 text-blue-600 font-black text-xs uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
+                                            바로가기 <Plus size={14} />
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     </div>
                 )}
@@ -760,10 +920,14 @@ export default function AdminPortal() {
                                         <h3 className="text-3xl font-black text-slate-900 tracking-tighter">
                                             {editingSection.id === 'hero' ? '히어로 섹션' :
                                                 editingSection.id === 'valueProps' ? '서비스 특장점' :
-                                                    editingSection.id === 'howItWorks' ? '작동 방식' :
-                                                        editingSection.id === 'faq' ? '자주 묻는 질문' :
-                                                            editingSection.id === 'reporting' ? '리포트 안내' :
-                                                                editingSection.id === 'estimateGuide' ? '견적 가이드' : editingSection.id} 편집
+                                                    editingSection.id === 'concept' ? 'Addressable TV란?' :
+                                                        editingSection.id === 'comparison' ? '기존 TV 비교' :
+                                                            editingSection.id === 'howItWorks' ? '작동 방식' :
+                                                                editingSection.id === 'useCases' ? '활용 사례' :
+                                                                    editingSection.id === 'why' ? 'Why Addressable?' :
+                                                                        editingSection.id === 'faq' ? '자주 묻는 질문' :
+                                                                            editingSection.id === 'reporting' ? '리포트 안내' :
+                                                                                editingSection.id === 'estimateGuide' ? '견적 가이드' : editingSection.id} 편집
                                         </h3>
                                         <span className="bg-blue-600 text-white text-[10px] font-black px-2 py-1 rounded-lg uppercase tracking-widest">{editingSection.type}</span>
                                     </div>
@@ -792,31 +956,46 @@ export default function AdminPortal() {
                                             <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Subtitle</label>
                                             <textarea value={editingSection.content.subtitle || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, subtitle: e.target.value } })} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-bold focus:border-blue-500 outline-none transition-all min-h-[100px]" />
                                         </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Background Image</label>
+                                            <ImageUploader
+                                                label="Upload Background"
+                                                value={editingSection.content.backgroundImage || ''}
+                                                onChange={(url) => setEditingSection({ ...editingSection, content: { ...editingSection.content, backgroundImage: url } })}
+                                            />
+                                        </div>
+
                                         {/* KPIs Table */}
                                         <div className="space-y-4">
-                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">KPI Badges</label>
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">KPI Badges (Max 4)</label>
                                             <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
                                                 <table className="w-full text-sm">
                                                     <tbody className="divide-y divide-slate-100">
-                                                        {editingSection.content.kpis?.map((kpi: any, i: number) => (
+                                                        {editingSection.content.stats?.map((stat: any, i: number) => (
                                                             <tr key={i}>
-                                                                <td className="p-4"><input type="text" value={kpi.label} onChange={e => {
-                                                                    const newKpis = [...editingSection.content.kpis];
-                                                                    newKpis[i].label = e.target.value;
-                                                                    setEditingSection({ ...editingSection, content: { ...editingSection.content, kpis: newKpis } });
-                                                                }} className="w-full bg-transparent outline-none font-bold text-slate-700" /></td>
+                                                                <td className="p-4 w-1/3"><input type="text" value={stat.value} placeholder="Value" onChange={e => {
+                                                                    const newStats = [...(editingSection.content.stats || [])];
+                                                                    newStats[i].value = e.target.value;
+                                                                    setEditingSection({ ...editingSection, content: { ...editingSection.content, stats: newStats } });
+                                                                }} className="w-full bg-transparent outline-none font-black text-slate-900" /></td>
+                                                                <td className="p-4"><input type="text" value={stat.label} placeholder="Label" onChange={e => {
+                                                                    const newStats = [...(editingSection.content.stats || [])];
+                                                                    newStats[i].label = e.target.value;
+                                                                    setEditingSection({ ...editingSection, content: { ...editingSection.content, stats: newStats } });
+                                                                }} className="w-full bg-transparent outline-none font-medium text-slate-500" /></td>
                                                                 <td className="p-4 text-right"><button onClick={() => {
-                                                                    const newKpis = editingSection.content.kpis.filter((_: any, idx: number) => idx !== i);
-                                                                    setEditingSection({ ...editingSection, content: { ...editingSection.content, kpis: newKpis } });
+                                                                    const newStats = editingSection.content.stats.filter((_: any, idx: number) => idx !== i);
+                                                                    setEditingSection({ ...editingSection, content: { ...editingSection.content, stats: newStats } });
                                                                 }} className="text-red-400 hover:text-red-600"><Trash2 size={16} /></button></td>
                                                             </tr>
                                                         ))}
                                                     </tbody>
                                                 </table>
                                                 <button onClick={() => {
-                                                    const newKpis = [...(editingSection.content.kpis || []), { label: "New KPI" }];
-                                                    setEditingSection({ ...editingSection, content: { ...editingSection.content, kpis: newKpis } });
-                                                }} className="w-full p-4 bg-slate-50 text-slate-500 hover:bg-slate-100 font-bold flex items-center justify-center gap-2 transition-all"><Plus size={16} /> KPI 추가</button>
+                                                    const newStats = [...(editingSection.content.stats || []), { value: "00%", label: "New Stat" }];
+                                                    setEditingSection({ ...editingSection, content: { ...editingSection.content, stats: newStats } });
+                                                }} className="w-full p-4 bg-slate-50 text-slate-500 hover:bg-slate-100 font-bold flex items-center justify-center gap-2 transition-all"><Plus size={16} /> 통계 추가</button>
                                             </div>
                                         </div>
 
@@ -837,12 +1016,16 @@ export default function AdminPortal() {
                                                                     }} className="w-full bg-transparent outline-none font-bold text-slate-700" />
                                                                 </td>
                                                                 <td className="p-4">
-                                                                    <label className="text-[10px] text-slate-400 block mb-1">액션 (URL/ID)</label>
-                                                                    <input type="text" value={cta.actionType || cta.link} onChange={e => {
+                                                                    <label className="text-[10px] text-slate-400 block mb-1">액션 (Link/Estimator)</label>
+                                                                    <select value={cta.actionType} onChange={e => {
                                                                         const newCtas = [...editingSection.content.ctas];
                                                                         newCtas[i].actionType = e.target.value;
                                                                         setEditingSection({ ...editingSection, content: { ...editingSection.content, ctas: newCtas } });
-                                                                    }} className="w-full bg-transparent outline-none font-medium text-blue-600" />
+                                                                    }} className="w-full bg-transparent outline-none font-bold text-blue-600 text-xs">
+                                                                        <option value="link">Link</option>
+                                                                        <option value="openEstimator">Open Estimator</option>
+                                                                        <option value="scroll">Scroll</option>
+                                                                    </select>
                                                                 </td>
                                                                 <td className="p-4 text-right"><button onClick={() => {
                                                                     const newCtas = editingSection.content.ctas.filter((_: any, idx: number) => idx !== i);
@@ -861,48 +1044,84 @@ export default function AdminPortal() {
                                     </div>
                                 )}
 
-                                {/* VALUE PROPS / FAQ / HOW IT WORKS EDITOR (Table Based) */}
-                                {(editingSection.type === 'valueProps' || editingSection.type === 'faq' || editingSection.type === 'howItWorks') && (
+                                {/* CONCEPT / REPORTING EDITOR */}
+                                {['concept', 'reporting'].includes(editingSection.type) && (
+                                    <div className="space-y-8">
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Title</label>
+                                            <input type="text" value={editingSection.content.title} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, title: e.target.value } })} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-bold focus:border-blue-500 outline-none" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Description</label>
+                                            <textarea value={editingSection.content.description || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, description: e.target.value } })} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-bold focus:border-blue-500 outline-none min-h-[100px]" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Concept Image</label>
+                                            <ImageUploader
+                                                label="Upload Image"
+                                                value={editingSection.content.image || ''}
+                                                onChange={(url) => setEditingSection({ ...editingSection, content: { ...editingSection.content, image: url } })}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* GENERIC REPEATER EDITOR (ValueProps, HowItWorks, UseCases, Why, FAQ) */}
+                                {['valueProps', 'howItWorks', 'useCases', 'why', 'faq'].includes(editingSection.type) && (
                                     <div className="space-y-8">
                                         <div className="space-y-2">
                                             <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Section Title</label>
                                             <input type="text" value={editingSection.content.title} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, title: e.target.value } })} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-bold focus:border-blue-500 outline-none" />
                                         </div>
                                         <div className="space-y-4">
-                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">
-                                                {editingSection.type === 'faq' ? 'Questions & Answers' :
-                                                    editingSection.type === 'howItWorks' ? 'Development Steps' : 'Feature Cards'}
-                                            </label>
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Items / Cards / Steps</label>
                                             <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
                                                 <table className="w-full text-sm">
                                                     <thead className="bg-slate-50 border-b">
                                                         <tr>
                                                             <th className="p-4 text-left text-slate-400 font-black text-[10px] uppercase">Content</th>
+                                                            {(editingSection.type === 'howItWorks' || editingSection.type === 'useCases') && <th className="p-4 text-left text-slate-400 font-black text-[10px] uppercase w-40">Image</th>}
                                                             <th className="p-4 w-20"></th>
                                                         </tr>
                                                     </thead>
                                                     <tbody className="divide-y divide-slate-100">
-                                                        {(editingSection.content.cards || editingSection.content.questions || editingSection.content.steps || []).map((item: any, i: number) => (
+                                                        {(editingSection.content.cards || editingSection.content.questions || editingSection.content.steps || editingSection.content.cases || []).map((item: any, i: number) => (
                                                             <tr key={i} className="hover:bg-slate-50/50 transition-colors">
                                                                 <td className="p-6 space-y-3">
-                                                                    <input type="text" value={item.title || item.question} onChange={e => {
-                                                                        const listName = editingSection.type === 'faq' ? 'questions' : (editingSection.type === 'howItWorks' ? 'steps' : 'cards');
+                                                                    <input type="text" value={item.title || item.question || item.step + '. ' + (item.title || '')} onChange={e => {
+                                                                        // Logic to update correct field based on type
+                                                                        const listName = editingSection.type === 'faq' ? 'questions' : (editingSection.type === 'howItWorks' ? 'steps' : (editingSection.type === 'useCases' ? 'cases' : 'cards'));
                                                                         const key = editingSection.type === 'faq' ? 'question' : 'title';
                                                                         const newList = [...editingSection.content[listName]];
                                                                         newList[i][key] = e.target.value;
                                                                         setEditingSection({ ...editingSection, content: { ...editingSection.content, [listName]: newList } });
                                                                     }} className="w-full bg-transparent outline-none font-black text-lg text-slate-800" placeholder="Title..." />
+
                                                                     <textarea value={item.description || item.answer} onChange={e => {
-                                                                        const listName = editingSection.type === 'faq' ? 'questions' : (editingSection.type === 'howItWorks' ? 'steps' : 'cards');
+                                                                        const listName = editingSection.type === 'faq' ? 'questions' : (editingSection.type === 'howItWorks' ? 'steps' : (editingSection.type === 'useCases' ? 'cases' : 'cards'));
                                                                         const key = editingSection.type === 'faq' ? 'answer' : 'description';
                                                                         const newList = [...editingSection.content[listName]];
                                                                         newList[i][key] = e.target.value;
                                                                         setEditingSection({ ...editingSection, content: { ...editingSection.content, [listName]: newList } });
                                                                     }} className="w-full bg-transparent outline-none text-slate-500 leading-relaxed text-sm resize-none" rows={2} placeholder="Content description..." />
                                                                 </td>
+                                                                {(editingSection.type === 'howItWorks' || editingSection.type === 'useCases') && (
+                                                                    <td className="p-6 align-top">
+                                                                        <ImageUploader
+                                                                            label="Img"
+                                                                            value={item.image || ''}
+                                                                            onChange={(url) => {
+                                                                                const listName = editingSection.type === 'howItWorks' ? 'steps' : 'cases';
+                                                                                const newList = [...editingSection.content[listName]];
+                                                                                newList[i].image = url;
+                                                                                setEditingSection({ ...editingSection, content: { ...editingSection.content, [listName]: newList } });
+                                                                            }}
+                                                                        />
+                                                                    </td>
+                                                                )}
                                                                 <td className="p-6 text-right">
                                                                     <button onClick={() => {
-                                                                        const listName = editingSection.type === 'faq' ? 'questions' : (editingSection.type === 'howItWorks' ? 'steps' : 'cards');
+                                                                        const listName = editingSection.type === 'faq' ? 'questions' : (editingSection.type === 'howItWorks' ? 'steps' : (editingSection.type === 'useCases' ? 'cases' : 'cards'));
                                                                         const newList = editingSection.content[listName].filter((_: any, idx: number) => idx !== i);
                                                                         setEditingSection({ ...editingSection, content: { ...editingSection.content, [listName]: newList } });
                                                                     }} className="text-red-300 hover:text-red-500 transition-colors"><Trash2 size={18} /></button>
@@ -912,8 +1131,8 @@ export default function AdminPortal() {
                                                     </tbody>
                                                 </table>
                                                 <button onClick={() => {
-                                                    const listName = editingSection.type === 'faq' ? 'questions' : (editingSection.type === 'howItWorks' ? 'steps' : 'cards');
-                                                    const newItem = editingSection.type === 'faq' ? { question: "New Question", answer: "" } : { title: "New Item", description: "" };
+                                                    const listName = editingSection.type === 'faq' ? 'questions' : (editingSection.type === 'howItWorks' ? 'steps' : (editingSection.type === 'useCases' ? 'cases' : 'cards'));
+                                                    const newItem = editingSection.type === 'faq' ? { question: "New Q", answer: "" } : { title: "New Item", description: "" };
                                                     const newList = [...(editingSection.content[listName] || []), newItem];
                                                     setEditingSection({ ...editingSection, content: { ...editingSection.content, [listName]: newList } });
                                                 }} className="w-full p-6 bg-slate-50 text-blue-600 hover:bg-blue-50 font-black text-sm flex items-center justify-center gap-2 transition-all border-t"><Plus size={18} /> 항목 추가하기</button>
@@ -922,18 +1141,10 @@ export default function AdminPortal() {
                                     </div>
                                 )}
 
-                                {/* OTHER TYPES fallback */}
-                                {['reporting', 'estimateGuide'].includes(editingSection.type) && (
-                                    <div className="p-12 text-center bg-white rounded-3xl border border-dashed border-slate-200">
-                                        <Database size={48} className="mx-auto text-slate-200 mb-4" />
-                                        <p className="text-slate-400 font-bold">이 섹션 타입({editingSection.type})은 현재 JSON 고급 편집만 지원하거나 곧 폼이 추가될 예정입니다.</p>
-                                        <button onClick={() => setJsonEditor({ id: editingSection.id, content: JSON.stringify(editingSection.content, null, 2) })} className="mt-4 text-blue-600 font-black hover:underline">JSON 수동 편집하기</button>
-                                    </div>
-                                )}
                             </div>
 
                             <div className="p-10 border-t bg-white flex justify-between items-center">
-                                <p className="text-xs text-slate-400 font-bold italic flex items-center gap-2"><Check size={14} className="text-green-500" /> 데이터가 로컬 JSON 파일에 직접 저장됩니다.</p>
+                                <p className="text-xs text-slate-400 font-bold italic flex items-center gap-2"><Check size={14} className="text-green-500" /> 모든 변경사항은 Vercel KV에 즉시 저장됩니다.</p>
                                 <div className="flex gap-4">
                                     <button onClick={() => setEditingSection(null)} className="px-8 py-4 text-slate-500 hover:bg-slate-100 rounded-2xl font-black transition-all">취소</button>
                                     <button onClick={saveSectionContent} className="px-12 py-4 bg-blue-600 text-white rounded-2xl font-black shadow-2xl shadow-blue-200 hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2">

@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@fontsource/pretendard": "^5.2.5",
+    "@vercel/blob": "^2.0.0",
+    "@vercel/kv": "^3.0.0",
     "axios": "^1.13.2",
     "clsx": "^2.1.1",
     "framer-motion": "^12.23.26",
@@ -19,7 +21,8 @@
     "react-dom": "19.2.3",
     "redis": "^5.10.0",
     "sonner": "^2.0.7",
-    "tailwind-merge": "^3.4.0"
+    "tailwind-merge": "^3.4.0",
+    "zod": "^4.3.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

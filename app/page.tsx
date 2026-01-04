@@ -1,5 +1,4 @@
-
-import { getJSON } from '@/lib/kv-store';
+import { getHome, getSection } from '@/lib/content/kv';
 import Link from 'next/link';
 import { Check, ArrowRight, FileText, BarChart3, Target } from 'lucide-react';
 import ConceptSection from '@/components/sections/ConceptSection';
@@ -7,57 +6,45 @@ import ComparisonSection from '@/components/sections/ComparisonSection';
 import HowItWorksSection from '@/components/sections/HowItWorksSection';
 import WhySection from '@/components/sections/WhySection';
 import UseCasesSection from '@/components/sections/UseCasesSection';
-
-// --- Data Loading Helpers ---
-async function getContent(type: string, id?: string) {
-  try {
-    if (type === 'home') {
-      return await getJSON('content', 'home');
-    } else if (type === 'section' && id) {
-      return await getJSON('content', id);
-    }
-    return null;
-  } catch (e) {
-    return null;
-  }
-}
+import Footer from '@/components/Footer';
 
 // --- Section Components ---
 
 function Hero({ data }: { data: any }) {
   if (!data) return null;
   return (
-    <section className="relative w-full min-h-[85vh] flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50/60 overflow-hidden">
+    <section className="section-surface relative w-full min-h-[85vh] flex items-center justify-center overflow-hidden border-b border-slate-200">
       <div className="section-wrap section-pad">
-        <div className="relative z-10 max-w-5xl mx-auto text-center space-y-8">
+        <div className="relative z-10 max-w-5xl mx-auto text-center space-y-10">
           <div className="space-y-6">
             {data.eyebrow && (
-              <span className="inline-block text-blue-700 font-bold tracking-wider uppercase text-sm">
+              <span className="inline-block text-blue-700 font-bold tracking-wider uppercase text-xs sm:text-sm bg-blue-50 px-3 py-1 rounded-full border border-blue-100 mb-2">
                 {data.eyebrow}
               </span>
             )}
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.1] text-slate-900">
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.1] text-slate-900 text-balance">
               {data.title}
             </h1>
           </div>
-          <p className="text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed text-balance">
             {data.subtitle}
           </p>
-          {data.kpis?.length > 0 && (
-            <div className="flex flex-wrap justify-center gap-3 pt-2">
-              {data.kpis.map((kpi: any, i: number) => (
-                <span key={i} className="px-4 py-2 bg-white rounded-full text-sm font-medium border border-slate-200 text-slate-700 shadow-sm">
-                  {kpi.label}
-                </span>
+          {data.stats?.length > 0 && (
+            <div className="flex flex-wrap justify-center gap-4 pt-4">
+              {data.stats.map((stat: any, i: number) => (
+                <div key={i} className="px-6 py-2 bg-white rounded-2xl text-sm font-medium border border-slate-200 text-slate-700 shadow-sm flex flex-col items-center">
+                  <span className="text-lg font-black text-slate-900 leading-none">{stat.value}</span>
+                  <span className="text-xs text-slate-500 mt-1">{stat.label}</span>
+                </div>
               ))}
             </div>
           )}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
             {data.ctas?.map((cta: any, i: number) => (
               <Link
                 key={i}
-                href={cta.actionType === 'openEstimator' ? '/estimate' : '#'}
-                className="w-full sm:w-auto btn-primary h-14 px-10 text-lg"
+                href={cta.actionType === 'openEstimator' ? '/estimate' : cta.target || '#'}
+                className={`w-full sm:w-auto h-14 px-10 text-lg ${cta.variant === 'secondary' ? 'btn-secondary' : 'btn-primary'}`}
               >
                 {cta.label}
               </Link>
@@ -77,19 +64,22 @@ function ValueProps({ data }: { data: any }) {
     <FileText key="3" className="h-6 w-6" />
   ];
   return (
-    <section id="valueProps" className="section-pad bg-white">
+    <section id="valueProps" className="section-white section-pad">
       <div className="section-wrap">
-        <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 text-center mb-12">
-          {data.title}
-        </h2>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
+          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
+            {data.title}
+          </h2>
+          <p className="text-lg text-slate-600">{data.description}</p>
+        </div>
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {data.cards?.map((card: any, i: number) => (
-            <div key={i} className="card card-hover p-8 group">
-              <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-700 mb-6 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+            <div key={i} className="card card-hover p-8 group flex flex-col items-start bg-slate-50/50">
+              <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-blue-700 mb-6 shadow-sm border border-slate-100 group-hover:scale-110 transition-transform">
                 {icons[i % 3]}
               </div>
               <h3 className="text-xl font-bold text-slate-900 mb-3">{card.title}</h3>
-              <p className="text-slate-600 leading-relaxed">{card.description}</p>
+              <p className="text-slate-600 leading-relaxed text-sm">{card.description}</p>
             </div>
           ))}
         </div>
@@ -101,24 +91,43 @@ function ValueProps({ data }: { data: any }) {
 function Reporting({ data }: { data: any }) {
   if (!data) return null;
   return (
-    <section id="reporting" className="py-24 px-6 bg-slate-50 border-y border-slate-200">
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-16">
-        <div className="flex-1 space-y-6 text-left">
-          <h2 className="text-4xl font-bold text-slate-900 leading-tight">{data.title}</h2>
-          <p className="text-xl text-slate-600 leading-relaxed">{data.description}</p>
-          <div className="pt-4 flex gap-4">
-            <div className="flex items-center gap-2 text-blue-700 font-bold">
-              <Check size={20} /> 실시간 대시보드
+    <section id="reporting" className="section-surface section-divider section-pad">
+      <div className="section-wrap grid lg:grid-cols-2 gap-16 items-center">
+        <div className="space-y-8">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 leading-tight text-balance">{data.title}</h2>
+          <p className="text-xl text-slate-600 leading-relaxed text-balance">{data.description}</p>
+          <div className="pt-4 flex flex-col gap-4">
+            <div className="flex items-center gap-3 text-slate-700 font-bold bg-white p-4 rounded-xl border border-slate-200 shadow-sm w-fit">
+              <div className="bg-blue-100 text-blue-700 p-1 rounded-lg"><Check size={16} /></div>
+              실시간 캠페인 대시보드 제공
             </div>
-            <div className="flex items-center gap-2 text-blue-700 font-bold">
-              <Check size={20} /> 채널별 상세 성과
+            <div className="flex items-center gap-3 text-slate-700 font-bold bg-white p-4 rounded-xl border border-slate-200 shadow-sm w-fit">
+              <div className="bg-blue-100 text-blue-700 p-1 rounded-lg"><Check size={16} /></div>
+              채널별/권역별 상세 성과 리포트
             </div>
           </div>
         </div>
-        <div className="flex-1 w-full aspect-video bg-white rounded-3xl shadow-2xl border border-slate-200 flex items-center justify-center overflow-hidden">
-          <div className="bg-slate-100 w-full h-full flex flex-col items-center justify-center text-slate-400 italic">
-            <BarChart3 size={64} className="mb-4 opacity-20" />
-            [ 리포팅 샘플 이미지 영역 ]
+
+        {/* Metric Cards instead of Image Placeholder */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+            <div className="text-sm font-bold text-slate-400 mb-2">Total Impressions</div>
+            <div className="text-3xl font-black text-slate-900">1,240,500</div>
+            <div className="text-xs text-emerald-600 font-bold mt-2 flex items-center gap-1">▲ 12.5% vs last week</div>
+          </div>
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+            <div className="text-sm font-bold text-slate-400 mb-2">Avg. CPV</div>
+            <div className="text-3xl font-black text-slate-900">12.5 KRW</div>
+            <div className="text-xs text-blue-600 font-bold mt-2">Optimized</div>
+          </div>
+          <div className="col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+            <div>
+              <div className="text-sm font-bold text-slate-400 mb-1">Campaign Status</div>
+              <div className="text-lg font-black text-slate-900">Active / On Track</div>
+            </div>
+            <div className="h-10 w-10 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center animate-pulse">
+              <BarChart3 size={20} />
+            </div>
           </div>
         </div>
       </div>
@@ -129,29 +138,29 @@ function Reporting({ data }: { data: any }) {
 function EstimateGuide({ data }: { data: any }) {
   if (!data) return null;
   return (
-    <section id="estimateGuide" className="section-pad bg-white">
+    <section id="estimateGuide" className="section-white section-pad border-y border-slate-100">
       <div className="section-wrap">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 mb-12">
+          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 mb-16">
             {data.title}
           </h2>
           <div className="relative">
-            <div className="hidden md:block absolute top-1/2 left-0 w-full h-0.5 bg-blue-100 -translate-y-1/2 z-0" />
-            <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="hidden md:block absolute top-12 left-0 w-full h-0.5 bg-slate-100 z-0" />
+            <div className="relative z-10 grid grid-cols-1 md:grid-cols-4 gap-8">
               {data.steps?.map((step: string, i: number) => (
-                <div key={i} className="flex flex-col items-center gap-4 group">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full border-4 border-blue-600 bg-white text-xl font-extrabold text-blue-600 shadow-sm transition-all group-hover:bg-blue-600 group-hover:text-white">
+                <div key={i} className="flex flex-col items-center gap-6 group">
+                  <div className="flex h-24 w-24 items-center justify-center rounded-3xl border border-slate-100 bg-white shadow-lg text-3xl font-black text-slate-300 transition-all group-hover:scale-110 group-hover:border-blue-200 group-hover:text-blue-600">
                     {i + 1}
                   </div>
-                  <span className="text-sm font-semibold text-slate-800">{step}</span>
+                  <span className="text-lg font-bold text-slate-800 leading-snug max-w-[150px]">{step}</span>
                 </div>
               ))}
             </div>
           </div>
-          <div className="mt-16">
+          <div className="mt-20">
             <Link
               href="/estimate"
-              className="btn-primary inline-flex items-center gap-2 text-lg"
+              className="btn-primary inline-flex items-center gap-3 text-lg px-12 py-5"
             >
               지금 견적 시작하기 <ArrowRight className="h-5 w-5" />
             </Link>
@@ -165,13 +174,14 @@ function EstimateGuide({ data }: { data: any }) {
 // --- Main Page Component ---
 
 export default async function Home() {
-  const homeConfig = await getContent('home');
+  // Use new KV service
+  const homeConfig = await getHome();
   const sections = homeConfig?.sections || [];
 
-  // Parallel data fetching for better performance
+  // Parallel data fetching
   const sectionsDataPromises = sections.map(async (section: any) => {
     if (!section.enabled) return null;
-    const data = await getContent('section', section.id);
+    const data = await getSection(section.id);
     return { ...section, data };
   });
 
@@ -180,7 +190,7 @@ export default async function Home() {
   return (
     <main className="min-h-screen bg-white">
       {resolvedSections.map((section: any) => {
-        if (!section) return null;
+        if (!section || !section.data) return null; // Check for data existence
 
         const { id, data } = section;
 
@@ -197,6 +207,7 @@ export default async function Home() {
           default: return null;
         }
       })}
+      <Footer />
     </main>
   );
 }
