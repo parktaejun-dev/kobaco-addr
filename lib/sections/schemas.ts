@@ -70,16 +70,18 @@ export const howItWorksSchema = z.object({
     })).min(4).max(4)
 }).strict();
 
-// 6. Use Cases (2 Cases, No Purchase Conversion)
+// 6. Use Cases (Flexible Grid)
 export const useCasesSchema = z.object({
     title: z.string().min(1),
+    subtitle: z.string().optional(),
     description: z.string().optional(),
     cases: z.array(z.object({
+        tag: z.string().min(1),
         title: z.string(),
         description: z.string(),
-        metrics: z.array(z.string()), // Key result metrics
+        metrics: z.array(z.string()).optional(), // Optional now
         image: urlSchema.optional()
-    })).min(2).max(2) // Strictly 2 cases
+    })).min(1).max(6) // Relaxed limit
 }).strict();
 
 // 7. Why (Extra Reach)
