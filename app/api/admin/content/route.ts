@@ -122,8 +122,8 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
-  } catch (e) {
-    console.error(e);
-    return NextResponse.json({ error: 'Operation failed' }, { status: 500 });
+  } catch (e: any) {
+    console.error('API Error:', e);
+    return NextResponse.json({ error: e.message || 'Operation failed' }, { status: 500 });
   }
 }

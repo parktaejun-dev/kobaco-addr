@@ -131,8 +131,10 @@ export default function AdminPortal() {
             });
             toast.success("Changes saved!");
             setEditingSection(null);
-        } catch (e) {
-            toast.error("Save failed");
+        } catch (e: any) {
+            const msg = e.response?.data?.error || e.response?.data?.message || e.message || "Save failed";
+            toast.error(`저장 실패: ${msg}`);
+            console.error(e);
         }
     };
 
@@ -142,8 +144,10 @@ export default function AdminPortal() {
             await axios.post('/api/admin/policy', { type, data: newList });
             toast.success("Saved to JSON");
             loadTabData();
-        } catch (e) {
-            toast.error("Save failed");
+        } catch (e: any) {
+            const msg = e.response?.data?.error || e.response?.data?.message || e.message || "Save failed";
+            toast.error(`저장 실패: ${msg}`);
+            console.error(e);
         }
     };
 
@@ -173,8 +177,9 @@ export default function AdminPortal() {
             }
             setJsonEditor(null);
             loadTabData();
-        } catch (e) {
-            toast.error("JSON 형식 오류 또는 저장 실패");
+        } catch (e: any) {
+            const msg = e.response?.data?.error || e.response?.data?.message || e.message || "Save failed";
+            toast.error(`JSON 저장 실패: ${msg}`);
         }
     };
 
@@ -736,16 +741,16 @@ export default function AdminPortal() {
                                         <div className="grid grid-cols-2 gap-6">
                                             <div className="space-y-2">
                                                 <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Eyebrow</label>
-                                                <input type="text" value={editingSection.content.eyebrow} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, eyebrow: e.target.value } })} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-bold focus:border-blue-500 outline-none transition-all" />
+                                                <input type="text" value={editingSection.content.eyebrow || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, eyebrow: e.target.value } })} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-bold focus:border-blue-500 outline-none transition-all" />
                                             </div>
                                             <div className="space-y-2">
                                                 <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Title</label>
-                                                <input type="text" value={editingSection.content.title} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, title: e.target.value } })} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-bold focus:border-blue-500 outline-none transition-all" />
+                                                <input type="text" value={editingSection.content.title || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, title: e.target.value } })} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-bold focus:border-blue-500 outline-none transition-all" />
                                             </div>
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Subtitle</label>
-                                            <textarea value={editingSection.content.subtitle} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, subtitle: e.target.value } })} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-bold focus:border-blue-500 outline-none transition-all min-h-[100px]" />
+                                            <textarea value={editingSection.content.subtitle || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, subtitle: e.target.value } })} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-bold focus:border-blue-500 outline-none transition-all min-h-[100px]" />
                                         </div>
                                         {/* KPIs Table */}
                                         <div className="space-y-4">
