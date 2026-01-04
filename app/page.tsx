@@ -231,9 +231,10 @@ export default async function Home() {
       {resolvedSections.map((section: any) => {
         if (!section || !section.data) return null; // Check for data existence
 
-        const { id, data } = section;
+        const { id, type, data } = section;
 
-        switch (id) {
+        // Use type instead of id for matching to support dynamically created sections
+        switch (type) {
           case 'hero': return <Hero key={id} data={data} />;
           case 'valueProps': return <ValueProps key={id} data={data} />;
           case 'concept': return <ConceptSection key={id} data={data} />;
@@ -243,6 +244,7 @@ export default async function Home() {
           case 'why': return <WhySection key={id} data={data} />;
           case 'reporting': return <Reporting key={id} data={data} />;
           case 'estimateGuide': return <EstimateGuide key={id} data={data} />;
+          case 'faq': return null; // TODO: Add FAQ component if needed
           default: return null;
         }
       })}
