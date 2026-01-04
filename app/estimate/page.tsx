@@ -130,387 +130,379 @@ export default function EstimatePage() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto p-6">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">KOBATA AI 견적 시뮬레이터 🚀</h1>
-          <p className="text-gray-500 mt-2">
+      <main className="max-w-4xl mx-auto p-6">
+        <div className="mb-8 text-center space-y-4">
+          <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">KOBATA AI 견적 시뮬레이터</h1>
+          <p className="text-lg text-gray-500">
             Addressable TV 광고 캠페인 견적을 AI가 최적화해 드립니다.
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Left: Form */}
-          <div className="lg:col-span-2 space-y-2">
+        {/* Quick Links Banner */}
+        <div className="grid md:grid-cols-3 gap-4 mb-10">
+          <a
+            href="https://notebooklm.google.com/notebook/ab573898-2bb6-4034-8694-bc1c08d480c7"
+            target="_blank"
+            className="flex items-center justify-center gap-2 p-4 bg-gradient-to-br from-blue-500 to-blue-600 text-white font-bold rounded-xl shadow-sm hover:shadow-md hover:from-blue-600 hover:to-blue-700 transition-all text-sm"
+          >
+            🤖 AI에게 질문하기
+            <ExternalLink size={14} className="opacity-70" />
+          </a>
+          <a
+            href="https://drive.google.com/file/d/1iyZCKQSYvrxazfxaz4F5Eh2ejjfWbZUw/view?usp=sharing"
+            target="_blank"
+            className="flex items-center justify-center gap-2 p-4 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl shadow-sm hover:bg-gray-50 transition-all text-sm"
+          >
+            📄 소개자료 다운로드
+            <ExternalLink size={14} className="text-gray-400" />
+          </a>
+          <a
+            href="mailto:tj1000@kobaco.co.kr"
+            className="flex items-center justify-center gap-2 p-4 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl shadow-sm hover:bg-gray-50 transition-all text-sm"
+          >
+            📧 담당자 문의
+            <span className="text-xs font-normal text-gray-400">| 박태준 차장</span>
+          </a>
+        </div>
 
-            {/* Section 1: Basic Info */}
-            <AccordionSection
-              title="1️⃣ 광고 캠페인 기본 정보"
-              defaultOpen={true}
-              icon={<FileText size={18} />}
-            >
-              <p className="text-sm text-gray-500 mb-4">
-                광고 제품명과 URL을 입력해주시면, AI가 적합한 타깃을 추천해 드립니다.
-              </p>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">광고주*</label>
-                  <input
-                    type="text"
-                    value={clientInfo.advertiserName}
-                    onChange={e => setClientInfo({ ...clientInfo, advertiserName: e.target.value })}
-                    placeholder="예: (주)OO전자"
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">제품명*</label>
-                  <input
-                    type="text"
-                    value={clientInfo.productName}
-                    onChange={e => setClientInfo({ ...clientInfo, productName: e.target.value })}
-                    placeholder="예: 로봇청소기 (URL 실패시 제품명으로 검색)"
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">제품 URL (선택)</label>
-                  <input
-                    type="url"
-                    value={clientInfo.url}
-                    onChange={e => setClientInfo({ ...clientInfo, url: e.target.value })}
-                    placeholder="https://example.com/product"
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                  />
+        <div className="space-y-6">
+          {/* Section 1: Basic Info */}
+          <AccordionSection
+            title="1️⃣ 광고 캠페인 기본 정보"
+            defaultOpen={true}
+            icon={<FileText size={18} />}
+          >
+            {/* ... Content ... */}
+            <p className="text-sm text-gray-500 mb-4">
+              광고 제품명과 URL을 입력해주시면, AI가 적합한 타깃을 추천해 드립니다.
+            </p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">광고주*</label>
+                <input
+                  type="text"
+                  value={clientInfo.advertiserName}
+                  onChange={e => setClientInfo({ ...clientInfo, advertiserName: e.target.value })}
+                  placeholder="예: (주)OO전자"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">제품명*</label>
+                <input
+                  type="text"
+                  value={clientInfo.productName}
+                  onChange={e => setClientInfo({ ...clientInfo, productName: e.target.value })}
+                  placeholder="예: 로봇청소기 (URL 실패시 제품명으로 검색)"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">제품 URL (선택)</label>
+                <input
+                  type="url"
+                  value={clientInfo.url}
+                  onChange={e => setClientInfo({ ...clientInfo, url: e.target.value })}
+                  placeholder="https://example.com/product"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                />
+              </div>
+            </div>
+          </AccordionSection>
+
+          {/* Section 2: AI Target Analysis */}
+          <AccordionSection
+            title="2️⃣ AI 타겟 분석"
+            defaultOpen={hasAIResult}
+            disabled={!hasProductInfo}
+            icon={<Sparkles size={18} />}
+          >
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <label className="text-sm font-medium text-gray-700">추천 세그먼트 개수:</label>
+                <input
+                  type="range"
+                  min="1"
+                  max="10"
+                  value={numRecommendations}
+                  onChange={(e) => setNumRecommendations(parseInt(e.target.value))}
+                  className="flex-1"
+                />
+                <span className="font-bold text-blue-600 w-8">{numRecommendations}개</span>
+              </div>
+
+              <button
+                onClick={handleAIAnalysis}
+                disabled={aiLoading || !hasProductInfo}
+                className="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold rounded-xl hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+              >
+                {aiLoading ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    분석 중...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles size={20} />
+                    🤖 AI 타겟 분석 요청
+                  </>
+                )}
+              </button>
+
+              <AIRecommendation
+                segments={aiResult?.segments || []}
+                understanding={aiResult?.understanding || ''}
+                keywords={aiResult?.keywords || []}
+                isLoading={aiLoading}
+              />
+            </div>
+          </AccordionSection>
+
+          {/* Section 3: Conditions */}
+          <AccordionSection
+            title="3️⃣ 타기팅 & 광고 조건 설정"
+            defaultOpen={true}
+            icon={<Settings size={18} />}
+          >
+            <p className="text-sm text-gray-500 mb-4">
+              타깃이 명확할수록 광고 효율이 높아집니다.
+            </p>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Ad Duration */}
+              <div className="p-4 border rounded-xl">
+                <label className="block text-sm font-medium text-gray-500 mb-3">광고 초수</label>
+                <div className="flex gap-3">
+                  {[15, 30].map((sec) => (
+                    <button
+                      key={sec}
+                      onClick={() => setFormData({ ...formData, ad_duration: sec as 15 | 30 })}
+                      className={`flex-1 py-3 rounded-lg border font-medium transition-all ${formData.ad_duration === sec
+                        ? 'bg-blue-600 text-white border-blue-600'
+                        : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                        }`}
+                    >
+                      {sec}초
+                    </button>
+                  ))}
                 </div>
               </div>
-            </AccordionSection>
 
-            {/* Section 2: AI Target Analysis */}
-            <AccordionSection
-              title="2️⃣ AI 타겟 분석"
-              defaultOpen={hasAIResult}
-              disabled={!hasProductInfo}
-              icon={<Sparkles size={18} />}
-            >
-              <div className="space-y-4">
+              {/* New Advertiser */}
+              <div className="p-4 border rounded-xl">
+                <label className="block text-sm font-medium text-gray-500 mb-3">신규 광고주</label>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-700">KOBACO ATV 첫 집행?</span>
+                  <button
+                    onClick={() => setFormData({ ...formData, is_new_advertiser: !formData.is_new_advertiser })}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${formData.is_new_advertiser ? 'bg-blue-600' : 'bg-gray-200'
+                      }`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${formData.is_new_advertiser ? 'translate-x-6' : 'translate-x-1'
+                      }`} />
+                  </button>
+                </div>
+                {formData.is_new_advertiser && (
+                  <p className="text-xs text-blue-600 mt-2 font-medium">✨ 신규 광고주 프로모션 적용!</p>
+                )}
+              </div>
+
+              {/* Targeting Options */}
+              <div className="p-4 border rounded-xl md:col-span-2">
+                <label className="block text-sm font-medium text-gray-500 mb-3">타게팅 설정</label>
+                <div className="grid md:grid-cols-2 gap-3">
+                  <label className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.audience_targeting}
+                      onChange={(e) => setFormData({ ...formData, audience_targeting: e.target.checked })}
+                      className="w-5 h-5 text-blue-600 rounded"
+                    />
+                    <span className="font-medium text-gray-700">오디언스 타게팅</span>
+                  </label>
+                  <label className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.region_targeting}
+                      onChange={(e) => setFormData({ ...formData, region_targeting: e.target.checked })}
+                      className="w-5 h-5 text-blue-600 rounded"
+                    />
+                    <span className="font-medium text-gray-700">지역 타게팅</span>
+                  </label>
+                </div>
+                {!formData.audience_targeting && !formData.region_targeting && (
+                  <p className="text-xs text-green-600 mt-3 font-medium">
+                    ✅ 논타겟팅(ROAS 최적화) 보너스가 적용됩니다.
+                  </p>
+                )}
+              </div>
+            </div>
+          </AccordionSection>
+
+          {/* Section 4: Budget */}
+          <AccordionSection
+            title="4️⃣ 예산 배분 계획"
+            defaultOpen={true}
+            icon={<Wallet size={18} />}
+          >
+            <p className="text-sm text-gray-500 mb-4">
+              월 예산을 입력해주세요. 채널별 예상 노출량과 최종 단가를 자동 계산합니다.
+            </p>
+
+            <div className="space-y-6">
+              {/* Total Budget Input & Auto Distribution */}
+              <div className="bg-gray-50 p-6 rounded-xl border">
+                <div className="mb-6">
+                  <label className="block text-sm font-bold text-gray-700 mb-2">💰 총 월 예산 (단위: 만원)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="100"
+                    value={totalBudget || ''}
+                    onChange={(e) => {
+                      const total = parseFloat(e.target.value) || 0;
+                      // Streamlit logic: MBC 30%, EBS 20%, PP 50%
+                      const allocations = { 'MBC': 0.3, 'EBS': 0.2, 'PP': 0.5 };
+
+                      const newBudgets: Record<string, number> = {
+                        'MBC': Math.floor(total * allocations['MBC']),
+                        'EBS': Math.floor(total * allocations['EBS']),
+                        'PP': Math.floor(total * allocations['PP'])
+                      };
+
+                      // Fix rounding errors by adding remainder to PP
+                      const loadedTotal = Object.values(newBudgets).reduce((a, b) => a + b, 0);
+                      if (total > loadedTotal) {
+                        newBudgets['PP'] += (total - loadedTotal);
+                      }
+
+                      setFormData(prev => ({
+                        ...prev,
+                        channel_budgets: newBudgets,
+                        selected_channels: total > 0 ? ['MBC', 'EBS', 'PP'] : []
+                      }));
+                    }}
+                    placeholder="예: 5000"
+                    className="w-full px-4 py-3 text-right text-lg font-bold border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+                  <p className="text-xs text-gray-500 mt-2 text-right">
+                    * 입력하신 예산은 MBC(30%), EBS(20%), PP(50%) 비율로 자동 배분됩니다.
+                  </p>
+                </div>
+
+                <h4 className="font-medium text-gray-700 mb-4 text-sm">📊 채널별 배분 결과 (자동 계산)</h4>
+                <div className="grid grid-cols-3 gap-4">
+                  {['MBC', 'EBS', 'PP'].map(ch => (
+                    <div key={ch} className="bg-white p-3 rounded-lg border">
+                      <span className="block text-xs font-semibold text-gray-500 mb-1">{ch}</span>
+                      <div className="text-right font-bold text-gray-900">
+                        {(formData.channel_budgets[ch] || 0).toLocaleString()} <span className="text-xs font-normal">만원</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Duration */}
+              <div className="p-4 border rounded-xl">
+                <label className="block text-sm font-medium text-gray-500 mb-2">📅 광고 기간 (개월)</label>
                 <div className="flex items-center gap-4">
-                  <label className="text-sm font-medium text-gray-700">추천 세그먼트 개수:</label>
                   <input
                     type="range"
                     min="1"
-                    max="10"
-                    value={numRecommendations}
-                    onChange={(e) => setNumRecommendations(parseInt(e.target.value))}
+                    max="12"
+                    value={formData.duration}
+                    onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) })}
                     className="flex-1"
                   />
-                  <span className="font-bold text-blue-600 w-8">{numRecommendations}개</span>
+                  <span className="font-bold text-blue-600 text-lg w-16 text-right">{formData.duration}개월</span>
+                </div>
+              </div>
+            </div>
+          </AccordionSection>
+
+          {/* Section 5: Results */}
+          <AccordionSection
+            title="5️⃣ AI 전략 분석 결과"
+            defaultOpen={true}
+            icon={<BarChart3 size={18} />}
+          >
+            {result && (
+              <div className="space-y-6">
+                {/* Summary Cards */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-blue-50 p-4 rounded-xl text-center">
+                    <p className="text-sm text-blue-600 mb-1">총 월 예산</p>
+                    <p className="text-xl font-bold text-blue-900">{result.summary.total_budget.toLocaleString()}원</p>
+                  </div>
+                  <div className="bg-blue-50 p-4 rounded-xl text-center">
+                    <p className="text-sm text-blue-600 mb-1">총 월 노출수</p>
+                    <p className="text-xl font-bold text-blue-900">{result.summary.total_impressions.toLocaleString()}회</p>
+                  </div>
+                  <div className="bg-blue-50 p-4 rounded-xl text-center">
+                    <p className="text-sm text-blue-600 mb-1">평균 CPV</p>
+                    <p className="text-xl font-bold text-blue-900">{result.summary.average_cpv.toFixed(1)}원</p>
+                  </div>
+                  <div className="bg-blue-50 p-4 rounded-xl text-center">
+                    <p className="text-sm text-blue-600 mb-1">광고 초수</p>
+                    <p className="text-xl font-bold text-blue-900">{result.summary.ad_duration}초</p>
+                  </div>
                 </div>
 
+                {/* Detail Table */}
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-gray-100">
+                        <th className="px-4 py-3 text-left font-semibold">채널</th>
+                        <th className="px-4 py-3 text-right font-semibold">예산(원)</th>
+                        <th className="px-4 py-3 text-right font-semibold">기본 CPV</th>
+                        <th className="px-4 py-3 text-right font-semibold">보너스율</th>
+                        <th className="px-4 py-3 text-right font-semibold">노출수</th>
+                        <th className="px-4 py-3 text-right font-semibold">최종 CPV</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {result.details.map((detail) => (
+                        <tr key={detail.channel} className="border-b">
+                          <td className="px-4 py-3 font-medium">{detail.channel}</td>
+                          <td className="px-4 py-3 text-right">{detail.budget.toLocaleString()}</td>
+                          <td className="px-4 py-3 text-right">{detail.base_cpv.toFixed(1)}</td>
+                          <td className="px-4 py-3 text-right text-green-600">{detail.total_bonus_rate.toFixed(1)}%</td>
+                          <td className="px-4 py-3 text-right font-semibold">{detail.guaranteed_impressions.toLocaleString()}</td>
+                          <td className="px-4 py-3 text-right">{detail.final_cpv.toFixed(1)}</td>
+                        </tr>
+                      ))}
+                      <tr className="bg-gray-50 font-bold">
+                        <td className="px-4 py-3">종합</td>
+                        <td className="px-4 py-3 text-right">{result.summary.total_budget.toLocaleString()}</td>
+                        <td className="px-4 py-3 text-right">-</td>
+                        <td className="px-4 py-3 text-right">-</td>
+                        <td className="px-4 py-3 text-right text-blue-600">{result.summary.total_impressions.toLocaleString()}</td>
+                        <td className="px-4 py-3 text-right">{result.summary.average_cpv.toFixed(1)}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Print Button */}
                 <button
-                  onClick={handleAIAnalysis}
-                  disabled={aiLoading || !hasProductInfo}
-                  className="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold rounded-xl hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                  onClick={goToPrint}
+                  className="w-full py-4 bg-green-600 text-white font-bold rounded-xl hover:bg-green-500 transition-all flex items-center justify-center gap-2"
                 >
-                  {aiLoading ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      분석 중...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles size={20} />
-                      🤖 AI 타겟 분석 요청
-                    </>
-                  )}
+                  <Printer size={20} />
+                  📄 AI 광고 전략 제안서 생성하기
                 </button>
 
-                <AIRecommendation
-                  segments={aiResult?.segments || []}
-                  understanding={aiResult?.understanding || ''}
-                  keywords={aiResult?.keywords || []}
-                  isLoading={aiLoading}
-                />
-              </div>
-            </AccordionSection>
-
-            {/* Section 3: Conditions */}
-            <AccordionSection
-              title="3️⃣ 타기팅 & 광고 조건 설정"
-              defaultOpen={true}
-              icon={<Settings size={18} />}
-            >
-              <p className="text-sm text-gray-500 mb-4">
-                타깃이 명확할수록 광고 효율이 높아집니다.
-              </p>
-
-              <div className="grid md:grid-cols-2 gap-6">
-                {/* Ad Duration */}
-                <div className="p-4 border rounded-xl">
-                  <label className="block text-sm font-medium text-gray-500 mb-3">광고 초수</label>
-                  <div className="flex gap-3">
-                    {[15, 30].map((sec) => (
-                      <button
-                        key={sec}
-                        onClick={() => setFormData({ ...formData, ad_duration: sec as 15 | 30 })}
-                        className={`flex-1 py-3 rounded-lg border font-medium transition-all ${formData.ad_duration === sec
-                          ? 'bg-blue-600 text-white border-blue-600'
-                          : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
-                          }`}
-                      >
-                        {sec}초
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* New Advertiser */}
-                <div className="p-4 border rounded-xl">
-                  <label className="block text-sm font-medium text-gray-500 mb-3">신규 광고주</label>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-700">KOBACO ATV 첫 집행?</span>
-                    <button
-                      onClick={() => setFormData({ ...formData, is_new_advertiser: !formData.is_new_advertiser })}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${formData.is_new_advertiser ? 'bg-blue-600' : 'bg-gray-200'
-                        }`}
-                    >
-                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${formData.is_new_advertiser ? 'translate-x-6' : 'translate-x-1'
-                        }`} />
-                    </button>
-                  </div>
-                  {formData.is_new_advertiser && (
-                    <p className="text-xs text-blue-600 mt-2 font-medium">✨ 신규 광고주 프로모션 적용!</p>
-                  )}
-                </div>
-
-                {/* Targeting Options */}
-                <div className="p-4 border rounded-xl md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-500 mb-3">타게팅 설정</label>
-                  <div className="grid md:grid-cols-2 gap-3">
-                    <label className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={formData.audience_targeting}
-                        onChange={(e) => setFormData({ ...formData, audience_targeting: e.target.checked })}
-                        className="w-5 h-5 text-blue-600 rounded"
-                      />
-                      <span className="font-medium text-gray-700">오디언스 타게팅</span>
-                    </label>
-                    <label className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={formData.region_targeting}
-                        onChange={(e) => setFormData({ ...formData, region_targeting: e.target.checked })}
-                        className="w-5 h-5 text-blue-600 rounded"
-                      />
-                      <span className="font-medium text-gray-700">지역 타게팅</span>
-                    </label>
-                  </div>
-                  {!formData.audience_targeting && !formData.region_targeting && (
-                    <p className="text-xs text-green-600 mt-3 font-medium">
-                      ✅ 논타겟팅(ROAS 최적화) 보너스가 적용됩니다.
-                    </p>
-                  )}
+                <div className="bg-gray-100 p-4 rounded-lg text-sm text-gray-600 flex gap-2">
+                  <AlertCircle size={16} className="text-blue-500 shrink-0 mt-0.5" />
+                  <span>위 결과는 시뮬레이션이며, 실제 집행 시 인벤토리 상황에 따라 달라질 수 있습니다.</span>
                 </div>
               </div>
-            </AccordionSection>
-
-            {/* Section 4: Budget */}
-            <AccordionSection
-              title="4️⃣ 예산 배분 계획"
-              defaultOpen={true}
-              icon={<Wallet size={18} />}
-            >
-              <p className="text-sm text-gray-500 mb-4">
-                월 예산을 입력해주세요. 채널별 예상 노출량과 최종 단가를 자동 계산합니다.
-              </p>
-
-              <div className="space-y-6">
-                {/* Total Budget Input & Auto Distribution */}
-                <div className="bg-gray-50 p-6 rounded-xl border">
-                  <div className="mb-6">
-                    <label className="block text-sm font-bold text-gray-700 mb-2">💰 총 월 예산 (단위: 만원)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="100"
-                      value={totalBudget || ''}
-                      onChange={(e) => {
-                        const total = parseFloat(e.target.value) || 0;
-                        // Streamlit logic: MBC 30%, EBS 20%, PP 50%
-                        const allocations = { 'MBC': 0.3, 'EBS': 0.2, 'PP': 0.5 };
-
-                        const newBudgets: Record<string, number> = {
-                          'MBC': Math.floor(total * allocations['MBC']),
-                          'EBS': Math.floor(total * allocations['EBS']),
-                          'PP': Math.floor(total * allocations['PP'])
-                        };
-
-                        // Fix rounding errors by adding remainder to PP
-                        const loadedTotal = Object.values(newBudgets).reduce((a, b) => a + b, 0);
-                        if (total > loadedTotal) {
-                          newBudgets['PP'] += (total - loadedTotal);
-                        }
-
-                        setFormData(prev => ({
-                          ...prev,
-                          channel_budgets: newBudgets,
-                          selected_channels: total > 0 ? ['MBC', 'EBS', 'PP'] : []
-                        }));
-                      }}
-                      placeholder="예: 5000"
-                      className="w-full px-4 py-3 text-right text-lg font-bold border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                    />
-                    <p className="text-xs text-gray-500 mt-2 text-right">
-                      * 입력하신 예산은 MBC(30%), EBS(20%), PP(50%) 비율로 자동 배분됩니다.
-                    </p>
-                  </div>
-
-                  <h4 className="font-medium text-gray-700 mb-4 text-sm">📊 채널별 배분 결과 (자동 계산)</h4>
-                  <div className="grid grid-cols-3 gap-4">
-                    {['MBC', 'EBS', 'PP'].map(ch => (
-                      <div key={ch} className="bg-white p-3 rounded-lg border">
-                        <span className="block text-xs font-semibold text-gray-500 mb-1">{ch}</span>
-                        <div className="text-right font-bold text-gray-900">
-                          {(formData.channel_budgets[ch] || 0).toLocaleString()} <span className="text-xs font-normal">만원</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Duration */}
-                <div className="p-4 border rounded-xl">
-                  <label className="block text-sm font-medium text-gray-500 mb-2">📅 광고 기간 (개월)</label>
-                  <div className="flex items-center gap-4">
-                    <input
-                      type="range"
-                      min="1"
-                      max="12"
-                      value={formData.duration}
-                      onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) })}
-                      className="flex-1"
-                    />
-                    <span className="font-bold text-blue-600 text-lg w-16 text-right">{formData.duration}개월</span>
-                  </div>
-                </div>
-              </div>
-            </AccordionSection>
-
-            {/* Section 5: Results */}
-            <AccordionSection
-              title="5️⃣ AI 전략 분석 결과"
-              defaultOpen={true}
-              icon={<BarChart3 size={18} />}
-            >
-              {result && (
-                <div className="space-y-6">
-                  {/* Summary Cards */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="bg-blue-50 p-4 rounded-xl text-center">
-                      <p className="text-sm text-blue-600 mb-1">총 월 예산</p>
-                      <p className="text-xl font-bold text-blue-900">{result.summary.total_budget.toLocaleString()}원</p>
-                    </div>
-                    <div className="bg-blue-50 p-4 rounded-xl text-center">
-                      <p className="text-sm text-blue-600 mb-1">총 월 노출수</p>
-                      <p className="text-xl font-bold text-blue-900">{result.summary.total_impressions.toLocaleString()}회</p>
-                    </div>
-                    <div className="bg-blue-50 p-4 rounded-xl text-center">
-                      <p className="text-sm text-blue-600 mb-1">평균 CPV</p>
-                      <p className="text-xl font-bold text-blue-900">{result.summary.average_cpv.toFixed(1)}원</p>
-                    </div>
-                    <div className="bg-blue-50 p-4 rounded-xl text-center">
-                      <p className="text-sm text-blue-600 mb-1">광고 초수</p>
-                      <p className="text-xl font-bold text-blue-900">{result.summary.ad_duration}초</p>
-                    </div>
-                  </div>
-
-                  {/* Detail Table */}
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="bg-gray-100">
-                          <th className="px-4 py-3 text-left font-semibold">채널</th>
-                          <th className="px-4 py-3 text-right font-semibold">예산(원)</th>
-                          <th className="px-4 py-3 text-right font-semibold">기본 CPV</th>
-                          <th className="px-4 py-3 text-right font-semibold">보너스율</th>
-                          <th className="px-4 py-3 text-right font-semibold">노출수</th>
-                          <th className="px-4 py-3 text-right font-semibold">최종 CPV</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {result.details.map((detail) => (
-                          <tr key={detail.channel} className="border-b">
-                            <td className="px-4 py-3 font-medium">{detail.channel}</td>
-                            <td className="px-4 py-3 text-right">{detail.budget.toLocaleString()}</td>
-                            <td className="px-4 py-3 text-right">{detail.base_cpv.toFixed(1)}</td>
-                            <td className="px-4 py-3 text-right text-green-600">{detail.total_bonus_rate.toFixed(1)}%</td>
-                            <td className="px-4 py-3 text-right font-semibold">{detail.guaranteed_impressions.toLocaleString()}</td>
-                            <td className="px-4 py-3 text-right">{detail.final_cpv.toFixed(1)}</td>
-                          </tr>
-                        ))}
-                        <tr className="bg-gray-50 font-bold">
-                          <td className="px-4 py-3">종합</td>
-                          <td className="px-4 py-3 text-right">{result.summary.total_budget.toLocaleString()}</td>
-                          <td className="px-4 py-3 text-right">-</td>
-                          <td className="px-4 py-3 text-right">-</td>
-                          <td className="px-4 py-3 text-right text-blue-600">{result.summary.total_impressions.toLocaleString()}</td>
-                          <td className="px-4 py-3 text-right">{result.summary.average_cpv.toFixed(1)}</td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Print Button */}
-                  <button
-                    onClick={goToPrint}
-                    className="w-full py-4 bg-green-600 text-white font-bold rounded-xl hover:bg-green-500 transition-all flex items-center justify-center gap-2"
-                  >
-                    <Printer size={20} />
-                    📄 AI 광고 전략 제안서 생성하기
-                  </button>
-
-                  <div className="bg-gray-100 p-4 rounded-lg text-sm text-gray-600 flex gap-2">
-                    <AlertCircle size={16} className="text-blue-500 shrink-0 mt-0.5" />
-                    <span>위 결과는 시뮬레이션이며, 실제 집행 시 인벤토리 상황에 따라 달라질 수 있습니다.</span>
-                  </div>
-                </div>
-              )}
-            </AccordionSection>
-          </div>
-
-          {/* Right: Sidebar */}
-          <div className="space-y-6">
-            <div className="bg-white border rounded-xl p-6 sticky top-24">
-              <h3 className="font-bold text-gray-900 mb-4">🔗 바로가기</h3>
-              <div className="space-y-3">
-                <a
-                  href="https://notebooklm.google.com/notebook/ab573898-2bb6-4034-8694-bc1c08d480c7"
-                  target="_blank"
-                  className="block w-full py-3 px-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-500 transition-colors text-center"
-                >
-                  🤖 AI에게 질문하기 (NotebookLM)
-                </a>
-                <a
-                  href="https://drive.google.com/file/d/1iyZCKQSYvrxazfxaz4F5Eh2ejjfWbZUw/view?usp=sharing"
-                  target="_blank"
-                  className="block w-full py-3 px-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-500 transition-colors text-center"
-                >
-                  📄 Addressable 소개자료
-                </a>
-              </div>
-
-              <hr className="my-6" />
-
-              <h3 className="font-bold text-gray-900 mb-4">📬 이메일 문의</h3>
-              <a
-                href="mailto:tj1000@kobaco.co.kr"
-                className="block w-full py-3 px-4 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors text-center text-sm"
-              >
-                📧 박태준 차장 | tj1000@kobaco.co.kr
-              </a>
-            </div>
-          </div>
+            )}
+          </AccordionSection>
         </div>
+
       </main>
     </div>
   );
