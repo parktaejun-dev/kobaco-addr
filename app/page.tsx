@@ -1,162 +1,98 @@
-"use client";
-import { useEffect, useState } from 'react';
-import { logVisit } from '@/lib/api';
-import EstimationFlow from '@/components/EstimationFlow';
-import Modal from '@/components/ui/Modal';
-import { Target, TrendingDown, BarChart3, ArrowRight, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { client } from '@/lib/sanity';
 import Link from 'next/link';
 
-export default function Home() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+// Fallback Data (MASTER SPEC Default)
+const FALLBACK_HERO = {
+  eyebrow: "KOBACO",
+  title: "KOBACO Addressable TV",
+  subtitle: "원하는 타겟에게만, 완전시청(CPV) 과금으로 합리적인 TV 광고를 시작하세요.",
+  badges: ["타겟팅 광고", "CPV 과금", "상세 리포트"],
+  cta: { label: "견적 산출하기", link: "/estimate" }
+};
 
-  useEffect(() => {
-    logVisit();
-  }, []);
+export default async function Home() {
+  let hero = FALLBACK_HERO;
+  
+  // Try fetching from Sanity, fallback silently if fails (e.g. no project ID)
+  try {
+      if (client.config().projectId !== 'dummy_project_id') {
+          const data = await client.fetch(`*[_type == "homePage"][0].hero`);
+          if (data) hero = { ...FALLBACK_HERO, ...data };
+      }
+  } catch (e) {
+      // console.warn("Sanity fetch failed:", e);
+  }
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="fixed top-0 w-full z-40 bg-white/80 backdrop-blur-md border-b">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">🚀</span>
-            <span className="font-bold text-xl tracking-tight">KOBA-TA <span className="text-blue-600">Target Advisor</span></span>
-          </div>
-          <div className="flex items-center gap-4">
-             <Link href="/admin/login" className="text-sm font-medium text-gray-500 hover:text-gray-900">
-              Admin
-            </Link>
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-bold hover:bg-blue-700 transition"
-            >
-              무료 견적 체험하기
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <main className="pt-16">
-        {/* Hero Section */}
-        <section className="relative py-20 lg:py-32 bg-gray-50 overflow-hidden">
-          <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#3b82f6_1px,transparent_1px)] [background-size:16px_16px]"></div>
-          <div className="max-w-5xl mx-auto px-6 text-center relative z-10">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-sm font-semibold mb-6 animate-fade-in-up">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-              </span>
-              KOBACO Addressable TV
+    <main className="flex flex-col min-h-screen">
+      {/* Hero Section - Fixed Position & Editable */}
+      <section className="relative w-full h-[85vh] flex items-center justify-center bg-slate-900 text-white overflow-hidden">
+        {/* Background Overlay (Placeholder for Video/Image) */}
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 opacity-90 z-0" />
+        
+        <div className="relative z-10 max-w-5xl w-full text-center px-6 space-y-8">
+            <div className="space-y-4">
+                <span className="inline-block text-blue-400 font-bold tracking-[0.2em] uppercase text-sm">
+                    {hero.eyebrow}
+                </span>
+                <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight leading-none text-white drop-shadow-sm">
+                    {hero.title}
+                </h1>
             </div>
-            <h1 className="text-4xl lg:text-6xl font-extrabold text-gray-900 tracking-tight mb-6 leading-tight">
-              TV 광고, 이제 디지털처럼 <br className="hidden md:block"/>
-              <span className="text-blue-600">정교하게 타겟팅</span>하세요
-            </h1>
-            <p className="text-lg text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed">
-              빅데이터 기반으로 원하는 시청자에게만 광고를 송출하여<br/>
-              비용은 획기적으로 줄이고, 광고 효과는 극대화합니다.
+            
+            <p className="text-xl md:text-2xl text-slate-300 max-w-3xl mx-auto leading-relaxed font-light">
+                {hero.subtitle}
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="inline-flex items-center justify-center gap-2 bg-blue-600 text-white px-8 py-4 rounded-full text-lg font-bold hover:bg-blue-700 hover:scale-105 transition shadow-lg shadow-blue-200"
-              >
-                AI 무료 견적 체험하기 <ArrowRight className="w-5 h-5" />
-              </button>
-              <a href="#features" className="inline-flex items-center justify-center gap-2 bg-white text-gray-700 border px-8 py-4 rounded-full text-lg font-bold hover:bg-gray-50 transition">
-                서비스 더 알아보기
-              </a>
-            </div>
-          </div>
-        </section>
-
-        {/* Features Section */}
-        <section id="features" className="py-20 lg:py-32 bg-white">
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="text-center mb-20">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">왜 KOBA-TA 인가요?</h2>
-              <p className="text-gray-500">기존 TV 광고의 한계를 넘어선 3가지 핵심 혁신 기술</p>
+            
+            {/* KPI Badges */}
+            <div className="flex flex-wrap justify-center gap-3 pt-2">
+                {hero.badges.map((badge: string, i: number) => (
+                    <span key={i} className="px-4 py-1.5 bg-white/5 backdrop-blur-sm rounded-full text-sm font-medium border border-white/10 text-blue-100">
+                        {badge}
+                    </span>
+                ))}
             </div>
 
-            <div className="grid md:grid-cols-3 gap-12">
-              <div className="group p-8 rounded-2xl bg-gray-50 hover:bg-blue-50 transition border border-gray-100 hover:border-blue-100">
-                <div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center shadow-sm mb-6 group-hover:scale-110 transition text-blue-600">
-                  <Target className="w-8 h-8" />
-                </div>
-                <h3 className="text-xl font-bold mb-3 text-gray-900">초정밀 타겟팅</h3>
-                <p className="text-gray-600 leading-relaxed">
-                  불특정 다수가 아닌, 지역/성별/관심사 기반으로
-                  우리 브랜드에 꼭 맞는 가구에만 선별적으로 광고를 노출합니다.
-                </p>
-              </div>
-
-              <div className="group p-8 rounded-2xl bg-gray-50 hover:bg-green-50 transition border border-gray-100 hover:border-green-100">
-                <div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center shadow-sm mb-6 group-hover:scale-110 transition text-green-600">
-                  <TrendingDown className="w-8 h-8" />
-                </div>
-                <h3 className="text-xl font-bold mb-3 text-gray-900">합리적인 과금</h3>
-                <p className="text-gray-600 leading-relaxed">
-                  송출 횟수와 상관없이, 실제 타겟 가구에
-                  <span className="font-semibold text-green-700"> 완전 노출(Impression)</span>된 횟수만큼만
-                  비용을 지불하세요.
-                </p>
-              </div>
-
-              <div className="group p-8 rounded-2xl bg-gray-50 hover:bg-purple-50 transition border border-gray-100 hover:border-purple-100">
-                <div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center shadow-sm mb-6 group-hover:scale-110 transition text-purple-600">
-                  <BarChart3 className="w-8 h-8" />
-                </div>
-                <h3 className="text-xl font-bold mb-3 text-gray-900">정확한 성과 측정</h3>
-                <p className="text-gray-600 leading-relaxed">
-                  추정이 아닌 전수 데이터를 기반으로
-                  디지털 광고 수준의 상세한 노출/도달 리포트를 제공해드립니다.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Trust Badge Section */}
-        <section className="py-16 bg-blue-900 text-white">
-          <div className="max-w-5xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-8">
-            <div className="text-center md:text-left">
-              <div className="flex items-center gap-2 justify-center md:justify-start mb-2 text-blue-300 font-semibold">
-                <ShieldCheck className="w-6 h-6" /> KOBACO 공인 서비스
-              </div>
-              <h2 className="text-2xl md:text-3xl font-bold">대한민국 방송광고진흥공사가 보증합니다</h2>
-              <p className="text-blue-200 mt-2">투명한 데이터와 공정한 집행 과정을 약속드립니다.</p>
-            </div>
-             <div className="flex flex-wrap gap-4 justify-center">
-                <div className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-lg">
-                    <CheckCircle2 className="w-5 h-5 text-blue-400" />
-                    <span>전수 데이터 분석</span>
-                </div>
-                <div className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-lg">
-                    <CheckCircle2 className="w-5 h-5 text-blue-400" />
-                    <span>프리미엄 채널 보장</span>
-                </div>
-            </div>
-          </div>
-        </section>
-      </main>
-
-      <footer className="bg-gray-50 py-12 border-t">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center text-sm text-gray-500">
-            <div className="mb-4 md:mb-0">
-                <span className="font-bold text-gray-900">KOBACO</span> &copy; {new Date().getFullYear()} All rights reserved.
-            </div>
-            <div className="flex gap-6">
-                <a href="#" className="hover:text-gray-900">이용약관</a>
-                <a href="#" className="hover:text-gray-900">개인정보처리방침</a>
-                <Link href="/admin/login" className="hover:text-gray-900">관리자 로그인</Link>
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-10">
+                <Link 
+                    href="/estimate"
+                    className="w-full sm:w-auto inline-flex h-14 items-center justify-center rounded-full bg-blue-600 px-10 text-lg font-bold text-white shadow-lg shadow-blue-900/30 hover:bg-blue-500 transition-all hover:scale-105 active:scale-95"
+                >
+                    {hero.cta.label}
+                </Link>
+                <Link 
+                    href="#features"
+                    className="w-full sm:w-auto inline-flex h-14 items-center justify-center rounded-full bg-white/10 px-10 text-lg font-medium text-white hover:bg-white/20 transition-all backdrop-blur-sm"
+                >
+                    더 알아보기
+                </Link>
             </div>
         </div>
-      </footer>
+      </section>
 
-      {/* Estimation Modal */}
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        <EstimationFlow onClose={() => setIsModalOpen(false)} />
-      </Modal>
-    </div>
+      {/* Placeholder for Sections (ValueProps, Product, etc.) */}
+      <section id="features" className="py-24 px-6 bg-white">
+          <div className="max-w-6xl mx-auto text-center">
+              <h2 className="text-3xl font-bold text-slate-900 mb-12">Why KOBACO Addressable TV?</h2>
+              
+              <div className="grid md:grid-cols-3 gap-8">
+                  {[
+                      { title: "정교한 타겟팅", desc: "IPTV 셋톱박스 데이터를 기반으로 원하는 오디언스만 골라 노출합니다." },
+                      { title: "합리적인 CPV 과금", desc: "광고를 끝까지 시청했을 때만 비용이 부과되는 완전시청 과금 방식입니다." },
+                      { title: "투명한 성과 리포트", desc: "채널별, 타겟별 상세 노출 및 시청 성과를 투명하게 제공합니다." }
+                  ].map((item, i) => (
+                      <div key={i} className="p-8 rounded-2xl bg-slate-50 border border-slate-100 hover:shadow-xl transition-shadow text-left">
+                          <div className="w-12 h-12 bg-blue-100 rounded-lg mb-6 flex items-center justify-center text-blue-600 font-bold text-xl">
+                              {i + 1}
+                          </div>
+                          <h3 className="text-xl font-bold text-slate-900 mb-3">{item.title}</h3>
+                          <p className="text-slate-600 leading-relaxed">{item.desc}</p>
+                      </div>
+                  ))}
+              </div>
+          </div>
+      </section>
+    </main>
   );
 }
