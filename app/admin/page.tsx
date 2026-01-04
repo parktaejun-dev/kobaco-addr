@@ -617,26 +617,66 @@ export default function AdminPortal() {
                             <div className="overflow-x-auto">
                                 <table className="w-full text-sm">
                                     <thead className="bg-slate-50 border-b border-slate-100">
-                                        <tr className="text-slate-400 font-black text-[10px] uppercase tracking-widest">
-                                            <th className="p-6 text-left w-40">대분류</th>
-                                            <th className="p-6 text-left w-40">중분류</th>
-                                            <th className="p-6 text-left">세그먼트명</th>
-                                            <th className="p-6 text-left">설명</th>
-                                            <th className="p-6 text-left">추천 광고주</th>
+                                        <tr className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">
+                                            <th className="p-4 text-left w-32">대분류</th>
+                                            <th className="p-4 text-left w-32">중분류</th>
+                                            <th className="p-4 text-left w-48">세그먼트명</th>
+                                            <th className="p-4 text-right w-24">모수</th>
+                                            <th className="p-4 text-right w-24">단가</th>
+                                            <th className="p-4 text-left">설명</th>
+                                            <th className="p-4 w-12"></th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-slate-100">
-                                        {filteredSegments.slice(0, 100).map((seg, i) => (
-                                            <tr key={i} className="hover:bg-slate-50/50 transition-colors">
-                                                <td className="p-6">
-                                                    <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-[10px] font-black">{seg['대분류']}</span>
-                                                </td>
-                                                <td className="p-6 font-bold text-slate-600">{seg['중분류']}</td>
-                                                <td className="p-6 font-black text-slate-900">{seg.name}</td>
-                                                <td className="p-6 text-slate-500 leading-relaxed text-xs">{seg.description}</td>
-                                                <td className="p-6 text-slate-400 text-xs italic">{seg.recommended_advertisers}</td>
-                                            </tr>
-                                        ))}
+                                    <tbody className="divide-y divide-slate-50 text-xs">
+                                        {filteredSegments.slice(0, 100).map((seg, originalIndex) => {
+                                            // Find index in original array to update correct item
+                                            const i = segments.indexOf(seg);
+                                            return (
+                                                <tr key={i} className="hover:bg-slate-50/50 transition-colors group">
+                                                    <td className="p-3"><input type="text" value={seg['대분류']} onChange={e => {
+                                                        const newList = [...segments];
+                                                        newList[i]['대분류'] = e.target.value;
+                                                        setSegments(newList);
+                                                    }} className="w-full bg-transparent p-1.5 outline-none font-black text-blue-600 focus:bg-white rounded border border-transparent focus:border-slate-200" /></td>
+                                                    <td className="p-3"><input type="text" value={seg['중분류']} onChange={e => {
+                                                        const newList = [...segments];
+                                                        newList[i]['중분류'] = e.target.value;
+                                                        setSegments(newList);
+                                                    }} className="w-full bg-transparent p-1.5 outline-none font-bold text-slate-600 focus:bg-white rounded border border-transparent focus:border-slate-200" /></td>
+                                                    <td className="p-3"><input type="text" value={seg.name} onChange={e => {
+                                                        const newList = [...segments];
+                                                        newList[i].name = e.target.value;
+                                                        setSegments(newList);
+                                                    }} className="w-full bg-transparent p-1.5 outline-none font-black text-slate-800 focus:bg-white rounded border border-transparent focus:border-slate-200" /></td>
+                                                    <td className="p-3"><input type="number" value={seg.count || 0} onChange={e => {
+                                                        const newList = [...segments];
+                                                        newList[i].count = parseInt(e.target.value) || 0;
+                                                        setSegments(newList);
+                                                    }} className="w-full bg-transparent p-1.5 outline-none text-right font-medium text-slate-500 focus:bg-white rounded border border-transparent focus:border-slate-200" /></td>
+                                                    <td className="p-3"><input type="number" value={seg.unit_price || 0} onChange={e => {
+                                                        const newList = [...segments];
+                                                        newList[i].unit_price = parseInt(e.target.value) || 0;
+                                                        setSegments(newList);
+                                                    }} className="w-full bg-transparent p-1.5 outline-none text-right font-bold text-slate-700 focus:bg-white rounded border border-transparent focus:border-slate-200" /></td>
+                                                    <td className="p-3"><input type="text" value={seg.description} onChange={e => {
+                                                        const newList = [...segments];
+                                                        newList[i].description = e.target.value;
+                                                        setSegments(newList);
+                                                    }} className="w-full bg-transparent p-1.5 outline-none text-slate-400 focus:bg-white rounded border border-transparent focus:border-slate-200" /></td>
+                                                    <td className="p-3 text-center">
+                                                        <button onClick={() => {
+                                                            if (confirm('정말 삭제하시겠습니까?')) {
+                                                                const newList = segments.filter((_, idx) => idx !== i);
+                                                                setSegments(newList);
+                                                            }
+                                                        }} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"><Trash2 size={16} /></button>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                        {filteredSegments.length === 0 && (
+                                            <tr><td colSpan={7} className="p-8 text-center text-slate-400 font-bold italic">검색 결과가 없습니다.</td></tr>
+                                        )}
                                     </tbody>
                                 </table>
                                 {filteredSegments.length > 100 && (

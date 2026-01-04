@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { getJSON, setJSON } from '@/lib/kv-store';
 
 // Whitelist of allowed policy types
@@ -41,6 +42,7 @@ export async function POST(request: Request) {
 
   try {
     await setJSON('policy', type, data);
+    revalidatePath('/estimate'); // Refresh Estimate Page Cache
     return NextResponse.json({ success: true });
   } catch (e: any) {
     console.error(e);
