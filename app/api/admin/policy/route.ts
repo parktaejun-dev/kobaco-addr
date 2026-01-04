@@ -1,9 +1,5 @@
-
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-
-const POLICY_DIR = path.join(process.cwd(), 'policy');
+import { getJSON, setJSON } from '@/lib/kv-store';
 
 // Whitelist of allowed policy types
 const ALLOWED_TYPES = ['channels', 'bonuses', 'surcharges', 'segments'] as const;
@@ -25,10 +21,8 @@ export async function GET(request: Request) {
   }
 
   try {
-    const filePath = path.join(POLICY_DIR, `${type}.json`);
-    if (!fs.existsSync(filePath)) return NextResponse.json([]);
-    const data = fs.readFileSync(filePath, 'utf-8');
-    return NextResponse.json(JSON.parse(data));
+    const data = await getJSON('policy', type);
+    return NextResponse.json(data || []);
   } catch (e) {
     return NextResponse.json({ error: 'Failed to load' }, { status: 500 });
   }
@@ -46,11 +40,10 @@ export async function POST(request: Request) {
   }
 
   try {
-    const filePath = path.join(POLICY_DIR, `${type}.json`);
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+    await setJSON('policy', type, data);
     return NextResponse.json({ success: true });
-  } catch (e) {
+  } catch (e: any) {
     console.error(e);
-    return NextResponse.json({ error: 'Failed to save' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to save', details: e.message }, { status: 500 });
   }
 }

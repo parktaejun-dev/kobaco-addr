@@ -1,6 +1,5 @@
 
-import fs from 'fs';
-import path from 'path';
+import { getJSON } from '@/lib/kv-store';
 import Link from 'next/link';
 import { Check, ArrowRight, FileText, BarChart3, Target } from 'lucide-react';
 import ConceptSection from '@/components/sections/ConceptSection';
@@ -10,15 +9,14 @@ import WhySection from '@/components/sections/WhySection';
 import UseCasesSection from '@/components/sections/UseCasesSection';
 
 // --- Data Loading Helpers ---
-function getContent(type: string, id?: string) {
-  const CONTENT_DIR = path.join(process.cwd(), 'content');
+async function getContent(type: string, id?: string) {
   try {
-    const filePath = id 
-      ? path.join(CONTENT_DIR, 'sections', `${id}.json`)
-      : path.join(CONTENT_DIR, `${type}.json`);
-    
-    if (!fs.existsSync(filePath)) return null;
-    return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+    if (type === 'home') {
+      return await getJSON('content', 'home');
+    } else if (type === 'section' && id) {
+      return await getJSON('content', id);
+    }
+    return null;
   } catch (e) {
     return null;
   }
@@ -109,19 +107,19 @@ function Reporting({ data }: { data: any }) {
           <h2 className="text-4xl font-bold text-slate-900 leading-tight">{data.title}</h2>
           <p className="text-xl text-slate-600 leading-relaxed">{data.description}</p>
           <div className="pt-4 flex gap-4">
-             <div className="flex items-center gap-2 text-blue-700 font-bold">
-                <Check size={20} /> 실시간 대시보드
-             </div>
-             <div className="flex items-center gap-2 text-blue-700 font-bold">
-                <Check size={20} /> 채널별 상세 성과
-             </div>
+            <div className="flex items-center gap-2 text-blue-700 font-bold">
+              <Check size={20} /> 실시간 대시보드
+            </div>
+            <div className="flex items-center gap-2 text-blue-700 font-bold">
+              <Check size={20} /> 채널별 상세 성과
+            </div>
           </div>
         </div>
         <div className="flex-1 w-full aspect-video bg-white rounded-3xl shadow-2xl border border-slate-200 flex items-center justify-center overflow-hidden">
-            <div className="bg-slate-100 w-full h-full flex flex-col items-center justify-center text-slate-400 italic">
-                <BarChart3 size={64} className="mb-4 opacity-20" />
-                [ 리포팅 샘플 이미지 영역 ]
-            </div>
+          <div className="bg-slate-100 w-full h-full flex flex-col items-center justify-center text-slate-400 italic">
+            <BarChart3 size={64} className="mb-4 opacity-20" />
+            [ 리포팅 샘플 이미지 영역 ]
+          </div>
         </div>
       </div>
     </section>
@@ -166,26 +164,36 @@ function EstimateGuide({ data }: { data: any }) {
 
 // --- Main Page Component ---
 
-export default function Home() {
-  const homeConfig = getContent('home');
+export default async function Home() {
+  const homeConfig = await getContent('home');
   const sections = homeConfig?.sections || [];
+
+  // Parallel data fetching for better performance
+  const sectionsDataPromises = sections.map(async (section: any) => {
+    if (!section.enabled) return null;
+    const data = await getContent('section', section.id);
+    return { ...section, data };
+  });
+
+  const resolvedSections = await Promise.all(sectionsDataPromises);
 
   return (
     <main className="min-h-screen bg-white">
-      {sections.map((section: any) => {
-        if (!section.enabled) return null;
-        const sectionData = getContent('section', section.id);
-        
-        switch (section.id) {
-          case 'hero': return <Hero key={section.id} data={sectionData} />;
-          case 'valueProps': return <ValueProps key={section.id} data={sectionData} />;
-          case 'concept': return <ConceptSection key={section.id} data={sectionData} />;
-          case 'comparison': return <ComparisonSection key={section.id} data={sectionData} />;
-          case 'howItWorks': return <HowItWorksSection key={section.id} data={sectionData} />;
-          case 'useCases': return <UseCasesSection key={section.id} data={sectionData} />;
-          case 'why': return <WhySection key={section.id} data={sectionData} />;
-          case 'reporting': return <Reporting key={section.id} data={sectionData} />;
-          case 'estimateGuide': return <EstimateGuide key={section.id} data={sectionData} />;
+      {resolvedSections.map((section: any) => {
+        if (!section) return null;
+
+        const { id, data } = section;
+
+        switch (id) {
+          case 'hero': return <Hero key={id} data={data} />;
+          case 'valueProps': return <ValueProps key={id} data={data} />;
+          case 'concept': return <ConceptSection key={id} data={data} />;
+          case 'comparison': return <ComparisonSection key={id} data={data} />;
+          case 'howItWorks': return <HowItWorksSection key={id} data={data} />;
+          case 'useCases': return <UseCasesSection key={id} data={data} />;
+          case 'why': return <WhySection key={id} data={data} />;
+          case 'reporting': return <Reporting key={id} data={data} />;
+          case 'estimateGuide': return <EstimateGuide key={id} data={data} />;
           default: return null;
         }
       })}

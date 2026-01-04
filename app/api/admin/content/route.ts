@@ -1,8 +1,5 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-
-const CONTENT_DIR = path.join(process.cwd(), 'content');
+import { getJSON, setJSON } from '@/lib/kv-store';
 
 const TEMPLATES: Record<string, any> = {
   valueProps: {
@@ -38,7 +35,7 @@ const TEMPLATES: Record<string, any> = {
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const type = searchParams.get('type');
+  const type = searchParams.get('type'); // 'home' or 'section'
   const id = searchParams.get('id');
 
   // Path Traversal prevention - validate id format
@@ -53,19 +50,15 @@ export async function GET(request: Request) {
 
   try {
     if (type === 'home') {
-      const data = fs.readFileSync(path.join(CONTENT_DIR, 'home.json'), 'utf-8');
-      return NextResponse.json(JSON.parse(data));
+      const data = await getJSON('content', 'home');
+      return NextResponse.json(data || {});
     } else if (type === 'section' && id) {
-      const filePath = path.join(CONTENT_DIR, 'sections', `${id}.json`);
-      if (!fs.existsSync(filePath)) {
-        return NextResponse.json({});
-      }
-      const data = fs.readFileSync(filePath, 'utf-8');
-      return NextResponse.json(JSON.parse(data));
+      const data = await getJSON('content', id);
+      return NextResponse.json(data || {});
     }
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   } catch (e) {
-    return NextResponse.json({ error: 'File not found' }, { status: 404 });
+    return NextResponse.json({ error: 'Data not found' }, { status: 404 });
   }
 }
 
@@ -73,50 +66,48 @@ export async function POST(request: Request) {
   const body = await request.json();
   const { action, type, id, content } = body;
 
-  // Path Traversal prevention - validate id and type format
+  // Path Traversal prevention
   const isValidId = (value: string | null | undefined): boolean => {
     if (!value) return true;
     return /^[a-zA-Z0-9-]+$/.test(value);
   };
 
-  if (id && !isValidId(id)) {
-    return NextResponse.json({ error: 'Invalid id format' }, { status: 400 });
-  }
-  if (type && !isValidId(type)) {
-    return NextResponse.json({ error: 'Invalid type format' }, { status: 400 });
-  }
+  if (id && !isValidId(id)) return NextResponse.json({ error: 'Invalid id format' }, { status: 400 });
+  if (type && !isValidId(type)) return NextResponse.json({ error: 'Invalid type format' }, { status: 400 });
 
   try {
-    // 1. Save Home Config (Reorder / Toggle)
+    // 1. Save Home Config
     if (action === 'save_home' || (!action && type === 'home')) {
-      fs.writeFileSync(path.join(CONTENT_DIR, 'home.json'), JSON.stringify(content, null, 2));
+      await setJSON('content', 'home', content);
       return NextResponse.json({ success: true });
     }
 
     // 2. Save Section Content
     if (action === 'save_section' || (!action && type === 'section')) {
       if (!id) return NextResponse.json({ error: 'ID is required for section save' }, { status: 400 });
-      const filePath = path.join(CONTENT_DIR, 'sections', `${id}.json`);
-      fs.writeFileSync(filePath, JSON.stringify(content, null, 2));
+      await setJSON('content', id, content);
       return NextResponse.json({ success: true });
     }
 
     // 3. Create New Section
     if (action === 'create_section') {
-      const homeData = JSON.parse(fs.readFileSync(path.join(CONTENT_DIR, 'home.json'), 'utf-8'));
+      const homeData = await getJSON('content', 'home');
 
       let newId = `${type}-1`;
       let counter = 1;
-      while (homeData.sections.find((s: any) => s.id === newId)) {
+      // Defensive check if homeData.sections exists
+      const sections = homeData?.sections || [];
+
+      while (sections.find((s: any) => s.id === newId)) {
         counter++;
         newId = `${type}-${counter}`;
       }
 
       const template = TEMPLATES[type] || { title: "New Section" };
-      fs.writeFileSync(path.join(CONTENT_DIR, 'sections', `${newId}.json`), JSON.stringify(template, null, 2));
+      await setJSON('content', newId, template);
 
-      homeData.sections.push({ id: newId, type, enabled: true });
-      fs.writeFileSync(path.join(CONTENT_DIR, 'home.json'), JSON.stringify(homeData, null, 2));
+      sections.push({ id: newId, type, enabled: true });
+      await setJSON('content', 'home', { ...homeData, sections });
 
       return NextResponse.json({ success: true, id: newId });
     }
@@ -124,6 +115,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (e: any) {
     console.error('API Error:', e);
-    return NextResponse.json({ error: e.message || 'Operation failed' }, { status: 500 });
+    return NextResponse.json({
+      error: 'Operation failed',
+      message: e.message || 'Unknown error',
+      stack: process.env.NODE_ENV === 'development' ? e.stack : undefined
+    }, { status: 500 });
   }
 }
