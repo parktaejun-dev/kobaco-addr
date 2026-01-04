@@ -114,12 +114,13 @@ export default function AdminPortal() {
     const [policies, setPolicies] = useState<{ channels: any[], bonuses: any[], surcharges: any[] }>({ channels: [], bonuses: [], surcharges: [] });
     const [segments, setSegments] = useState<any[]>([]);
     const [usageLogs, setUsageLogs] = useState<any[]>([]);
-    const [stats, setStats] = useState<DashboardStats | null>(null);
 
     // Editor State
     const [editingSection, setEditingSection] = useState<{ id: string, type: string, content: any } | null>(null);
     const [showAddModal, setShowAddModal] = useState(false);
     const [jsonEditor, setJsonEditor] = useState<{ id: string, content: string } | null>(null);
+    // Stats State
+    const [stats, setStats] = useState<any>(null);
 
     // Segment Filter State
     const [segFilters, setSegFilters] = useState({ category: '', subcategory: '' });
@@ -147,10 +148,8 @@ export default function AdminPortal() {
     const loadTabData = async () => {
         try {
             if (activeTab === 'dashboard') {
-                // Fetch Stats Dashboard data (Mock for now or implement API)
-                // You might need a GET /api/admin/stats route, but let's assume we can add it or just focus on the structure first
-                // For now, let's reuse usage logs or skip stats fetching if API isn't ready
-                // Ideally: const res = await axios.get('/api/admin/stats'); setStats(res.data);
+                const res = await axios.get('/api/admin/stats/overview');
+                setStats(res.data);
             } else if (activeTab === 'content') {
                 const res = await axios.get('/api/admin/content?type=home');
                 setHomeConfig(res.data);
@@ -353,7 +352,7 @@ export default function AdminPortal() {
                                     <span className="text-[10px] bg-slate-100 px-2 py-1 rounded font-bold text-slate-500 uppercase">Today</span>
                                 </div>
                                 <div>
-                                    <div className="text-3xl font-black text-slate-800">1,240</div>
+                                    <div className="text-3xl font-black text-slate-800">{stats?.todaySearchCount?.toLocaleString() || 0}</div>
                                     <div className="text-xs font-bold text-slate-400 mt-1">일일 검색 횟수</div>
                                 </div>
                             </div>
@@ -363,7 +362,7 @@ export default function AdminPortal() {
                                     <span className="text-[10px] bg-slate-100 px-2 py-1 rounded font-bold text-slate-500 uppercase">Today</span>
                                 </div>
                                 <div>
-                                    <div className="text-3xl font-black text-slate-800">856</div>
+                                    <div className="text-3xl font-black text-slate-800">{stats?.todayCtaCount?.toLocaleString() || 0}</div>
                                     <div className="text-xs font-bold text-slate-400 mt-1">CTA 클릭 수</div>
                                 </div>
                             </div>
@@ -373,7 +372,7 @@ export default function AdminPortal() {
                                     <span className="text-[10px] bg-slate-100 px-2 py-1 rounded font-bold text-slate-500 uppercase">Today</span>
                                 </div>
                                 <div>
-                                    <div className="text-3xl font-black text-slate-800">12</div>
+                                    <div className="text-3xl font-black text-slate-800">{stats?.todaySaves?.toLocaleString() || 0}</div>
                                     <div className="text-xs font-bold text-slate-400 mt-1">관리자 저장 횟수</div>
                                 </div>
                             </div>
@@ -383,7 +382,7 @@ export default function AdminPortal() {
                                     <span className="text-[10px] bg-slate-100 px-2 py-1 rounded font-bold text-slate-500 uppercase">Today</span>
                                 </div>
                                 <div>
-                                    <div className="text-3xl font-black text-slate-800">5</div>
+                                    <div className="text-3xl font-black text-slate-800">{stats?.todayUploads?.toLocaleString() || 0}</div>
                                     <div className="text-xs font-bold text-slate-400 mt-1">이미지 업로드</div>
                                 </div>
                             </div>

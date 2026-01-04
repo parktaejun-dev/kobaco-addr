@@ -13,7 +13,7 @@ import Footer from '@/components/Footer';
 function Hero({ data }: { data: any }) {
   if (!data) return null;
   return (
-    <section className="section-surface relative w-full min-h-[85vh] flex items-center justify-center overflow-hidden border-b border-slate-200">
+    <section className="relative w-full min-h-[90vh] flex items-center justify-center overflow-hidden bg-slate-950 text-white">
       <div className="section-wrap section-pad">
         <div className="relative z-10 max-w-5xl mx-auto text-center space-y-10">
           <div className="space-y-6">
@@ -22,11 +22,11 @@ function Hero({ data }: { data: any }) {
                 {data.eyebrow}
               </span>
             )}
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.1] text-slate-900 text-balance">
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.1] text-white text-balance">
               {data.title}
             </h1>
           </div>
-          <p className="text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed text-balance">
+          <p className="text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed text-balance">
             {data.subtitle}
           </p>
           {data.stats?.length > 0 && (
@@ -64,7 +64,7 @@ function ValueProps({ data }: { data: any }) {
     <FileText key="3" className="h-6 w-6" />
   ];
   return (
-    <section id="valueProps" className="section-white section-pad">
+    <section id="valueProps" className="section-pad bg-slate-50">
       <div className="section-wrap">
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
           <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
@@ -74,7 +74,7 @@ function ValueProps({ data }: { data: any }) {
         </div>
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {data.cards?.map((card: any, i: number) => (
-            <div key={i} className="card card-hover p-8 group flex flex-col items-start bg-slate-50/50">
+            <div key={i} className="card card-hover p-8 group flex flex-col items-start bg-white shadow-md">
               <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-blue-700 mb-6 shadow-sm border border-slate-100 group-hover:scale-110 transition-transform">
                 {icons[i % 3]}
               </div>
@@ -91,7 +91,7 @@ function ValueProps({ data }: { data: any }) {
 function Reporting({ data }: { data: any }) {
   if (!data) return null;
   return (
-    <section id="reporting" className="section-surface section-divider section-pad">
+    <section id="reporting" className="section-pad bg-slate-900 text-slate-100">
       <div className="section-wrap grid lg:grid-cols-2 gap-16 items-center">
         <div className="space-y-8">
           <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 leading-tight text-balance">{data.title}</h2>
@@ -110,20 +110,20 @@ function Reporting({ data }: { data: any }) {
 
         {/* Metric Cards instead of Image Placeholder */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+          <div className="bg-slate-950 text-white shadow-2xl border-0 p-6 rounded-2xl">
             <div className="text-sm font-bold text-slate-400 mb-2">Total Impressions</div>
-            <div className="text-3xl font-black text-slate-900">1,240,500</div>
+            <div className="text-3xl font-black text-white">1,240,500</div>
             <div className="text-xs text-emerald-600 font-bold mt-2 flex items-center gap-1">▲ 12.5% vs last week</div>
           </div>
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+          <div className="bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700">
             <div className="text-sm font-bold text-slate-400 mb-2">Avg. CPV</div>
-            <div className="text-3xl font-black text-slate-900">12.5 KRW</div>
+            <div className="text-3xl font-black text-white">12.5 KRW</div>
             <div className="text-xs text-blue-600 font-bold mt-2">Optimized</div>
           </div>
-          <div className="col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+          <div className="col-span-2 bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700 flex items-center justify-between">
             <div>
               <div className="text-sm font-bold text-slate-400 mb-1">Campaign Status</div>
-              <div className="text-lg font-black text-slate-900">Active / On Track</div>
+              <div className="text-lg font-black text-white">Active / On Track</div>
             </div>
             <div className="h-10 w-10 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center animate-pulse">
               <BarChart3 size={20} />
@@ -188,7 +188,18 @@ export default async function Home() {
   const resolvedSections = await Promise.all(sectionsDataPromises);
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-white relative">
+      {/* Global Header / Logo */}
+      <header className="absolute top-0 left-0 w-full z-50 p-6 md:p-10 pointer-events-none">
+        <div className="section-wrap pointer-events-auto">
+          <img
+            src="https://n2wpsx55oxsmnkaa.public.blob.vercel-storage.com/webpage/logo_red.png"
+            alt="KOBACO Addressable TV"
+            className="h-8 md:h-10"
+          />
+        </div>
+      </header>
+
       {resolvedSections.map((section: any) => {
         if (!section || !section.data) return null; // Check for data existence
 
@@ -207,7 +218,6 @@ export default async function Home() {
           default: return null;
         }
       })}
-      <Footer />
     </main>
   );
 }
