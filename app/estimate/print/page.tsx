@@ -109,8 +109,8 @@ export default function EstimatePrint() {
       <div className="max-w-[210mm] min-h-[297mm] mx-auto bg-white shadow-2xl p-[20mm] print:shadow-none print:p-[15mm]">
 
         {/* Header with Logo */}
-        <div className="flex justify-between items-center border-b-[2px] border-[#004a9e] pb-2 mb-4">
-          <h1 className="text-[20px] font-black text-[#004a9e]">AI 광고 최적화 플랜</h1>
+        <div className="flex justify-between items-center border-b-2 border-slate-900 pb-2 mb-4">
+          <h1 className="text-[20px] font-black text-slate-900">AI 광고 최적화 플랜</h1>
           <Image
             src="/kobaco_logo.png"
             alt="KOBACO"
@@ -140,8 +140,8 @@ export default function EstimatePrint() {
 
         {/* AI Strategy Summary */}
         {aiResult?.understanding && (
-          <section className="bg-[#f0f6ff] border border-[#cce0ff] p-3 rounded mb-4">
-            <h2 className="text-[#004a9e] font-black text-sm border-b border-[#cce0ff] pb-1 mb-2 mt-0">
+          <section className="bg-gray-50 border border-gray-200 p-3 rounded mb-4">
+            <h2 className="text-slate-900 font-black text-sm border-b border-gray-200 pb-1 mb-2 mt-0">
               AI 광고 전략 총평
             </h2>
             <p className="text-[11px] text-gray-800 leading-normal whitespace-pre-wrap">
@@ -152,32 +152,32 @@ export default function EstimatePrint() {
 
         {/* Summary Cards */}
         <div className="grid grid-cols-3 gap-3 mb-4">
-          <div className="bg-gray-50 border border-gray-200 p-2 rounded text-center">
+          <div className="bg-white border border-gray-200 p-2 rounded text-center shadow-sm">
             <h3 className="text-[10px] text-gray-500 mb-1 font-bold">총 월 예산</h3>
-            <p className="text-sm font-black text-[#004a9e]">{result.summary.total_budget.toLocaleString()}원</p>
+            <p className="text-sm font-black text-slate-900">{result.summary.total_budget.toLocaleString()}원</p>
           </div>
-          <div className="bg-gray-50 border border-gray-200 p-2 rounded text-center">
+          <div className="bg-white border border-gray-200 p-2 rounded text-center shadow-sm">
             <h3 className="text-[10px] text-gray-500 mb-1 font-bold">총 월 노출수</h3>
-            <p className="text-sm font-black text-[#004a9e]">{result.summary.total_impressions.toLocaleString()}회</p>
+            <p className="text-sm font-black text-slate-900">{result.summary.total_impressions.toLocaleString()}회</p>
           </div>
-          <div className="bg-gray-50 border border-gray-200 p-2 rounded text-center">
+          <div className="bg-white border border-gray-200 p-2 rounded text-center shadow-sm">
             <h3 className="text-[10px] text-gray-500 mb-1 font-bold">평균 CPV</h3>
-            <p className="text-sm font-black text-[#004a9e]">{result.summary.average_cpv.toFixed(1)}원</p>
+            <p className="text-sm font-black text-slate-900">{result.summary.average_cpv.toFixed(1)}원</p>
           </div>
         </div>
 
         {/* Channel Detail Table */}
-        <h2 className="text-[#004a9e] font-black text-xs border-l-4 border-[#004a9e] pl-2 mb-2 mt-4">채널별 상세 내역 (월 기준)</h2>
+        <h2 className="text-slate-900 font-black text-xs border-l-4 border-slate-900 pl-2 mb-2 mt-4">채널별 상세 내역 (월 기준)</h2>
         <table className="w-full text-[10px] border-collapse mb-4">
-          <thead className="bg-[#f0f6ff]">
+          <thead className="bg-gray-50">
             <tr>
-              <th className="border border-gray-200 px-1 py-1 text-center font-bold">채널</th>
-              <th className="border border-gray-200 px-1 py-1 text-center font-bold">예산(원)</th>
-              <th className="border border-gray-200 px-1 py-1 text-center font-bold">기본 CPV</th>
-              <th className="border border-gray-200 px-1 py-1 text-center font-bold">보너스율</th>
-              <th className="border border-gray-200 px-1 py-1 text-center font-bold">할증율</th>
-              <th className="border border-gray-200 px-1 py-1 text-center font-bold">최종 CPV</th>
-              <th className="border border-gray-200 px-1 py-1 text-center font-bold">보장 노출수</th>
+              <th className="border border-gray-200 px-1 py-1 text-center font-bold text-gray-700">채널</th>
+              <th className="border border-gray-200 px-1 py-1 text-center font-bold text-gray-700">예산(원)</th>
+              <th className="border border-gray-200 px-1 py-1 text-center font-bold text-gray-700">기본 CPV</th>
+              <th className="border border-gray-200 px-1 py-1 text-center font-bold text-gray-700">보너스율</th>
+              <th className="border border-gray-200 px-1 py-1 text-center font-bold text-gray-700">할증율</th>
+              <th className="border border-gray-200 px-1 py-1 text-center font-bold text-gray-700">최종 CPV</th>
+              <th className="border border-gray-200 px-1 py-1 text-center font-bold text-gray-700">보장 노출수</th>
             </tr>
           </thead>
           <tbody>
@@ -207,7 +207,7 @@ export default function EstimatePrint() {
         {/* AI Target Analysis Detail (if available) */}
         {aiResult && aiResult.segments.length > 0 && (
           <>
-            <h2 className="text-[#004a9e] font-bold text-lg border-b-2 border-gray-200 pb-2 mb-4 mt-6">
+            <h2 className="text-slate-900 font-bold text-lg border-b-2 border-gray-200 pb-2 mb-4 mt-6">
               🎯 AI 타겟 분석 상세
             </h2>
             <div className="bg-gray-50 border border-gray-200 p-4 rounded">
@@ -224,7 +224,7 @@ export default function EstimatePrint() {
                   {segment.key_factors && segment.key_factors.length > 0 && (
                     <p className="text-sm text-gray-700 ml-5 mt-1">
                       <strong>🔑 핵심 매칭 요소:</strong>{' '}
-                      <span className="text-[#004a9e] font-bold">{segment.key_factors.join(', ')}</span>
+                      <span className="text-slate-700 font-bold">{segment.key_factors.join(', ')}</span>
                     </p>
                   )}
                   <p className="text-sm text-gray-700 ml-5 mt-1">
@@ -242,7 +242,7 @@ export default function EstimatePrint() {
             <strong>[제안서 문의] KOBACO 전략마케팅국 크로스세일즈팀</strong><br />
             박태준 차장 (02-731-7297, tj1000@kobaco.co.kr) | 이효정 과장 (02-731-7296, hlee0405@kobaco.co.kr)
           </div>
-          <p>© KOBACO. 본 문서는 시뮬레이션 결과이며 실제 집행 시 변동될 수 있습니다.</p>
+          <p>© KOBACO.</p>
         </div>
 
       </div>
