@@ -5,11 +5,24 @@ import path from 'path';
 
 const POLICY_DIR = path.join(process.cwd(), 'policy');
 
+// Whitelist of allowed policy types
+const ALLOWED_TYPES = ['channels', 'bonuses', 'surcharges', 'segments'] as const;
+type PolicyType = typeof ALLOWED_TYPES[number];
+
+const isValidType = (type: string | null): type is PolicyType => {
+  return type !== null && ALLOWED_TYPES.includes(type as PolicyType);
+};
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const type = searchParams.get('type'); // 'channels', 'bonuses', 'surcharges', 'segments'
+  const type = searchParams.get('type');
 
   if (!type) return NextResponse.json({ error: 'Type required' }, { status: 400 });
+
+  // Whitelist validation
+  if (!isValidType(type)) {
+    return NextResponse.json({ error: 'Invalid type. Allowed: channels, bonuses, surcharges, segments' }, { status: 400 });
+  }
 
   try {
     const filePath = path.join(POLICY_DIR, `${type}.json`);
@@ -26,6 +39,11 @@ export async function POST(request: Request) {
   const { type, data } = body;
 
   if (!type || !data) return NextResponse.json({ error: 'Invalid data' }, { status: 400 });
+
+  // Whitelist validation
+  if (!isValidType(type)) {
+    return NextResponse.json({ error: 'Invalid type. Allowed: channels, bonuses, surcharges, segments' }, { status: 400 });
+  }
 
   try {
     const filePath = path.join(POLICY_DIR, `${type}.json`);

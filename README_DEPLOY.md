@@ -11,7 +11,15 @@
 1. 이 저장소(Git Repository)를 본인의 GitHub에 푸시합니다.
 2. [Vercel Dashboard](https://vercel.com/dashboard)에서 **"Add New" -> "Project"**를 클릭합니다.
 3. GitHub 저장소를 연결하고 **"Import"**를 누릅니다.
-4. **Environment Variables** 섹션에 `.env.example`의 내용을 참고하여 환경 변수를 추가합니다.
+4. **Environment Variables** 섹션에 아래 환경 변수를 추가합니다:
+   
+   **🔐 관리자 인증 (필수)**
+   - `ADMIN_USER`: 관리자 아이디 (예: `admin`)
+   - `ADMIN_PASSWORD`: 관리자 비밀번호 (강력한 비밀번호 권장)
+   
+   **⚠️ 주의: 위 환경변수를 설정하지 않으면 /admin 페이지 접근이 완전히 차단됩니다.**
+   
+   **📦 선택 사항**
    - `NEXT_PUBLIC_SANITY_PROJECT_ID`: Sanity 프로젝트 ID
    - `NEXT_PUBLIC_SANITY_DATASET`: `production`
 5. **"Deploy"** 버튼을 누르면 배포가 완료됩니다.
