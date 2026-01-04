@@ -17,8 +17,8 @@ export default function EstimatePage() {
   const [result, setResult] = useState<EstimateResult | null>(null);
 
   const [formData, setFormData] = useState<EstimateRequest>({
-    selected_channels: ['MBC', 'EBS', 'KBS', 'TVCHOSUN'],
-    channel_budgets: { 'MBC': 1500, 'EBS': 1000, 'KBS': 0, 'TVCHOSUN': 2500 },
+    selected_channels: ['MBC', 'EBS', 'PP'],
+    channel_budgets: { 'MBC': 1500, 'EBS': 1000, 'PP': 2500 },
     duration: 3,
     region_targeting: false,
     region_selections: {},
@@ -325,30 +325,56 @@ export default function EstimatePage() {
               </p>
 
               <div className="space-y-6">
-                {/* Channel Budgets */}
-                <div className="bg-gray-50 p-4 rounded-xl border">
-                  <h4 className="font-medium text-gray-700 mb-4">📊 채널별 예산 배분 (단위: 만원)</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {['MBC', 'EBS', 'KBS', 'TVCHOSUN'].map(ch => (
-                      <div key={ch}>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">{ch}</label>
-                        <input
-                          type="number"
-                          min="0"
-                          step="100"
-                          value={formData.channel_budgets[ch] || ''}
-                          onChange={(e) => handleBudgetChange(ch, e.target.value)}
-                          placeholder="0"
-                          className="w-full px-3 py-2 text-right border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                        />
+                {/* Total Budget Input & Auto Distribution */}
+                <div className="bg-gray-50 p-6 rounded-xl border">
+                  <div className="mb-6">
+                    <label className="block text-sm font-bold text-gray-700 mb-2">💰 총 월 예산 (단위: 만원)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="100"
+                      value={totalBudget || ''}
+                      onChange={(e) => {
+                        const total = parseFloat(e.target.value) || 0;
+                        // Streamlit logic: MBC 30%, EBS 20%, PP 50%
+                        const allocations = { 'MBC': 0.3, 'EBS': 0.2, 'PP': 0.5 };
+
+                        const newBudgets: Record<string, number> = {
+                          'MBC': Math.floor(total * allocations['MBC']),
+                          'EBS': Math.floor(total * allocations['EBS']),
+                          'PP': Math.floor(total * allocations['PP'])
+                        };
+
+                        // Fix rounding errors by adding remainder to PP
+                        const loadedTotal = Object.values(newBudgets).reduce((a, b) => a + b, 0);
+                        if (total > loadedTotal) {
+                          newBudgets['PP'] += (total - loadedTotal);
+                        }
+
+                        setFormData(prev => ({
+                          ...prev,
+                          channel_budgets: newBudgets,
+                          selected_channels: total > 0 ? ['MBC', 'EBS', 'PP'] : []
+                        }));
+                      }}
+                      placeholder="예: 5000"
+                      className="w-full px-4 py-3 text-right text-lg font-bold border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                    />
+                    <p className="text-xs text-gray-500 mt-2 text-right">
+                      * 입력하신 예산은 MBC(30%), EBS(20%), PP(50%) 비율로 자동 배분됩니다.
+                    </p>
+                  </div>
+
+                  <h4 className="font-medium text-gray-700 mb-4 text-sm">📊 채널별 배분 결과 (자동 계산)</h4>
+                  <div className="grid grid-cols-3 gap-4">
+                    {['MBC', 'EBS', 'PP'].map(ch => (
+                      <div key={ch} className="bg-white p-3 rounded-lg border">
+                        <span className="block text-xs font-semibold text-gray-500 mb-1">{ch}</span>
+                        <div className="text-right font-bold text-gray-900">
+                          {(formData.channel_budgets[ch] || 0).toLocaleString()} <span className="text-xs font-normal">만원</span>
+                        </div>
                       </div>
                     ))}
-                  </div>
-                  <div className="mt-4 pt-4 border-t flex justify-between items-center">
-                    <span className="font-medium text-gray-700">총 예산:</span>
-                    <span className="text-xl font-bold text-blue-600">
-                      {totalBudget.toLocaleString()}만원
-                    </span>
                   </div>
                 </div>
 
