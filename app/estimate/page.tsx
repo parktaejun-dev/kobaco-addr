@@ -110,7 +110,7 @@ export default function EstimatePage() {
 
   const totalBudget = Object.values(formData.channel_budgets).reduce((a, b) => a + b, 0);
   const hasProductInfo = clientInfo.productName.trim().length > 0;
-  const hasAIResult = aiResult && aiResult.segments.length > 0;
+  const hasAIResult = !!(aiResult && aiResult.segments.length > 0);
 
   return (
     <div className="min-h-screen bg-gray-50">
