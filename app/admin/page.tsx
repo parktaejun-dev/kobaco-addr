@@ -6,8 +6,7 @@ import { toast } from 'sonner';
 import {
     Lock, Layout, ShieldCheck, Database, BarChart3,
     Edit, Trash2, Plus, ChevronDown, Check, X,
-    ArrowUp, ArrowDown, Eye, Save, Settings,
-    Move
+    Eye, Save, Settings, Move, GripVertical
 } from 'lucide-react';
 
 type Tab = 'home' | 'content' | 'policies' | 'segments' | 'usage';
@@ -80,16 +79,15 @@ export default function AdminPortal() {
 
     // --- Content Builder Handlers ---
 
-    const moveSection = async (index: number, direction: 'up' | 'down') => {
-        const newSections = [...homeConfig.sections];
-        const targetIndex = direction === 'up' ? index - 1 : index + 1;
-        if (targetIndex < 0 || targetIndex >= newSections.length) return;
-
-        [newSections[index], newSections[targetIndex]] = [newSections[targetIndex], newSections[index]];
-        const newConfig = { ...homeConfig, sections: newSections };
+    const updateSectionOrder = async (newList: any[]) => {
+        const newConfig = { ...homeConfig, sections: newList };
         setHomeConfig(newConfig);
-        await axios.post('/api/admin/content', { action: 'save_home', content: newConfig });
-        toast.success("Order updated");
+        try {
+            await axios.post('/api/admin/content', { action: 'save_home', content: newConfig });
+            toast.success("순서가 저장되었습니다.");
+        } catch (e) {
+            toast.error("순서 저장 실패");
+        }
     };
 
     const toggleSection = async (id: string, current: boolean) => {
@@ -252,44 +250,80 @@ export default function AdminPortal() {
 
                 {/* Tab: Content (Section Manager) */}
                 {activeTab === 'content' && homeConfig && (
-                    <div className="space-y-4">
-                        {homeConfig.sections.map((section: any, index: number) => (
-                            <div key={section.id} className={`bg-white rounded-2xl border-2 transition-all ${section.enabled ? 'border-transparent shadow-sm' : 'border-dashed border-slate-200 opacity-60'}`}>
-                                <div className="p-6 flex items-center justify-between">
-                                    <div className="flex items-center gap-6">
-                                        <div className="flex flex-col gap-1">
-                                            <button onClick={() => moveSection(index, 'up')} disabled={index === 0} className="text-slate-300 hover:text-blue-500 disabled:opacity-0"><ArrowUp size={16} /></button>
-                                            <button onClick={() => moveSection(index, 'down')} disabled={index === homeConfig.sections.length - 1} className="text-slate-300 hover:text-blue-500 disabled:opacity-0"><ArrowDown size={16} /></button>
-                                        </div>
-                                        <div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-black text-lg text-slate-800 tracking-tight">{section.id}</span>
-                                                <span className="bg-slate-100 text-slate-500 text-[10px] font-black px-2 py-0.5 rounded uppercase">{section.type}</span>
+                    <div className="space-y-6">
+                        <div className="flex justify-between items-center mb-4">
+                            <div>
+                                <h3 className="text-2xl font-black text-slate-800 tracking-tight">섹션 구성 및 순서</h3>
+                                <p className="text-slate-500 font-medium">섹션을 드래그하여 순서를 변경하거나 노출 여부를 설정하세요.</p>
+                            </div>
+                            <button onClick={() => setShowAddModal(true)} className="px-6 py-3 bg-blue-600 text-white rounded-2xl font-black shadow-xl shadow-blue-100 hover:bg-blue-700 transition-all flex items-center gap-2">
+                                <Plus size={20} /> 새 섹션 추가
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            {homeConfig.sections.map((section: any, index: number) => (
+                                <div
+                                    key={section.id}
+                                    className={`bg-white rounded-2xl border-2 transition-all ${section.enabled ? 'border-transparent shadow-sm' : 'border-dashed border-slate-200 opacity-60'}`}
+                                    onDragOver={(e) => e.preventDefault()}
+                                    onDrop={(e) => {
+                                        e.preventDefault();
+                                        const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+                                        if (fromIndex !== index) {
+                                            const newSections = [...homeConfig.sections];
+                                            const [moved] = newSections.splice(fromIndex, 1);
+                                            newSections.splice(index, 0, moved);
+                                            updateSectionOrder(newSections);
+                                        }
+                                    }}
+                                >
+                                    <div className="p-6 flex items-center justify-between">
+                                        <div className="flex items-center gap-6">
+                                            <div
+                                                className="flex flex-col items-center justify-center text-slate-300 cursor-grab active:cursor-grabbing p-2 hover:text-blue-500 transition-colors"
+                                                draggable
+                                                onDragStart={(e) => e.dataTransfer.setData('text/plain', index.toString())}
+                                            >
+                                                <GripVertical size={20} />
                                             </div>
-                                            <p className="text-xs text-slate-400 mt-1 font-bold">섹션 내용을 편집하려면 오른쪽 버튼을 클릭하세요.</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <button onClick={() => openEditor(section)} className="flex items-center gap-2 px-5 py-2.5 bg-blue-50 text-blue-700 rounded-xl hover:bg-blue-100 font-bold text-sm transition-all">
-                                            <Edit size={16} /> 내용 편집
-                                        </button>
-                                        <button onClick={() => toggleSection(section.id, section.enabled)} className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all ${section.enabled ? 'bg-green-50 text-green-600' : 'bg-slate-100 text-slate-400'}`}>
-                                            {section.enabled ? '노출 중' : '숨김'}
-                                        </button>
-                                        {section.type === 'hero' ? (
-                                            <div className="p-2.5 text-slate-200 cursor-not-allowed group relative" title="히어로 섹션은 삭제할 수 없습니다.">
-                                                <Lock size={18} />
-                                                <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none transition-opacity">삭제 불가</span>
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-black text-lg text-slate-800 tracking-tight">{
+                                                        section.id === 'hero' ? '히어로 섹션' :
+                                                            section.id === 'valueProps' ? '서비스 특장점' :
+                                                                section.id === 'howItWorks' ? '작동 방식' :
+                                                                    section.id === 'faq' ? '자주 묻는 질문' :
+                                                                        section.id === 'reporting' ? '리포트 안내' :
+                                                                            section.id === 'estimateGuide' ? '견적 가이드' : section.id
+                                                    }</span>
+                                                    <span className="bg-slate-100 text-slate-500 text-[10px] font-black px-2 py-0.5 rounded uppercase">{section.type}</span>
+                                                </div>
+                                                <p className="text-xs text-slate-400 mt-1 font-bold">드래그하여 순서를 변경할 수 있습니다.</p>
                                             </div>
-                                        ) : (
-                                            <button onClick={() => deleteSection(section.id)} className="p-2.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
-                                                <Trash2 size={18} />
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <button onClick={() => openEditor(section)} className="flex items-center gap-2 px-5 py-2.5 bg-blue-50 text-blue-700 rounded-xl hover:bg-blue-100 font-bold text-sm transition-all">
+                                                <Edit size={16} /> 내용 편집
                                             </button>
-                                        )}
+                                            <button onClick={() => toggleSection(section.id, section.enabled)} className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all ${section.enabled ? 'bg-green-50 text-green-600' : 'bg-slate-100 text-slate-400'}`}>
+                                                {section.enabled ? '노출 중' : '숨김'}
+                                            </button>
+                                            {section.type === 'hero' ? (
+                                                <div className="p-2.5 text-slate-200 cursor-not-allowed group relative" title="히어로 섹션은 삭제할 수 없습니다.">
+                                                    <Lock size={18} />
+                                                    <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none transition-opacity">삭제 불가</span>
+                                                </div>
+                                            ) : (
+                                                <button onClick={() => deleteSection(section.id)} className="p-2.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
                 )}
 
@@ -372,21 +406,29 @@ export default function AdminPortal() {
                             <div className="space-y-8">
                                 {['MBC', 'EBS', 'PP'].map(channel => {
                                     const channelBonuses = policies.bonuses.filter(b => b.channel_name === channel);
-                                    if (channelBonuses.length === 0) return null;
                                     return (
-                                        <div key={channel} className="border rounded-2xl overflow-hidden">
-                                            <div className="px-4 py-2 bg-slate-50 border-b font-black text-[10px] text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div> {channel} 매체 보너스
+                                        <div key={channel} className="border rounded-2xl overflow-hidden shadow-sm">
+                                            <div className="px-6 py-4 bg-slate-50 border-b flex justify-between items-center">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                                                    <span className="font-black text-base text-slate-800">{channel} 매체 보너스</span>
+                                                </div>
+                                                <button onClick={() => {
+                                                    const newList = [...policies.bonuses, { channel_name: channel, bonus_type: "volume", condition_type: "min_budget", min_value: 0, rate: 0.1, description: "신규 항목" }];
+                                                    setPolicies({ ...policies, bonuses: newList });
+                                                }} className="px-3 py-1.5 bg-white border border-slate-200 text-blue-600 rounded-lg font-bold text-xs hover:bg-blue-50 transition-all flex items-center gap-1">
+                                                    <Plus size={14} /> 항목 추가
+                                                </button>
                                             </div>
                                             <table className="w-full text-xs">
                                                 <thead className="bg-white/50 border-b border-slate-100">
-                                                    <tr className="text-slate-400 font-bold">
-                                                        <th className="p-3 text-left w-24">종류</th>
-                                                        <th className="p-3 text-left w-28">조건</th>
-                                                        <th className="p-3 text-right w-24">기준값</th>
-                                                        <th className="p-3 text-right w-20">보너스율</th>
-                                                        <th className="p-3 text-left">설명</th>
-                                                        <th className="p-3 w-10"></th>
+                                                    <tr className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">
+                                                        <th className="p-4 text-left w-32">종류</th>
+                                                        <th className="p-4 text-left w-32">조건</th>
+                                                        <th className="p-4 text-right w-32">기준값</th>
+                                                        <th className="p-4 text-right w-24">보너스율</th>
+                                                        <th className="p-4 text-left">설명</th>
+                                                        <th className="p-4 w-12"></th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-slate-50">
@@ -394,36 +436,39 @@ export default function AdminPortal() {
                                                         const i = policies.bonuses.indexOf(bo);
                                                         return (
                                                             <tr key={i} className="hover:bg-slate-50/50 transition-colors group text-[11px]">
-                                                                <td className="p-2"><input type="text" value={bo.bonus_type} onChange={e => {
+                                                                <td className="p-3"><input type="text" value={bo.bonus_type} onChange={e => {
                                                                     const newList = [...policies.bonuses];
                                                                     newList[i].bonus_type = e.target.value;
                                                                     setPolicies({ ...policies, bonuses: newList });
-                                                                }} className="w-full bg-transparent p-1 outline-none focus:bg-white rounded" /></td>
-                                                                <td className="p-2 text-slate-400 italic font-mono">{bo.condition_type}</td>
-                                                                <td className="p-2"><input type="number" value={bo.min_value} onChange={e => {
+                                                                }} className="w-full bg-transparent p-1.5 outline-none font-bold text-slate-700 focus:bg-white rounded border border-transparent focus:border-slate-200" /></td>
+                                                                <td className="p-3 text-slate-400 italic font-mono px-4">{bo.condition_type}</td>
+                                                                <td className="p-3"><input type="number" value={bo.min_value} onChange={e => {
                                                                     const newList = [...policies.bonuses];
                                                                     newList[i].min_value = parseFloat(e.target.value);
                                                                     setPolicies({ ...policies, bonuses: newList });
-                                                                }} className="w-full bg-transparent p-1 outline-none text-right font-medium focus:bg-white rounded" /></td>
-                                                                <td className="p-2"><input type="number" step="0.01" value={bo.rate} onChange={e => {
+                                                                }} className="w-full bg-transparent p-1.5 outline-none text-right font-medium focus:bg-white rounded border border-transparent focus:border-slate-200" /></td>
+                                                                <td className="p-3"><input type="number" step="0.01" value={bo.rate} onChange={e => {
                                                                     const newList = [...policies.bonuses];
                                                                     newList[i].rate = parseFloat(e.target.value);
                                                                     setPolicies({ ...policies, bonuses: newList });
-                                                                }} className="w-full bg-transparent p-1 outline-none text-right font-bold text-green-600 focus:bg-white rounded" /></td>
-                                                                <td className="p-2"><input type="text" value={bo.description} onChange={e => {
+                                                                }} className="w-full bg-transparent p-1.5 outline-none text-right font-black text-green-600 focus:bg-white rounded border border-transparent focus:border-slate-200" /></td>
+                                                                <td className="p-3"><input type="text" value={bo.description} onChange={e => {
                                                                     const newList = [...policies.bonuses];
                                                                     newList[i].description = e.target.value;
                                                                     setPolicies({ ...policies, bonuses: newList });
-                                                                }} className="w-full bg-transparent p-1 outline-none text-slate-400 focus:bg-white rounded" /></td>
-                                                                <td className="p-2 text-center">
+                                                                }} className="w-full bg-transparent p-1.5 outline-none text-slate-500 focus:bg-white rounded border border-transparent focus:border-slate-200" /></td>
+                                                                <td className="p-3 text-center">
                                                                     <button onClick={() => {
                                                                         const newList = policies.bonuses.filter((_, idx) => idx !== i);
                                                                         setPolicies({ ...policies, bonuses: newList });
-                                                                    }} className="text-slate-200 hover:text-red-500 opacity-0 group-hover:opacity-100"><Trash2 size={14} /></button>
+                                                                    }} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"><Trash2 size={16} /></button>
                                                                 </td>
                                                             </tr>
                                                         );
                                                     })}
+                                                    {channelBonuses.length === 0 && (
+                                                        <tr><td colSpan={6} className="p-8 text-center text-slate-400 font-bold italic">등록된 정책이 없습니다.</td></tr>
+                                                    )}
                                                 </tbody>
                                             </table>
                                         </div>
@@ -450,20 +495,28 @@ export default function AdminPortal() {
                             <div className="space-y-8">
                                 {['MBC', 'EBS', 'PP'].map(channel => {
                                     const channelSurcharges = policies.surcharges.filter(s => s.channel_name === channel);
-                                    if (channelSurcharges.length === 0) return null;
                                     return (
-                                        <div key={channel} className="border rounded-2xl overflow-hidden">
-                                            <div className="px-4 py-2 bg-slate-50 border-b font-black text-[10px] text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-orange-500"></div> {channel} 매체 할증
+                                        <div key={channel} className="border rounded-2xl overflow-hidden shadow-sm">
+                                            <div className="px-6 py-4 bg-slate-50 border-b flex justify-between items-center">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-2 h-2 rounded-full bg-orange-500"></div>
+                                                    <span className="font-black text-base text-slate-800">{channel} 매체 할증</span>
+                                                </div>
+                                                <button onClick={() => {
+                                                    const newList = [...policies.surcharges, { channel_name: channel, surcharge_type: "region", condition_value: "지역", rate: 0.1, description: "신규 할증" }];
+                                                    setPolicies({ ...policies, surcharges: newList });
+                                                }} className="px-3 py-1.5 bg-white border border-slate-200 text-orange-600 rounded-lg font-bold text-xs hover:bg-orange-50 transition-all flex items-center gap-1">
+                                                    <Plus size={14} /> 항목 추가
+                                                </button>
                                             </div>
                                             <table className="w-full text-xs">
                                                 <thead className="bg-white/50 border-b border-slate-100">
-                                                    <tr className="text-slate-400 font-bold">
-                                                        <th className="p-3 text-left w-28">종류</th>
-                                                        <th className="p-3 text-left w-28">조건값</th>
-                                                        <th className="p-3 text-right w-20">할증률</th>
-                                                        <th className="p-3 text-left">설명</th>
-                                                        <th className="p-3 w-10"></th>
+                                                    <tr className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">
+                                                        <th className="p-4 text-left w-32">종류</th>
+                                                        <th className="p-4 text-left w-32">조건값</th>
+                                                        <th className="p-4 text-right w-32">할증률</th>
+                                                        <th className="p-4 text-left">설명</th>
+                                                        <th className="p-4 w-12"></th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-slate-50">
@@ -471,35 +524,38 @@ export default function AdminPortal() {
                                                         const i = policies.surcharges.indexOf(sc);
                                                         return (
                                                             <tr key={i} className="hover:bg-slate-50/50 transition-colors group">
-                                                                <td className="p-2"><input type="text" value={sc.surcharge_type} onChange={e => {
+                                                                <td className="p-3"><input type="text" value={sc.surcharge_type} onChange={e => {
                                                                     const newList = [...policies.surcharges];
                                                                     newList[i].surcharge_type = e.target.value;
                                                                     setPolicies({ ...policies, surcharges: newList });
-                                                                }} className="w-full bg-transparent p-1 outline-none focus:bg-white rounded" /></td>
-                                                                <td className="p-2"><input type="text" value={sc.condition_value} onChange={e => {
+                                                                }} className="w-full bg-transparent p-1.5 outline-none font-bold text-slate-700 focus:bg-white rounded border border-transparent focus:border-slate-200" /></td>
+                                                                <td className="p-3"><input type="text" value={sc.condition_value} onChange={e => {
                                                                     const newList = [...policies.surcharges];
                                                                     newList[i].condition_value = e.target.value;
                                                                     setPolicies({ ...policies, surcharges: newList });
-                                                                }} className="w-full bg-transparent p-1 outline-none focus:bg-white rounded" /></td>
-                                                                <td className="p-2"><input type="number" step="0.01" value={sc.rate} onChange={e => {
+                                                                }} className="w-full bg-transparent p-1.5 outline-none font-medium text-slate-700 focus:bg-white rounded border border-transparent focus:border-slate-200" /></td>
+                                                                <td className="p-3"><input type="number" step="0.01" value={sc.rate} onChange={e => {
                                                                     const newList = [...policies.surcharges];
                                                                     newList[i].rate = parseFloat(e.target.value);
                                                                     setPolicies({ ...policies, surcharges: newList });
-                                                                }} className="w-full bg-transparent p-1 outline-none text-right font-bold text-orange-600 focus:bg-white rounded" /></td>
-                                                                <td className="p-2"><input type="text" value={sc.description} onChange={e => {
+                                                                }} className="w-full bg-transparent p-1.5 outline-none text-right font-black text-orange-600 focus:bg-white rounded border border-transparent focus:border-slate-200" /></td>
+                                                                <td className="p-3"><input type="text" value={sc.description} onChange={e => {
                                                                     const newList = [...policies.surcharges];
                                                                     newList[i].description = e.target.value;
                                                                     setPolicies({ ...policies, surcharges: newList });
-                                                                }} className="w-full bg-transparent p-1 outline-none text-slate-400 focus:bg-white rounded" /></td>
-                                                                <td className="p-2 text-center">
+                                                                }} className="w-full bg-transparent p-1.5 outline-none text-slate-500 focus:bg-white rounded border border-transparent focus:border-slate-200" /></td>
+                                                                <td className="p-3 text-center">
                                                                     <button onClick={() => {
                                                                         const newList = policies.surcharges.filter((_, idx) => idx !== i);
                                                                         setPolicies({ ...policies, surcharges: newList });
-                                                                    }} className="text-slate-200 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"><Trash2 size={14} /></button>
+                                                                    }} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"><Trash2 size={16} /></button>
                                                                 </td>
                                                             </tr>
                                                         );
                                                     })}
+                                                    {channelSurcharges.length === 0 && (
+                                                        <tr><td colSpan={5} className="p-8 text-center text-slate-400 font-bold italic">등록된 정책이 없습니다.</td></tr>
+                                                    )}
                                                 </tbody>
                                             </table>
                                         </div>
@@ -539,6 +595,15 @@ export default function AdminPortal() {
                                     <option value="">중분류 전체</option>
                                     {subcategories.map(s => <option key={s} value={s}>{s}</option>)}
                                 </select>
+                                <button
+                                    onClick={() => {
+                                        const newSeg = { name: "새 세그먼트", ['대분류']: segFilters.category || "미지정", ['중분류']: segFilters.subcategory || "미지정", description: "설명", recommended_advertisers: "추천 광고주" };
+                                        setSegments([newSeg, ...segments]);
+                                    }}
+                                    className="px-5 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 font-bold text-sm transition-all shadow-xl shadow-emerald-100 flex items-center gap-2"
+                                >
+                                    <Plus size={16} /> 세그먼트 추가
+                                </button>
                                 <button onClick={() => setJsonEditor({ id: 'segments', content: JSON.stringify(segments, null, 2) })} className="px-4 py-2.5 bg-white border border-slate-200 text-slate-400 rounded-xl hover:text-blue-500 font-bold font-mono text-[10px] uppercase">JSON</button>
                                 <button onClick={() => savePolicyEdit('segments', segments)} className="px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-bold text-sm transition-all shadow-xl shadow-blue-100 flex items-center gap-2">
                                     <Save size={16} /> 정책 저장

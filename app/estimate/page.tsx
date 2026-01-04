@@ -116,14 +116,24 @@ export default function EstimatePage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="font-bold text-xl text-blue-900">KOBACO Addressable</Link>
-          <div className="flex items-center gap-4">
+      <header className="bg-white/80 backdrop-blur-md border-b sticky top-0 z-30">
+        <div className="max-w-5xl mx-auto px-6 h-18 py-4 flex items-center justify-between">
+          <Link href="/" className="font-black text-2xl text-blue-900 tracking-tighter flex items-center gap-2">
+            <span className="bg-blue-900 text-white p-1.5 rounded-lg rotate-3 shadow-lg"><Target size={20} /></span>
+            KOBACO Addressable
+          </Link>
+          <div className="flex items-center gap-6">
+            <a
+              href="https://drive.google.com/file/d/1iyZCKQSYvrxazfxaz4F5Eh2ejjfWbZUw/view?usp=sharing"
+              target="_blank"
+              className="text-sm font-bold text-slate-600 hover:text-blue-600 flex items-center gap-1.5 transition-colors"
+            >
+              <FileText size={16} className="text-blue-500" /> 소개자료
+            </a>
             <a
               href="https://notebooklm.google.com/notebook/ab573898-2bb6-4034-8694-bc1c08d480c7"
               target="_blank"
-              className="text-sm text-blue-600 hover:underline flex items-center gap-1"
+              className="px-4 py-2 bg-blue-50 text-blue-700 rounded-full text-sm font-black hover:bg-blue-100 flex items-center gap-1.5 transition-all shadow-sm"
             >
               🤖 AI에게 질문하기 <ExternalLink size={12} />
             </a>
@@ -132,38 +142,16 @@ export default function EstimatePage() {
       </header>
 
       <main className="max-w-4xl mx-auto p-6">
-        <div className="mb-8 text-center space-y-4">
-          <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">KOBATA AI 견적 시뮬레이터</h1>
-          <p className="text-lg text-gray-500">
-            Addressable TV 광고 캠페인 견적을 AI가 최적화해 드립니다.
+        <div className="mb-12 text-center space-y-4 pt-8 animate-in fade-in slide-in-from-top-4 duration-700">
+          <div className="inline-block px-4 py-1.5 bg-blue-50 text-blue-600 rounded-full text-xs font-black uppercase tracking-widest mb-2 shadow-sm">AI Analytics Platform</div>
+          <h1 className="text-5xl font-black text-slate-900 tracking-tighter leading-tight">
+            KOBACO 어드레서블 <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-500">견적 시뮬레이터</span>
+          </h1>
+          <p className="text-lg text-slate-500 font-medium max-w-xl mx-auto">
+            데이터 기반의 Addressable TV 광고 캠페인 견적을 <br />
+            AI가 실시간으로 분석하고 최적화해 드립니다.
           </p>
-        </div>
-
-        {/* Quick Links Banner */}
-        <div className="grid md:grid-cols-3 gap-4 mb-10">
-          <a
-            href="https://notebooklm.google.com/notebook/ab573898-2bb6-4034-8694-bc1c08d480c7"
-            target="_blank"
-            className="flex items-center justify-center gap-2 p-4 bg-gradient-to-br from-blue-500 to-blue-600 text-white font-bold rounded-xl shadow-sm hover:shadow-md hover:from-blue-600 hover:to-blue-700 transition-all text-sm"
-          >
-            🤖 AI에게 질문하기
-            <ExternalLink size={14} className="opacity-70" />
-          </a>
-          <a
-            href="https://drive.google.com/file/d/1iyZCKQSYvrxazfxaz4F5Eh2ejjfWbZUw/view?usp=sharing"
-            target="_blank"
-            className="flex items-center justify-center gap-2 p-4 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl shadow-sm hover:bg-gray-50 transition-all text-sm"
-          >
-            📄 소개자료 다운로드
-            <ExternalLink size={14} className="text-gray-400" />
-          </a>
-          <a
-            href="mailto:tj1000@kobaco.co.kr"
-            className="flex items-center justify-center gap-2 p-4 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl shadow-sm hover:bg-gray-50 transition-all text-sm"
-          >
-            📧 담당자 문의
-            <span className="text-xs font-normal text-gray-400">| 박태준 차장</span>
-          </a>
         </div>
 
         <div className="space-y-6">
@@ -245,12 +233,11 @@ export default function EstimatePage() {
                   {aiLoading ? (
                     <>
                       <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      분석 중...
+                      KOBACO AI가 분석 중입니다...
                     </>
                   ) : (
                     <>
-                      <Sparkles size={20} />
-                      🤖 AI 타겟 분석 요청
+                      <Sparkles size={18} /> AI 타겟 분석 시작하기
                     </>
                   )}
                 </button>

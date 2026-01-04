@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "KOBA-TA (Target Advisor)",
+  title: "KOBACO Addressable TV",
   description: "AI 기반 TV 광고 타겟 분석 및 견적 시뮬레이션",
 };
 

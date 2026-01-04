@@ -21,7 +21,7 @@ export function AIRecommendation({
             <div className="space-y-4">
                 <div className="flex items-center gap-3 text-blue-600">
                     <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-                    <span className="font-medium">🤖 KOBATA AI가 타겟을 분석 중입니다...</span>
+                    <span className="font-medium">🤖 KOBACO AI가 타겟을 분석 중입니다...</span>
                 </div>
                 <div className="space-y-3">
                     {[1, 2, 3].map((i) => (
@@ -113,8 +113,8 @@ function SegmentCard({ segment, rank }: { segment: Segment; rank: number }) {
                 {segment.reason && (
                     <div
                         className={`p-3 rounded-lg text-sm ${isDefault
-                                ? 'bg-gray-100 text-gray-700'
-                                : 'bg-green-50 text-green-800'
+                            ? 'bg-gray-100 text-gray-700'
+                            : 'bg-green-50 text-green-800'
                             }`}
                     >
                         <strong>{isDefault ? 'ℹ️ 기본 추천 사유:' : '💡 AI 추천 사유:'}</strong>{' '}
