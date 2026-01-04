@@ -113,13 +113,18 @@ export default function EstimatePage() {
   };
 
   const goToPrint = () => {
-    localStorage.setItem('kobaco_estimate_data', JSON.stringify({
-      form: formData,
-      info: clientInfo,
-      result,
-      aiResult
-    }));
-    router.push('/estimate/print');
+    try {
+      localStorage.setItem('kobaco_estimate_data', JSON.stringify({
+        form: formData,
+        info: clientInfo,
+        result,
+        aiResult
+      }));
+      router.push('/estimate/print');
+    } catch (e) {
+      console.error("Failed to save estimate data:", e);
+      alert("데이터 저장에 실패했습니다. 브라우저 저장 공간을 확인해주세요.");
+    }
   };
 
   const totalBudget = Object.values(formData.channel_budgets).reduce((a, b) => a + b, 0);

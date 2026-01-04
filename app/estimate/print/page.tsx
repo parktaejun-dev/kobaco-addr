@@ -43,16 +43,42 @@ export default function EstimatePrint() {
   const [data, setData] = useState<PrintData | null>(null);
 
   useEffect(() => {
-    const savedData = localStorage.getItem('kobaco_estimate_data');
-    if (!savedData) {
-      alert("견적 데이터가 없습니다.");
-      router.push('/estimate');
-      return;
-    }
-    setData(JSON.parse(savedData));
-  }, [router]);
+    try {
+      if (typeof window === 'undefined') return;
 
-  if (!data) return <div className="p-10 text-center">Loading...</div>;
+      const savedData = localStorage.getItem('kobaco_estimate_data');
+      if (!savedData) {
+        // Data missing: Stay on page to show empty state (don't alert/redirect immediately to avoid blocking)
+        return;
+      }
+      setData(JSON.parse(savedData));
+    } catch (e) {
+      console.error("Failed to load estimate data:", e);
+    }
+  }, []);
+
+  if (!data) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-6 text-center">
+        <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 max-w-md w-full">
+          <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Printer size={32} className="text-slate-400" />
+          </div>
+          <h2 className="text-xl font-bold text-slate-900 mb-3">견적 데이터가 없습니다</h2>
+          <p className="text-slate-500 mb-8 leading-relaxed">
+            저장된 견적 내용이 없거나 만료되었습니다.<br />
+            견적 시뮬레이터에서 다시 견적을 생성해주세요.
+          </p>
+          <button
+            onClick={() => router.push('/estimate')}
+            className="w-full py-3.5 bg-slate-900 text-white font-bold rounded-lg hover:bg-slate-800 transition-all"
+          >
+            견적 다시 내기
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const { form, info, result, aiResult } = data;
   const today = new Date().toLocaleDateString('ko-KR', {
