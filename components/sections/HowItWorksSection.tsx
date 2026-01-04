@@ -13,8 +13,8 @@ const icons = [Database, BarChart3, Layers3, Send];
 
 export default function HowItWorksSection({ data }: { data: HowData }) {
   return (
-    <section className="py-16 sm:py-24">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+    <section className="section-pad bg-white">
+      <div className="section-wrap">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -34,7 +34,7 @@ export default function HowItWorksSection({ data }: { data: HowData }) {
               return (
                 <div
                   key={idx}
-                  className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                  className="card card-hover p-6 group"
                 >
                   <div className="flex items-center justify-between">
                     <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
