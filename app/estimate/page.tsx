@@ -170,7 +170,7 @@ export default function EstimatePage() {
         <div className="space-y-6">
           {/* Section 1: Basic Info */}
           <AccordionSection
-            title="1️⃣ 광고 캠페인 기본 정보"
+            title="광고 캠페인 기본 정보"
             defaultOpen={true}
             icon={<FileText size={18} />}
           >
@@ -200,7 +200,9 @@ export default function EstimatePage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">제품 URL (선택)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  제품 URL (선택) <span className="text-xs text-slate-500 font-normal ml-1">- 제품 페이지가 있으면 좋습니다</span>
+                </label>
                 <input
                   type="url"
                   value={clientInfo.url}
@@ -214,7 +216,7 @@ export default function EstimatePage() {
 
           {/* Section 2: AI Target Analysis */}
           <AccordionSection
-            title="2️⃣ AI 타겟 분석"
+            title="AI 타겟 분석"
             defaultOpen={true}
             disabled={!hasProductInfo}
             icon={<Sparkles size={18} />}
@@ -272,7 +274,7 @@ export default function EstimatePage() {
 
           {/* Section 3: Conditions */}
           <AccordionSection
-            title="3️⃣ 타기팅 & 광고 조건 설정"
+            title="타기팅 & 광고 조건 설정"
             defaultOpen={true}
             icon={<Settings size={18} />}
             className={hasAIResult ? "ring-2 ring-blue-400 ring-offset-2 shadow-lg transition-all duration-500 delay-300" : ""}
@@ -322,16 +324,11 @@ export default function EstimatePage() {
                     </button>
                   ))}
                 </div>
-                {formData.is_new_advertiser && (
-                  <div className="mt-3 text-xs font-medium text-blue-700 flex items-center gap-1.5">
-                    <Sparkles size={12} /> 신규 광고주 프로모션 적용 대상입니다.
-                  </div>
-                )}
               </div>
 
               {/* Targeting Options */}
               <div className="p-4 border rounded-xl md:col-span-2">
-                <label className="block text-sm font-medium text-gray-500 mb-3">타게팅 설정</label>
+                <label className="block text-sm font-medium text-gray-500 mb-3">타기팅 설정</label>
                 <div className="grid md:grid-cols-2 gap-3">
                   <label className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer">
                     <input
@@ -340,7 +337,7 @@ export default function EstimatePage() {
                       onChange={(e) => setFormData({ ...formData, audience_targeting: e.target.checked })}
                       className="w-5 h-5 text-blue-600 rounded"
                     />
-                    <span className="font-medium text-gray-700">오디언스 타게팅</span>
+                    <span className="font-medium text-gray-700">오디언스 타기팅</span>
                   </label>
                   <label className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer">
                     <input
@@ -349,12 +346,12 @@ export default function EstimatePage() {
                       onChange={(e) => setFormData({ ...formData, region_targeting: e.target.checked })}
                       className="w-5 h-5 text-blue-600 rounded"
                     />
-                    <span className="font-medium text-gray-700">지역 타게팅</span>
+                    <span className="font-medium text-gray-700">지역 타기팅</span>
                   </label>
                 </div>
                 {!formData.audience_targeting && !formData.region_targeting && (
                   <p className="text-xs text-green-600 mt-3 font-medium">
-                    ✅ 논타겟팅(ROAS 최적화) 보너스가 적용됩니다.
+                    ✅ 논타기팅(ROAS 최적화) 보너스가 적용됩니다.
                   </p>
                 )}
               </div>
@@ -363,7 +360,7 @@ export default function EstimatePage() {
 
           {/* Section 4: Budget */}
           <AccordionSection
-            title="4️⃣ 예산 배분 계획"
+            title="예산 배분 계획"
             defaultOpen={true}
             icon={<Wallet size={18} />}
           >
@@ -375,7 +372,7 @@ export default function EstimatePage() {
               {/* Total Budget Input & Two-way Distribution */}
               <div className="bg-gray-50 p-6 rounded-xl border">
                 <div className="mb-8">
-                  <label className="block text-sm font-bold text-gray-700 mb-2">💰 총 월 예산 (단위: 만원)</label>
+                  <label className="block text-xl font-bold text-gray-900 mb-2">총 월 예산 (단위: 만원)</label>
                   <input
                     type="number"
                     min="0"
@@ -411,7 +408,7 @@ export default function EstimatePage() {
 
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="font-bold text-gray-700 text-sm flex items-center gap-2">
-                    <ArrowUpRight size={16} className="text-blue-500" /> 채널별 예산 세부 설정
+                    채널별 예산 세부 설정
                   </h4>
                   <span className="text-[10px] text-gray-400 font-medium">* 개별 예산을 직접 수정할 수 있습니다.</span>
                 </div>
@@ -461,7 +458,7 @@ export default function EstimatePage() {
 
           {/* Section 5: Results */}
           <AccordionSection
-            title="5️⃣ AI 전략 분석 결과"
+            title="AI 전략 분석 결과"
             defaultOpen={true}
             icon={<BarChart3 size={18} />}
           >
@@ -532,16 +529,13 @@ export default function EstimatePage() {
                   견적서 출력하기
                 </button>
 
-                <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg text-sm text-slate-600 flex gap-2">
-                  <AlertCircle size={16} className="text-slate-500 shrink-0 mt-0.5" />
-                  <span>위 결과는 시뮬레이션이며, 실제 집행 시 인벤토리 상황에 따라 달라질 수 있습니다.</span>
-                </div>
+              </button>
               </div>
             )}
-          </AccordionSection>
-        </div>
-
-      </main>
+      </AccordionSection>
     </div>
+
+      </main >
+    </div >
   );
 }
