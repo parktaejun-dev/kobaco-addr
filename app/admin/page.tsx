@@ -142,16 +142,23 @@ export default function AdminPortal() {
         if (!jsonEditor) return;
         try {
             const parsed = JSON.parse(jsonEditor.content);
-            await axios.post('/api/admin/content', {
-                action: 'save_section',
-                id: jsonEditor.id,
-                content: parsed
-            });
-            toast.success("JSON saved!");
+
+            // Check if this is a policy type
+            if (['channels', 'bonuses', 'surcharges', 'segments'].includes(jsonEditor.id)) {
+                await axios.post('/api/admin/policy', { type: jsonEditor.id, data: parsed });
+                toast.success("정책 데이터 저장됨!");
+            } else {
+                await axios.post('/api/admin/content', {
+                    action: 'save_section',
+                    id: jsonEditor.id,
+                    content: parsed
+                });
+                toast.success("섹션 데이터 저장됨!");
+            }
             setJsonEditor(null);
             loadTabData();
         } catch (e) {
-            toast.error("Invalid JSON or save failed");
+            toast.error("JSON 형식 오류 또는 저장 실패");
         }
     };
 
@@ -162,15 +169,15 @@ export default function AdminPortal() {
             {/* Sidebar */}
             <aside className="w-64 bg-slate-900 text-white flex flex-col fixed inset-y-0 shadow-2xl z-20">
                 <div className="p-8 border-b border-white/10">
-                    <h2 className="text-xl font-black tracking-tighter text-blue-400">KOBACO A.TV</h2>
-                    <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-widest font-bold">Admin Engine</p>
+                    <h2 className="text-xl font-black tracking-tighter text-blue-400">KOBACO Addressable</h2>
+                    <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-widest font-bold">관리자 콘솔</p>
                 </div>
                 <nav className="flex-1 p-4 space-y-2 mt-4">
                     {[
-                        { id: 'content', label: 'Section Manager', icon: Layout },
-                        { id: 'policies', label: 'Sales Policies', icon: ShieldCheck },
-                        { id: 'segments', label: 'Segments DB', icon: Database },
-                        { id: 'usage', label: 'Usage History', icon: BarChart3 },
+                        { id: 'content', label: '섹션 관리', icon: Layout },
+                        { id: 'policies', label: '정책 관리', icon: ShieldCheck },
+                        { id: 'segments', label: '세그먼트 DB', icon: Database },
+                        { id: 'usage', label: '사용 기록', icon: BarChart3 },
                     ].map(item => (
                         <button key={item.id} onClick={() => setActiveTab(item.id as Tab)}
                             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-sm ${activeTab === item.id ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
@@ -239,13 +246,22 @@ export default function AdminPortal() {
                 {/* Tab: Policies (Inherited logic from previous dashboard) */}
                 {activeTab === 'policies' && (
                     <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200">
-                        <p className="text-center text-slate-400 py-12 font-medium italic">Policies 및 Segments 기능은 기존의 강력한 표 편집 UI가 유지됩니다.</p>
-                        {/* Simplified view for brevity, but maintains policy editing capability */}
+                        <p className="text-center text-slate-400 py-8 font-medium italic">정책 데이터를 수정하려면 아래 버튼을 클릭하세요.</p>
                         <div className="grid grid-cols-3 gap-6">
-                            {['channels', 'bonuses', 'surcharges'].map(t => (
-                                <div key={t} className="p-6 bg-slate-50 rounded-2xl border border-slate-100 text-center space-y-4">
-                                    <h3 className="font-black text-slate-700 uppercase tracking-widest text-xs">{t}</h3>
-                                    <button onClick={() => setActiveTab(t as any)} className="text-blue-600 font-bold text-sm hover:underline">Manage {t} Data →</button>
+                            {[
+                                { key: 'channels', label: '채널', desc: '광고 채널 및 기본 CPV' },
+                                { key: 'bonuses', label: '보너스', desc: '볼륨/기간 보너스 정책' },
+                                { key: 'surcharges', label: '할증', desc: '지역/커스텀 할증 정책' },
+                            ].map(t => (
+                                <div key={t.key} className="p-6 bg-slate-50 rounded-2xl border border-slate-100 text-center space-y-4">
+                                    <h3 className="font-black text-slate-700 text-lg">{t.label}</h3>
+                                    <p className="text-xs text-slate-400">{t.desc}</p>
+                                    <button
+                                        onClick={() => setJsonEditor({ id: t.key, content: JSON.stringify(policies[t.key as keyof typeof policies] || [], null, 2) })}
+                                        className="text-blue-600 font-bold text-sm hover:underline"
+                                    >
+                                        {t.label} 데이터 편집 →
+                                    </button>
                                 </div>
                             ))}
                         </div>

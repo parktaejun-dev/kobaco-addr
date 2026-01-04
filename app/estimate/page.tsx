@@ -117,7 +117,7 @@ export default function EstimatePage() {
       {/* Header */}
       <header className="bg-white border-b sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="font-bold text-xl text-blue-900">KOBACO A.TV</Link>
+          <Link href="/" className="font-bold text-xl text-blue-900">KOBACO Addressable</Link>
           <div className="flex items-center gap-4">
             <a
               href="https://notebooklm.google.com/notebook/ab573898-2bb6-4034-8694-bc1c08d480c7"
@@ -253,8 +253,8 @@ export default function EstimatePage() {
                         key={sec}
                         onClick={() => setFormData({ ...formData, ad_duration: sec as 15 | 30 })}
                         className={`flex-1 py-3 rounded-lg border font-medium transition-all ${formData.ad_duration === sec
-                            ? 'bg-blue-600 text-white border-blue-600'
-                            : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                          ? 'bg-blue-600 text-white border-blue-600'
+                          : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
                           }`}
                       >
                         {sec}초
