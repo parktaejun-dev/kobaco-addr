@@ -3,6 +3,11 @@ import fs from 'fs';
 import path from 'path';
 import Link from 'next/link';
 import { Check, ArrowRight, FileText, BarChart3, Target } from 'lucide-react';
+import ConceptSection from '@/components/sections/ConceptSection';
+import ComparisonSection from '@/components/sections/ComparisonSection';
+import HowItWorksSection from '@/components/sections/HowItWorksSection';
+import WhySection from '@/components/sections/WhySection';
+import UseCasesSection from '@/components/sections/UseCasesSection';
 
 // --- Data Loading Helpers ---
 function getContent(type: string, id?: string) {
@@ -160,20 +165,16 @@ export default function Home() {
         switch (section.id) {
           case 'hero': return <Hero key={section.id} data={sectionData} />;
           case 'valueProps': return <ValueProps key={section.id} data={sectionData} />;
+          case 'concept': return <ConceptSection key={section.id} data={sectionData} />;
+          case 'comparison': return <ComparisonSection key={section.id} data={sectionData} />;
+          case 'howItWorks': return <HowItWorksSection key={section.id} data={sectionData} />;
+          case 'useCases': return <UseCasesSection key={section.id} data={sectionData} />;
+          case 'why': return <WhySection key={section.id} data={sectionData} />;
           case 'reporting': return <Reporting key={section.id} data={sectionData} />;
           case 'estimateGuide': return <EstimateGuide key={section.id} data={sectionData} />;
           default: return null;
         }
       })}
-      
-      {/* Footer */}
-      <footer className="py-12 px-6 border-t border-slate-100 bg-slate-50 text-center text-slate-400 text-sm">
-          <p>© 2026 KOBACO. All rights reserved.</p>
-          <div className="mt-4 flex justify-center gap-6">
-              <Link href="/admin" className="hover:text-slate-600 underline underline-offset-4 font-medium">관리자(콘텐츠 편집)</Link>
-              <Link href="/admin/usage" className="hover:text-slate-600 underline underline-offset-4 font-medium">사용 통계</Link>
-          </div>
-      </footer>
     </main>
   );
 }
