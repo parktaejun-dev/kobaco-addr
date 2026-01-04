@@ -6,6 +6,7 @@ import ComparisonSection from '@/components/sections/ComparisonSection';
 import HowItWorksSection from '@/components/sections/HowItWorksSection';
 import WhySection from '@/components/sections/WhySection';
 import UseCasesSection from '@/components/sections/UseCasesSection';
+import FAQSection from '@/components/sections/FAQSection';
 import Footer from '@/components/Footer';
 
 // --- Section Components ---
@@ -244,7 +245,7 @@ export default async function Home() {
           case 'why': return <WhySection key={id} data={data} />;
           case 'reporting': return <Reporting key={id} data={data} />;
           case 'estimateGuide': return <EstimateGuide key={id} data={data} />;
-          case 'faq': return null; // TODO: Add FAQ component if needed
+          case 'faq': return <FAQSection key={id} data={data} />;
           default: return null;
         }
       })}

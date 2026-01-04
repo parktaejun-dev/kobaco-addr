@@ -29,7 +29,10 @@ const TEMPLATES: Record<string, any> = {
   howItWorks: {
     title: "이용 방법",
     steps: [
-      { title: "Step 1", description: "Description" }
+      { step: 1, title: "Step 1", description: "설명을 입력하세요." },
+      { step: 2, title: "Step 2", description: "설명을 입력하세요." },
+      { step: 3, title: "Step 3", description: "설명을 입력하세요." },
+      { step: 4, title: "Step 4", description: "설명을 입력하세요." }
     ]
   }
 };
