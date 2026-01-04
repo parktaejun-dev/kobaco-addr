@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { getJSON, setJSON } from '@/lib/kv-store';
-import { getSection } from '@/lib/content/kv';
+import { getSection, saveSection, getHome, saveHome } from '@/lib/content/kv';
 
 const TEMPLATES: Record<string, any> = {
   valueProps: {
@@ -52,7 +51,7 @@ export async function GET(request: Request) {
 
   try {
     if (type === 'home') {
-      const data = await getJSON('content', 'home');
+      const data = await getHome();
       return NextResponse.json(data || {});
     } else if (type === 'section' && id) {
       const data = await getSection(id);
@@ -80,22 +79,24 @@ export async function POST(request: Request) {
   try {
     // 1. Save Home Config
     if (action === 'save_home' || (!action && type === 'home')) {
-      await setJSON('content', 'home', content);
+      await saveHome(content);
       revalidatePath('/'); // Refresh Main Page
       return NextResponse.json({ success: true });
     }
 
-    // 2. Save Section Content
+    // 2. Save Section Content (DEPRECATED - use /api/admin/section/save instead)
     if (action === 'save_section' || (!action && type === 'section')) {
-      if (!id) return NextResponse.json({ error: 'ID is required for section save' }, { status: 400 });
-      await setJSON('content', id, content);
-      revalidatePath('/'); // Refresh Main Page
-      return NextResponse.json({ success: true });
+      // This legacy endpoint doesn't have 'type' info needed for proper key pattern
+      // Redirect to use the proper endpoint
+      return NextResponse.json({
+        error: 'Deprecated',
+        message: 'Use /api/admin/section/save with {id, type, data} instead'
+      }, { status: 400 });
     }
 
     // 3. Create New Section
     if (action === 'create_section') {
-      const homeData = await getJSON('content', 'home');
+      const homeData = await getHome();
 
       let newId = `${type}-1`;
       let counter = 1;
@@ -108,10 +109,10 @@ export async function POST(request: Request) {
       }
 
       const template = TEMPLATES[type] || { title: "New Section" };
-      await setJSON('content', newId, template);
+      await saveSection(newId, type, template);
 
       sections.push({ id: newId, type, enabled: true });
-      await setJSON('content', 'home', { ...homeData, sections });
+      await saveHome({ ...homeData, sections });
 
       revalidatePath('/'); // Refresh Main Page
       return NextResponse.json({ success: true, id: newId });
