@@ -10,11 +10,11 @@ import {
     Move
 } from 'lucide-react';
 
-type Tab = 'content' | 'policies' | 'segments' | 'usage';
+type Tab = 'home' | 'content' | 'policies' | 'segments' | 'usage';
 
 export default function AdminPortal() {
     // Middleware handles authentication - if we reach this page, we're already authenticated
-    const [activeTab, setActiveTab] = useState<Tab>('content');
+    const [activeTab, setActiveTab] = useState<Tab>('home');
 
     // Data State
     const [homeConfig, setHomeConfig] = useState<any>(null);
@@ -28,8 +28,23 @@ export default function AdminPortal() {
     const [jsonEditor, setJsonEditor] = useState<{ id: string, content: string } | null>(null);
 
     // Segment Filter State
-    const [expandedCats, setExpandedCats] = useState<Record<string, boolean>>({});
-    const [categoryFilters, setCategoryFilters] = useState<Record<string, string>>({});
+    const [segFilters, setSegFilters] = useState({ category: '', subcategory: '' });
+
+    const filteredSegments = useMemo(() => {
+        return segments.filter(seg => {
+            const catMatch = !segFilters.category || seg['대분류'] === segFilters.category;
+            const subMatch = !segFilters.subcategory || seg['중분류'] === segFilters.subcategory;
+            return catMatch && subMatch;
+        });
+    }, [segments, segFilters]);
+
+    const categories = useMemo(() => Array.from(new Set(segments.map(s => s['대분류']).filter(Boolean))), [segments]);
+    const subcategories = useMemo(() => {
+        const filtered = segFilters.category
+            ? segments.filter(s => s['대분류'] === segFilters.category)
+            : segments;
+        return Array.from(new Set(filtered.map(s => s['중분류']).filter(Boolean)));
+    }, [segments, segFilters.category]);
 
     useEffect(() => {
         loadTabData();
@@ -52,11 +67,6 @@ export default function AdminPortal() {
                 // segments.json has { version, data: [] } structure
                 const segmentData = res.data.data || res.data;
                 setSegments(segmentData);
-                const cats = segmentData.reduce((acc: any, curr: any) => {
-                    acc[curr['대분류'] || '기타'] = true;
-                    return acc;
-                }, {});
-                setExpandedCats(cats);
             } else if (activeTab === 'usage') {
                 const res = await axios.get('/api/log/usage');
                 setUsageLogs(res.data);
@@ -170,10 +180,13 @@ export default function AdminPortal() {
         <div className="min-h-screen bg-slate-50 flex">
             {/* Sidebar */}
             <aside className="w-64 bg-slate-900 text-white flex flex-col fixed inset-y-0 shadow-2xl z-20">
-                <div className="p-8 border-b border-white/10">
-                    <h2 className="text-xl font-black tracking-tighter text-blue-400">KOBACO Addressable</h2>
-                    <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-widest font-bold">관리자 콘솔</p>
-                </div>
+                <button
+                    onClick={() => setActiveTab('home')}
+                    className="p-8 border-b border-white/10 text-left hover:bg-white/5 transition-all group"
+                >
+                    <h2 className="text-xl font-black tracking-tighter text-blue-400 group-hover:text-blue-300">KOBACO Addressable</h2>
+                    <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-widest font-bold">관리자 페이지</p>
+                </button>
                 <nav className="flex-1 p-4 space-y-2 mt-4">
                     {[
                         { id: 'content', label: '섹션 관리', icon: Layout },
@@ -195,11 +208,47 @@ export default function AdminPortal() {
 
             {/* Main Area */}
             <main className="flex-1 ml-64 p-12">
-                <div>
-                    <h1 className="text-4xl font-black text-slate-900 capitalize tracking-tight">
-                        {activeTab === 'content' ? '섹션 관리' : activeTab === 'policies' ? '정책 관리' : activeTab === 'segments' ? '세그먼트 DB' : '사용 기록'}
-                    </h1>
-                </div>
+                {activeTab !== 'home' && (
+                    <header className="mb-12">
+                        <h1 className="text-4xl font-black text-slate-900 capitalize tracking-tight">
+                            {activeTab === 'content' ? '섹션 관리' : activeTab === 'policies' ? '정책 관리' : activeTab === 'segments' ? '세그먼트 DB' : '사용 기록'}
+                        </h1>
+                    </header>
+                )}
+
+                {/* Tab: Home (Dashboard) */}
+                {activeTab === 'home' && (
+                    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <header>
+                            <h1 className="text-4xl font-black text-slate-900 tracking-tight">안녕하세요, 관리자님</h1>
+                            <p className="text-slate-500 mt-2 font-medium">KOBACO Addressable의 모든 설정과 데이터를 한눈에 관리하세요.</p>
+                        </header>
+
+                        <div className="grid grid-cols-2 gap-6">
+                            {[
+                                { id: 'content', label: '섹션 관리', desc: '메인 페이지의 구성 요소를 편집하고 배치 순서를 변경합니다.', icon: Layout, color: 'bg-blue-500' },
+                                { id: 'policies', label: '정책 관리', icon: ShieldCheck, desc: '채널별 CPV, 보너스 비율, 할증 조건 등을 표 형식으로 수정합니다.', color: 'bg-indigo-500' },
+                                { id: 'segments', label: '세그먼트 DB', icon: Database, desc: 'AI 분석의 기반이 되는 오디언스 세그먼트 데이터를 조회하고 필터링합니다.', color: 'bg-emerald-500' },
+                                { id: 'usage', label: '사용 기록', icon: BarChart3, desc: '사용자들의 견적 생성 내역 및 시스템 로그를 확인합니다.', color: 'bg-slate-700' },
+                            ].map(item => (
+                                <button
+                                    key={item.id}
+                                    onClick={() => setActiveTab(item.id as Tab)}
+                                    className="p-8 bg-white border border-slate-200 rounded-[2rem] text-left hover:border-blue-500 hover:shadow-xl transition-all group active:scale-[0.98]"
+                                >
+                                    <div className={`w-14 h-14 ${item.color} text-white rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-blue-200 transition-transform group-hover:scale-110`}>
+                                        <item.icon size={28} />
+                                    </div>
+                                    <h3 className="text-xl font-black text-slate-800 mb-2">{item.label}</h3>
+                                    <p className="text-slate-500 text-sm font-medium leading-relaxed">{item.desc}</p>
+                                    <div className="mt-6 flex items-center gap-2 text-blue-600 font-black text-xs uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
+                                        바로가기 <Plus size={14} />
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 {/* Tab: Content (Section Manager) */}
                 {activeTab === 'content' && homeConfig && (
@@ -227,7 +276,12 @@ export default function AdminPortal() {
                                         <button onClick={() => toggleSection(section.id, section.enabled)} className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all ${section.enabled ? 'bg-green-50 text-green-600' : 'bg-slate-100 text-slate-400'}`}>
                                             {section.enabled ? '노출 중' : '숨김'}
                                         </button>
-                                        {section.type !== 'hero' && (
+                                        {section.type === 'hero' ? (
+                                            <div className="p-2.5 text-slate-200 cursor-not-allowed group relative" title="히어로 섹션은 삭제할 수 없습니다.">
+                                                <Lock size={18} />
+                                                <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none transition-opacity">삭제 불가</span>
+                                            </div>
+                                        ) : (
                                             <button onClick={() => deleteSection(section.id)} className="p-2.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
                                                 <Trash2 size={18} />
                                             </button>
@@ -315,60 +369,68 @@ export default function AdminPortal() {
                                     </button>
                                 </div>
                             </div>
-                            <div className="overflow-x-auto border rounded-2xl overflow-hidden">
-                                <table className="w-full text-xs">
-                                    <thead className="bg-slate-50 border-b border-slate-100">
-                                        <tr className="text-slate-500 font-bold">
-                                            <th className="p-4 text-left">채널</th>
-                                            <th className="p-4 text-left">종류</th>
-                                            <th className="p-4 text-left">조건</th>
-                                            <th className="p-4 text-right">기준값</th>
-                                            <th className="p-4 text-right">보너스율</th>
-                                            <th className="p-4 text-left">설명</th>
-                                            <th className="p-4 w-12"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-50">
-                                        {policies.bonuses.map((bo, i) => (
-                                            <tr key={i} className="hover:bg-slate-50/50 transition-colors group text-[11px]">
-                                                <td className="p-2 min-w-[80px]"><input type="text" value={bo.channel_name} onChange={e => {
-                                                    const newList = [...policies.bonuses];
-                                                    newList[i].channel_name = e.target.value;
-                                                    setPolicies({ ...policies, bonuses: newList });
-                                                }} className="w-full bg-transparent p-1 outline-none font-bold focus:bg-white rounded" /></td>
-                                                <td className="p-2 min-w-[80px]"><input type="text" value={bo.bonus_type} onChange={e => {
-                                                    const newList = [...policies.bonuses];
-                                                    newList[i].bonus_type = e.target.value;
-                                                    setPolicies({ ...policies, bonuses: newList });
-                                                }} className="w-full bg-transparent p-1 outline-none focus:bg-white rounded" /></td>
-                                                <td className="p-2 text-slate-400 italic font-mono min-w-[100px]">{bo.condition_type}</td>
-                                                <td className="p-2 min-w-[100px]"><input type="number" value={bo.min_value} onChange={e => {
-                                                    const newList = [...policies.bonuses];
-                                                    newList[i].min_value = parseFloat(e.target.value);
-                                                    setPolicies({ ...policies, bonuses: newList });
-                                                }} className="w-full bg-transparent p-1 outline-none text-right font-medium focus:bg-white rounded" /></td>
-                                                <td className="p-2 min-w-[80px]"><input type="number" step="0.01" value={bo.rate} onChange={e => {
-                                                    const newList = [...policies.bonuses];
-                                                    newList[i].rate = parseFloat(e.target.value);
-                                                    setPolicies({ ...policies, bonuses: newList });
-                                                }} className="w-full bg-transparent p-1 outline-none text-right font-bold text-green-600 focus:bg-white rounded" /></td>
-                                                <td className="p-2"><input type="text" value={bo.description} onChange={e => {
-                                                    const newList = [...policies.bonuses];
-                                                    newList[i].description = e.target.value;
-                                                    setPolicies({ ...policies, bonuses: newList });
-                                                }} className="w-full bg-transparent p-1 outline-none text-slate-400 focus:bg-white rounded" /></td>
-                                                <td className="p-2 text-center">
-                                                    <button onClick={() => {
-                                                        const newList = policies.bonuses.filter((_, idx) => idx !== i);
-                                                        setPolicies({ ...policies, bonuses: newList });
-                                                    }} className="text-slate-200 hover:text-red-500 opacity-0 group-hover:opacity-100"><Trash2 size={14} /></button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                            <div className="space-y-8">
+                                {['MBC', 'EBS', 'PP'].map(channel => {
+                                    const channelBonuses = policies.bonuses.filter(b => b.channel_name === channel);
+                                    if (channelBonuses.length === 0) return null;
+                                    return (
+                                        <div key={channel} className="border rounded-2xl overflow-hidden">
+                                            <div className="px-4 py-2 bg-slate-50 border-b font-black text-[10px] text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div> {channel} 매체 보너스
+                                            </div>
+                                            <table className="w-full text-xs">
+                                                <thead className="bg-white/50 border-b border-slate-100">
+                                                    <tr className="text-slate-400 font-bold">
+                                                        <th className="p-3 text-left w-24">종류</th>
+                                                        <th className="p-3 text-left w-28">조건</th>
+                                                        <th className="p-3 text-right w-24">기준값</th>
+                                                        <th className="p-3 text-right w-20">보너스율</th>
+                                                        <th className="p-3 text-left">설명</th>
+                                                        <th className="p-3 w-10"></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-50">
+                                                    {channelBonuses.map((bo, originalIndex) => {
+                                                        const i = policies.bonuses.indexOf(bo);
+                                                        return (
+                                                            <tr key={i} className="hover:bg-slate-50/50 transition-colors group text-[11px]">
+                                                                <td className="p-2"><input type="text" value={bo.bonus_type} onChange={e => {
+                                                                    const newList = [...policies.bonuses];
+                                                                    newList[i].bonus_type = e.target.value;
+                                                                    setPolicies({ ...policies, bonuses: newList });
+                                                                }} className="w-full bg-transparent p-1 outline-none focus:bg-white rounded" /></td>
+                                                                <td className="p-2 text-slate-400 italic font-mono">{bo.condition_type}</td>
+                                                                <td className="p-2"><input type="number" value={bo.min_value} onChange={e => {
+                                                                    const newList = [...policies.bonuses];
+                                                                    newList[i].min_value = parseFloat(e.target.value);
+                                                                    setPolicies({ ...policies, bonuses: newList });
+                                                                }} className="w-full bg-transparent p-1 outline-none text-right font-medium focus:bg-white rounded" /></td>
+                                                                <td className="p-2"><input type="number" step="0.01" value={bo.rate} onChange={e => {
+                                                                    const newList = [...policies.bonuses];
+                                                                    newList[i].rate = parseFloat(e.target.value);
+                                                                    setPolicies({ ...policies, bonuses: newList });
+                                                                }} className="w-full bg-transparent p-1 outline-none text-right font-bold text-green-600 focus:bg-white rounded" /></td>
+                                                                <td className="p-2"><input type="text" value={bo.description} onChange={e => {
+                                                                    const newList = [...policies.bonuses];
+                                                                    newList[i].description = e.target.value;
+                                                                    setPolicies({ ...policies, bonuses: newList });
+                                                                }} className="w-full bg-transparent p-1 outline-none text-slate-400 focus:bg-white rounded" /></td>
+                                                                <td className="p-2 text-center">
+                                                                    <button onClick={() => {
+                                                                        const newList = policies.bonuses.filter((_, idx) => idx !== i);
+                                                                        setPolicies({ ...policies, bonuses: newList });
+                                                                    }} className="text-slate-200 hover:text-red-500 opacity-0 group-hover:opacity-100"><Trash2 size={14} /></button>
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    })}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    );
+                                })}
                                 <button onClick={() => {
-                                    const newList = [...policies.bonuses, { channel_name: "MBC", bonus_type: "volume", condition_type: "min_budget", min_value: 0, rate: 0.1, description: "보너스 명칭" }];
+                                    const newList = [...policies.bonuses, { channel_name: "PP", bonus_type: "volume", condition_type: "min_budget", min_value: 0, rate: 0.1, description: "보너스 명칭" }];
                                     setPolicies({ ...policies, bonuses: newList });
                                 }} className="w-full p-4 bg-slate-50 text-slate-400 font-bold hover:bg-slate-100 transition-all flex items-center justify-center gap-2"><Plus size={16} /> 보너스 항목 추가</button>
                             </div>
@@ -385,58 +447,66 @@ export default function AdminPortal() {
                                     </button>
                                 </div>
                             </div>
-                            <div className="overflow-x-auto border rounded-2xl overflow-hidden">
-                                <table className="w-full text-xs">
-                                    <thead className="bg-slate-50 border-b border-slate-100">
-                                        <tr className="text-slate-500 font-bold">
-                                            <th className="p-4 text-left border-r border-slate-100">채널</th>
-                                            <th className="p-4 text-left border-r border-slate-100">종류</th>
-                                            <th className="p-4 text-left border-r border-slate-100">조건값</th>
-                                            <th className="p-4 text-right border-r border-slate-100">할증률</th>
-                                            <th className="p-4 text-left">설명</th>
-                                            <th className="p-4 w-12"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-50">
-                                        {policies.surcharges.map((sc, i) => (
-                                            <tr key={i} className="hover:bg-slate-50/50 transition-colors group">
-                                                <td className="p-2 border-r border-slate-50"><input type="text" value={sc.channel_name} onChange={e => {
-                                                    const newList = [...policies.surcharges];
-                                                    newList[i].channel_name = e.target.value;
-                                                    setPolicies({ ...policies, surcharges: newList });
-                                                }} className="w-20 bg-transparent p-1 outline-none font-bold focus:bg-white rounded" /></td>
-                                                <td className="p-2 border-r border-slate-50"><input type="text" value={sc.surcharge_type} onChange={e => {
-                                                    const newList = [...policies.surcharges];
-                                                    newList[i].surcharge_type = e.target.value;
-                                                    setPolicies({ ...policies, surcharges: newList });
-                                                }} className="w-24 bg-transparent p-1 outline-none focus:bg-white rounded" /></td>
-                                                <td className="p-2 border-r border-slate-50"><input type="text" value={sc.condition_value} onChange={e => {
-                                                    const newList = [...policies.surcharges];
-                                                    newList[i].condition_value = e.target.value;
-                                                    setPolicies({ ...policies, surcharges: newList });
-                                                }} className="w-full bg-transparent p-1 outline-none focus:bg-white rounded" /></td>
-                                                <td className="p-2 border-r border-slate-50"><input type="number" step="0.01" value={sc.rate} onChange={e => {
-                                                    const newList = [...policies.surcharges];
-                                                    newList[i].rate = parseFloat(e.target.value);
-                                                    setPolicies({ ...policies, surcharges: newList });
-                                                }} className="w-16 bg-transparent p-1 outline-none text-right font-bold text-orange-600 focus:bg-white rounded" /></td>
-                                                <td className="p-2"><input type="text" value={sc.description} onChange={e => {
-                                                    const newList = [...policies.surcharges];
-                                                    newList[i].description = e.target.value;
-                                                    setPolicies({ ...policies, surcharges: newList });
-                                                }} className="w-full bg-transparent p-1 outline-none text-slate-400 focus:bg-white rounded" /></td>
-                                                <td className="p-2 text-center">
-                                                    <button onClick={() => {
-                                                        const newList = policies.surcharges.filter((_, idx) => idx !== i);
-                                                        setPolicies({ ...policies, surcharges: newList });
-                                                    }} className="text-slate-200 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"><Trash2 size={14} /></button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                            <div className="space-y-8">
+                                {['MBC', 'EBS', 'PP'].map(channel => {
+                                    const channelSurcharges = policies.surcharges.filter(s => s.channel_name === channel);
+                                    if (channelSurcharges.length === 0) return null;
+                                    return (
+                                        <div key={channel} className="border rounded-2xl overflow-hidden">
+                                            <div className="px-4 py-2 bg-slate-50 border-b font-black text-[10px] text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-orange-500"></div> {channel} 매체 할증
+                                            </div>
+                                            <table className="w-full text-xs">
+                                                <thead className="bg-white/50 border-b border-slate-100">
+                                                    <tr className="text-slate-400 font-bold">
+                                                        <th className="p-3 text-left w-28">종류</th>
+                                                        <th className="p-3 text-left w-28">조건값</th>
+                                                        <th className="p-3 text-right w-20">할증률</th>
+                                                        <th className="p-3 text-left">설명</th>
+                                                        <th className="p-3 w-10"></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-50">
+                                                    {channelSurcharges.map((sc, originalIndex) => {
+                                                        const i = policies.surcharges.indexOf(sc);
+                                                        return (
+                                                            <tr key={i} className="hover:bg-slate-50/50 transition-colors group">
+                                                                <td className="p-2"><input type="text" value={sc.surcharge_type} onChange={e => {
+                                                                    const newList = [...policies.surcharges];
+                                                                    newList[i].surcharge_type = e.target.value;
+                                                                    setPolicies({ ...policies, surcharges: newList });
+                                                                }} className="w-full bg-transparent p-1 outline-none focus:bg-white rounded" /></td>
+                                                                <td className="p-2"><input type="text" value={sc.condition_value} onChange={e => {
+                                                                    const newList = [...policies.surcharges];
+                                                                    newList[i].condition_value = e.target.value;
+                                                                    setPolicies({ ...policies, surcharges: newList });
+                                                                }} className="w-full bg-transparent p-1 outline-none focus:bg-white rounded" /></td>
+                                                                <td className="p-2"><input type="number" step="0.01" value={sc.rate} onChange={e => {
+                                                                    const newList = [...policies.surcharges];
+                                                                    newList[i].rate = parseFloat(e.target.value);
+                                                                    setPolicies({ ...policies, surcharges: newList });
+                                                                }} className="w-full bg-transparent p-1 outline-none text-right font-bold text-orange-600 focus:bg-white rounded" /></td>
+                                                                <td className="p-2"><input type="text" value={sc.description} onChange={e => {
+                                                                    const newList = [...policies.surcharges];
+                                                                    newList[i].description = e.target.value;
+                                                                    setPolicies({ ...policies, surcharges: newList });
+                                                                }} className="w-full bg-transparent p-1 outline-none text-slate-400 focus:bg-white rounded" /></td>
+                                                                <td className="p-2 text-center">
+                                                                    <button onClick={() => {
+                                                                        const newList = policies.surcharges.filter((_, idx) => idx !== i);
+                                                                        setPolicies({ ...policies, surcharges: newList });
+                                                                    }} className="text-slate-200 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"><Trash2 size={14} /></button>
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    })}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    );
+                                })}
                                 <button onClick={() => {
-                                    const newList = [...policies.surcharges, { channel_name: "MBC", surcharge_type: "region", condition_value: "지역명", rate: 0.2, description: "설명" }];
+                                    const newList = [...policies.surcharges, { channel_name: "PP", surcharge_type: "region", condition_value: "지역명", rate: 0.2, description: "설명" }];
                                     setPolicies({ ...policies, surcharges: newList });
                                 }} className="w-full p-4 bg-slate-50 text-slate-400 font-bold hover:bg-slate-100 transition-all flex items-center justify-center gap-2"><Plus size={16} /> 할증 항목 추가</button>
                             </div>
@@ -446,52 +516,68 @@ export default function AdminPortal() {
 
                 {/* Tab: Segments DB (View Only Table with Filtering) */}
                 {activeTab === 'segments' && (
-                    <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-                        <div className="p-8 border-b bg-slate-50/50 flex justify-between items-center">
-                            <div>
+                    <div className="space-y-6">
+                        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-8 flex flex-col md:flex-row justify-between items-center gap-6">
+                            <div className="flex-1">
                                 <h3 className="text-2xl font-black text-slate-800 tracking-tight">세그먼트 데이터 조회</h3>
-                                <p className="text-slate-500 font-medium mt-1">총 {segments.length}개의 세그먼트 데이터가 로드되었습니다.</p>
+                                <p className="text-slate-500 font-medium mt-1">총 {segments.length}개 중 {filteredSegments.length}개 표시 중</p>
                             </div>
-                            <div className="flex gap-4">
-                                <button onClick={() => setJsonEditor({ id: 'segments', content: JSON.stringify(segments, null, 2) })} className="px-5 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 font-bold text-sm transition-all shadow-sm">
-                                    JSON 직접 편집
-                                </button>
-                                <button onClick={() => savePolicyEdit('segments', segments)} className="px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-bold text-sm transition-all shadow-xl shadow-blue-100">
-                                    저장하기
+                            <div className="flex flex-wrap gap-4">
+                                <select
+                                    className="px-4 py-2.5 bg-slate-50 border rounded-xl font-bold text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                                    value={segFilters.category}
+                                    onChange={e => setSegFilters({ subcategory: '', category: e.target.value })}
+                                >
+                                    <option value="">대분류 전체</option>
+                                    {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                                <select
+                                    className="px-4 py-2.5 bg-slate-50 border rounded-xl font-bold text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                                    value={segFilters.subcategory}
+                                    onChange={e => setSegFilters(prev => ({ ...prev, subcategory: e.target.value }))}
+                                >
+                                    <option value="">중분류 전체</option>
+                                    {subcategories.map(s => <option key={s} value={s}>{s}</option>)}
+                                </select>
+                                <button onClick={() => setJsonEditor({ id: 'segments', content: JSON.stringify(segments, null, 2) })} className="px-4 py-2.5 bg-white border border-slate-200 text-slate-400 rounded-xl hover:text-blue-500 font-bold font-mono text-[10px] uppercase">JSON</button>
+                                <button onClick={() => savePolicyEdit('segments', segments)} className="px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-bold text-sm transition-all shadow-xl shadow-blue-100 flex items-center gap-2">
+                                    <Save size={16} /> 정책 저장
                                 </button>
                             </div>
                         </div>
 
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                                <thead className="bg-slate-50 border-b border-slate-100">
-                                    <tr className="text-slate-400 font-black text-[10px] uppercase tracking-widest">
-                                        <th className="p-6 text-left w-40">대분류</th>
-                                        <th className="p-6 text-left w-40">중분류</th>
-                                        <th className="p-6 text-left">세그먼트명</th>
-                                        <th className="p-6 text-left">설명</th>
-                                        <th className="p-6 text-left">추천 광고주</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                    {segments.slice(0, 100).map((seg, i) => (
-                                        <tr key={i} className="hover:bg-slate-50/50 transition-colors">
-                                            <td className="p-6">
-                                                <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-[10px] font-black">{seg['대분류']}</span>
-                                            </td>
-                                            <td className="p-6 font-bold text-slate-600">{seg['중분류']}</td>
-                                            <td className="p-6 font-black text-slate-900">{seg.name}</td>
-                                            <td className="p-6 text-slate-500 leading-relaxed text-xs">{seg.description}</td>
-                                            <td className="p-6 text-slate-400 text-xs italic">{seg.recommended_advertisers}</td>
+                        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead className="bg-slate-50 border-b border-slate-100">
+                                        <tr className="text-slate-400 font-black text-[10px] uppercase tracking-widest">
+                                            <th className="p-6 text-left w-40">대분류</th>
+                                            <th className="p-6 text-left w-40">중분류</th>
+                                            <th className="p-6 text-left">세그먼트명</th>
+                                            <th className="p-6 text-left">설명</th>
+                                            <th className="p-6 text-left">추천 광고주</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                            {segments.length > 100 && (
-                                <div className="p-8 text-center bg-slate-50 text-slate-400 font-bold italic text-sm border-t border-slate-100">
-                                    상위 100개 항목만 표시 중입니다. (전체 {segments.length}개)
-                                </div>
-                            )}
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {filteredSegments.slice(0, 100).map((seg, i) => (
+                                            <tr key={i} className="hover:bg-slate-50/50 transition-colors">
+                                                <td className="p-6">
+                                                    <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-[10px] font-black">{seg['대분류']}</span>
+                                                </td>
+                                                <td className="p-6 font-bold text-slate-600">{seg['중분류']}</td>
+                                                <td className="p-6 font-black text-slate-900">{seg.name}</td>
+                                                <td className="p-6 text-slate-500 leading-relaxed text-xs">{seg.description}</td>
+                                                <td className="p-6 text-slate-400 text-xs italic">{seg.recommended_advertisers}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                                {filteredSegments.length > 100 && (
+                                    <div className="p-8 text-center bg-slate-50 text-slate-400 font-bold italic text-sm border-t border-slate-100">
+                                        상위 100개 항목만 표시 중입니다.
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 )}
