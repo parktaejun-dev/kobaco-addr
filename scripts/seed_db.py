@@ -70,12 +70,22 @@ def seed_data():
             if not existing_segments:
                 print("Seeding Segments...")
                 for item in segments_data.get('data', []):
-                    keywords_str = ",".join(item.get('키워드', [])) if isinstance(item.get('키워드'), list) else str(item.get('키워드', ''))
+                    # Handle flexible keys (Korean vs English)
+                    name = item.get('세그먼트명') or item.get('name') or ''
+                    desc = item.get('세그먼트 설명') or item.get('description') or ''
+                    
+                    # Keywords: Try '키워드' or 'recommended_advertisers'
+                    kw_raw = item.get('키워드') or item.get('recommended_advertisers') or ''
+                    if isinstance(kw_raw, list):
+                        keywords_str = ",".join(kw_raw)
+                    else:
+                        keywords_str = str(kw_raw)
+
                     segment = Segment(
                         category_large=item.get('대분류', ''),
                         category_middle=item.get('중분류', ''),
-                        name=item.get('세그먼트명', ''),
-                        description=item.get('세그먼트 설명', ''),
+                        name=name,
+                        description=desc,
                         keywords=keywords_str
                     )
                     session.add(segment)

@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks, status
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlmodel import Session, select
+from sqlmodel import Session, select, delete
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
 from contextlib import asynccontextmanager
@@ -282,3 +282,104 @@ def update_settings(update: SettingsUpdate, current_user: AdminUser = Depends(ge
     set_val('active_model', update.active_model)
     session.commit()
     return {"status": "updated"}
+
+@app.put("/api/admin/channels/{id}")
+def update_channel(id: int, data: Channel, session: Session = Depends(get_session), current_user: AdminUser = Depends(get_current_user)):
+    obj = session.get(Channel, id)
+    if not obj: raise HTTPException(status_code=404, detail="Channel not found")
+    # Update allow-listed fields
+    obj.base_cpv = data.base_cpv
+    obj.cpv_audience = data.cpv_audience
+    obj.cpv_non_target = data.cpv_non_target
+    session.add(obj)
+    session.commit()
+    session.refresh(obj)
+    return obj
+
+@app.put("/api/admin/bonuses/{id}")
+def update_bonus(id: int, data: Bonus, session: Session = Depends(get_session), current_user: AdminUser = Depends(get_current_user)):
+    obj = session.get(Bonus, id)
+    if not obj: raise HTTPException(status_code=404, detail="Bonus not found")
+    obj.min_value = data.min_value
+    obj.rate = data.rate
+    obj.description = data.description
+    session.add(obj)
+    session.commit()
+    session.refresh(obj)
+    return obj
+
+@app.put("/api/admin/surcharges/{id}")
+def update_surcharge(id: int, data: Surcharge, session: Session = Depends(get_session), current_user: AdminUser = Depends(get_current_user)):
+    obj = session.get(Surcharge, id)
+    if not obj: raise HTTPException(status_code=404, detail="Surcharge not found")
+    obj.rate = data.rate
+    obj.description = data.description
+    session.add(obj)
+    session.commit()
+    session.refresh(obj)
+    return obj
+
+@app.put("/api/admin/segments/{id}")
+def update_segment(id: int, data: Segment, session: Session = Depends(get_session), current_user: AdminUser = Depends(get_current_user)):
+    obj = session.get(Segment, id)
+    if not obj: raise HTTPException(status_code=404, detail="Segment not found")
+    obj.category_large = data.category_large
+    obj.category_middle = data.category_middle
+    obj.name = data.name
+    obj.description = data.description
+    obj.keywords = data.keywords
+    session.add(obj)
+    session.commit()
+    session.refresh(obj)
+    return obj
+
+# --- Backup & Restore ---
+
+@app.get("/api/admin/backup")
+def backup_data(current_user: AdminUser = Depends(get_current_user), session: Session = Depends(get_session)):
+    channels = session.exec(select(Channel)).all()
+    bonuses = session.exec(select(Bonus)).all()
+    surcharges = session.exec(select(Surcharge)).all()
+    segments = session.exec(select(Segment)).all()
+    
+    return {
+        "channels": [c.model_dump() for c in channels],
+        "bonuses": [b.model_dump() for b in bonuses],
+        "surcharges": [s.model_dump() for s in surcharges],
+        "segments": [s.model_dump() for s in segments]
+    }
+
+@app.post("/api/admin/restore")
+def restore_data(data: Dict[str, List[Dict]], current_user: AdminUser = Depends(get_current_user), session: Session = Depends(get_session)):
+    try:
+        # Delete existing
+        session.exec(delete(Channel))
+        session.exec(delete(Bonus))
+        session.exec(delete(Surcharge))
+        session.exec(delete(Segment))
+        
+        # Insert new
+        # Note: model_validate handles conversion from dict, assuming IDs are included or managed
+        # If IDs are present, they are preserved. If not, auto-increment.
+        
+        if "channels" in data:
+            for item in data["channels"]:
+                session.add(Channel.model_validate(item))
+        
+        if "bonuses" in data:
+            for item in data["bonuses"]:
+                session.add(Bonus.model_validate(item))
+                
+        if "surcharges" in data:
+            for item in data["surcharges"]:
+                session.add(Surcharge.model_validate(item))
+                
+        if "segments" in data:
+            for item in data["segments"]:
+                session.add(Segment.model_validate(item))
+            
+        session.commit()
+        return {"status": "restored", "counts": {k: len(v) for k,v in data.items() if isinstance(v, list)}}
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=400, detail=f"Restore failed: {str(e)}")
