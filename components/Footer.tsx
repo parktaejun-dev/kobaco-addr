@@ -25,7 +25,7 @@ export default function Footer() {
               <span className="text-slate-700">|</span>
               <Link href="/admin" className="hover:text-white transition-colors">관리자 로그인</Link>
             </div>
-            <p className="text-xs text-slate-600 font-medium">
+            <p className="text-sm text-slate-500 font-medium">
               © 2026 Korea Broadcast Advertising Corp. All rights reserved.
             </p>
           </div>

@@ -75,7 +75,7 @@ function ValueProps({ data }: { data: any }) {
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {data.cards?.map((card: any, i: number) => (
             <div key={i} className="card card-hover p-8 group flex flex-col items-start bg-white shadow-md">
-              <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-blue-700 mb-6 shadow-sm border border-slate-100 group-hover:scale-110 transition-transform">
+              <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-blue-700 mb-6 shadow-sm border border-slate-100">
                 {icons[i % 3]}
               </div>
               <h3 className="text-xl font-bold text-slate-900 mb-3">{card.title}</h3>
@@ -125,7 +125,7 @@ function Reporting({ data }: { data: any }) {
               <div className="text-sm font-bold text-slate-400 mb-1">Campaign Status</div>
               <div className="text-lg font-black text-white">Active / On Track</div>
             </div>
-            <div className="h-10 w-10 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center animate-pulse">
+            <div className="h-10 w-10 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center">
               <BarChart3 size={20} />
             </div>
           </div>
@@ -137,34 +137,62 @@ function Reporting({ data }: { data: any }) {
 
 function EstimateGuide({ data }: { data: any }) {
   if (!data) return null;
+
   return (
-    <section id="estimateGuide" className="section-white section-pad border-y border-slate-100">
-      <div className="section-wrap">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 mb-16">
+    <section
+      id="estimateGuide"
+      className="section-pad bg-white border-t border-slate-200"
+    >
+      <div className="section-wrap max-w-5xl mx-auto">
+        {/* Header */}
+        <div className="mb-12">
+          <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-slate-900">
             {data.title}
           </h2>
-          <div className="relative">
-            <div className="hidden md:block absolute top-12 left-0 w-full h-0.5 bg-slate-100 z-0" />
-            <div className="relative z-10 grid grid-cols-1 md:grid-cols-4 gap-8">
-              {data.steps?.map((step: string, i: number) => (
-                <div key={i} className="flex flex-col items-center gap-6 group">
-                  <div className="flex h-24 w-24 items-center justify-center rounded-3xl border border-slate-100 bg-white shadow-lg text-3xl font-black text-slate-300 transition-all group-hover:scale-110 group-hover:border-blue-200 group-hover:text-blue-600">
-                    {i + 1}
-                  </div>
-                  <span className="text-lg font-bold text-slate-800 leading-snug max-w-[150px]">{step}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="mt-20">
-            <Link
-              href="/estimate"
-              className="btn-primary inline-flex items-center gap-3 text-lg px-12 py-5"
+          <p className="mt-3 text-base text-slate-600 max-w-2xl">
+            캠페인 조건을 입력하면 예상 노출과 비용을 즉시 계산합니다.
+            영업 문의 없이도 기준 수치를 확인할 수 있습니다.
+          </p>
+        </div>
+
+        {/* Steps */}
+        <div className="divide-y divide-slate-200 border border-slate-200 rounded-xl">
+          {data.steps?.map((step: string, i: number) => (
+            <div
+              key={i}
+              className="flex items-start gap-6 px-6 py-5"
             >
-              지금 견적 시작하기 <ArrowRight className="h-5 w-5" />
-            </Link>
-          </div>
+              {/* Index */}
+              <div className="text-sm font-medium text-slate-400 pt-1 w-8">
+                {String(i + 1).padStart(2, '0')}
+              </div>
+
+              {/* Content */}
+              <div className="flex-1">
+                <div className="text-base font-medium text-slate-900">
+                  {step}
+                </div>
+                <div className="mt-1 text-sm text-slate-500">
+                  입력 항목에 따라 실시간으로 결과가 업데이트됩니다.
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Action */}
+        <div className="mt-12 flex items-center justify-end">
+          <Link
+            href="/estimate"
+            className="inline-flex items-center gap-2 rounded-lg
+              bg-slate-900 px-6 py-3
+              text-sm font-medium text-white
+              hover:bg-slate-800
+              transition-colors"
+          >
+            예상 비용 계산하기
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
       </div>
     </section>
