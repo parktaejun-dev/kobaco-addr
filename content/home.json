@@ -1,0 +1,8 @@
+{
+  "sections": [
+    { "id": "hero", "enabled": true },
+    { "id": "valueProps", "enabled": true },
+    { "id": "reporting", "enabled": true },
+    { "id": "estimateGuide", "enabled": true }
+  ]
+}

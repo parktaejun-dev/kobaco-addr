@@ -1,0 +1,17 @@
+{
+  "eyebrow": "KOBACO",
+  "title": "KOBACO Addressable TV",
+  "subtitle": "원하는 타겟에게만 노출하고, 끝까지 본 만큼만(CPV) 지불하세요.",
+  "kpis": [
+    { "label": "타겟팅 광고" },
+    { "label": "CPV 합리적 과금" },
+    { "label": "투명한 성과 리포트" }
+  ],
+  "ctas": [
+    {
+      "label": "무료 견적 산출하기",
+      "actionType": "openEstimator",
+      "payload": { "startStep": 1 }
+    }
+  ]
+}
