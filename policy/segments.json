@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "category_large": "데모그래픽",
+    "category_middle": "성연령",
+    "name": "2049 남녀",
+    "description": "구매력이 높은 20~49세 남녀 핵심 타겟",
+    "keywords": "직장인,소비,트렌드"
+  },
+  {
+    "id": 2,
+    "category_large": "라이프스타일",
+    "category_middle": "건강",
+    "name": "헬스케어 고관여",
+    "description": "건강기능식품 및 운동 관련 프로그램 시청 이력 보유",
+    "keywords": "비타민,홍삼,운동"
+  },
+  {
+    "id": 3,
+    "category_large": "라이프스타일",
+    "category_middle": "육아",
+    "name": "초등 자녀 보유",
+    "description": "초등학생 대상 프로그램 및 교육 채널 시청 가구",
+    "keywords": "학원,교육,간식"
+  }
+]
