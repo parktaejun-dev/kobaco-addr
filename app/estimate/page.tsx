@@ -220,7 +220,7 @@ export default function EstimatePage() {
             defaultOpen={true}
             disabled={!hasProductInfo}
             icon={<Sparkles size={18} />}
-            className={hasProductInfo && !hasAIResult ? "ring-2 ring-blue-400 ring-offset-2 shadow-lg transition-all duration-500" : ""}
+            className={hasProductInfo && !hasAIResult ? "ring-1 ring-slate-900 shadow-xl transition-all duration-500" : ""}
           >
             <div className="space-y-4">
               <div className="flex items-center gap-4">
@@ -277,7 +277,7 @@ export default function EstimatePage() {
             title="타기팅 & 광고 조건 설정"
             defaultOpen={true}
             icon={<Settings size={18} />}
-            className={hasAIResult ? "ring-2 ring-blue-400 ring-offset-2 shadow-lg transition-all duration-500 delay-300" : ""}
+            className={hasAIResult ? "ring-1 ring-slate-900 shadow-xl transition-all duration-500 delay-300" : ""}
           >
             <p className="text-sm text-gray-500 mb-4">
               타깃이 명확할수록 광고 효율이 높아집니다.
@@ -330,21 +330,21 @@ export default function EstimatePage() {
               <div className="p-4 border rounded-xl md:col-span-2">
                 <label className="block text-sm font-medium text-gray-500 mb-3">타기팅 설정</label>
                 <div className="grid md:grid-cols-2 gap-3">
-                  <label className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer">
+                  <label className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg cursor-pointer hover:border-slate-500 transition-colors">
                     <input
                       type="checkbox"
                       checked={formData.audience_targeting}
                       onChange={(e) => setFormData({ ...formData, audience_targeting: e.target.checked })}
-                      className="w-5 h-5 text-blue-600 rounded"
+                      className="w-5 h-5 text-slate-900 rounded focus:ring-slate-900"
                     />
                     <span className="font-medium text-gray-700">오디언스 타기팅</span>
                   </label>
-                  <label className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer">
+                  <label className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg cursor-pointer hover:border-slate-500 transition-colors">
                     <input
                       type="checkbox"
                       checked={formData.region_targeting}
                       onChange={(e) => setFormData({ ...formData, region_targeting: e.target.checked })}
-                      className="w-5 h-5 text-blue-600 rounded"
+                      className="w-5 h-5 text-slate-900 rounded focus:ring-slate-900"
                     />
                     <span className="font-medium text-gray-700">지역 타기팅</span>
                   </label>
@@ -466,20 +466,20 @@ export default function EstimatePage() {
               <div className="space-y-6">
                 {/* Summary Cards */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg text-center">
-                    <p className="text-sm text-slate-500 mb-1 font-medium">총 월 예산</p>
+                  <div className="bg-white border border-gray-200 p-4 rounded-lg text-center shadow-sm">
+                    <p className="text-sm text-gray-500 mb-1 font-medium">총 월 예산</p>
                     <p className="text-xl font-black text-slate-900">{result.summary.total_budget.toLocaleString()}원</p>
                   </div>
-                  <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg text-center">
-                    <p className="text-sm text-slate-500 mb-1 font-medium">총 월 노출수</p>
+                  <div className="bg-white border border-gray-200 p-4 rounded-lg text-center shadow-sm">
+                    <p className="text-sm text-gray-500 mb-1 font-medium">총 월 노출수</p>
                     <p className="text-xl font-black text-slate-900">{result.summary.total_impressions.toLocaleString()}회</p>
                   </div>
-                  <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg text-center">
-                    <p className="text-sm text-slate-500 mb-1 font-medium">평균 CPV</p>
+                  <div className="bg-white border border-gray-200 p-4 rounded-lg text-center shadow-sm">
+                    <p className="text-sm text-gray-500 mb-1 font-medium">평균 CPV</p>
                     <p className="text-xl font-black text-slate-900">{result.summary.average_cpv.toFixed(1)}원</p>
                   </div>
-                  <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg text-center">
-                    <p className="text-sm text-slate-500 mb-1 font-medium">광고 초수</p>
+                  <div className="bg-white border border-gray-200 p-4 rounded-lg text-center shadow-sm">
+                    <p className="text-sm text-gray-500 mb-1 font-medium">광고 초수</p>
                     <p className="text-xl font-black text-slate-900">{result.summary.ad_duration}초</p>
                   </div>
                 </div>
@@ -529,13 +529,12 @@ export default function EstimatePage() {
                   견적서 출력하기
                 </button>
 
-              </button>
               </div>
             )}
-      </AccordionSection>
-    </div>
+          </AccordionSection>
+        </div>
 
-      </main >
-    </div >
+      </main>
+    </div>
   );
 }
