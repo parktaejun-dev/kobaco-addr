@@ -11,8 +11,8 @@ type ComparisonData = {
 
 export default function ComparisonSection({ data }: { data: ComparisonData }) {
   return (
-    <section className="py-16 sm:py-24 bg-slate-50/60">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+    <section className="section-pad bg-slate-50/60">
+      <div className="section-wrap">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -24,7 +24,7 @@ export default function ComparisonSection({ data }: { data: ComparisonData }) {
           </h2>
 
           <div className="mt-8 grid gap-6 lg:grid-cols-2">
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="card p-6">
               <div className="flex items-center gap-2 text-sm font-semibold text-slate-600">
                 <Tv2 className="h-4 w-4" />
                 {data.left.label}
@@ -43,7 +43,7 @@ export default function ComparisonSection({ data }: { data: ComparisonData }) {
               </ul>
             </div>
 
-            <div className="rounded-2xl border border-blue-200 bg-white p-6 shadow-sm">
+            <div className="card border-blue-200 p-6">
               <div className="flex items-center gap-2 text-sm font-semibold text-blue-700">
                 <Target className="h-4 w-4" />
                 {data.right.label}
