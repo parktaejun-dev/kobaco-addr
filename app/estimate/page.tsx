@@ -327,7 +327,7 @@ export default function EstimatePage() {
                 </div>
                 {formData.is_new_advertiser && (
                   <div className="mt-4 p-3 bg-blue-50 rounded-xl flex items-center gap-2 text-xs font-bold text-blue-600 animate-in fade-in slide-in-from-top-2">
-                    <Sparkles size={14} /> ✨ 어드레서블 첫 집행 웰컴 보너스가 적용됩니다.
+                    <Sparkles size={14} /> ✨ 신규 광고주 프로모션(보너스)이 적용됩니다.
                   </div>
                 )}
               </div>
