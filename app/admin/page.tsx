@@ -205,7 +205,7 @@ export default function AdminPortal() {
             </aside>
 
             {/* Main Area */}
-            <main className="flex-1 ml-64 p-12">
+            <main className="flex-1 ml-64 p-12 flex flex-col min-h-screen">
                 {activeTab !== 'home' && (
                     <header className="mb-12">
                         <h1 className="text-4xl font-black text-slate-900 capitalize tracking-tight">
@@ -633,6 +633,67 @@ export default function AdminPortal() {
                                         상위 100개 항목만 표시 중입니다.
                                     </div>
                                 )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Tab: Usage Logs (Real Data from policy/usage_logs.json) */}
+                {activeTab === 'usage' && (
+                    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                            <div className="p-8 border-b border-slate-100 flex justify-between items-center">
+                                <div>
+                                    <h3 className="text-2xl font-black text-slate-800 tracking-tight">최근 사용 기록</h3>
+                                    <p className="text-slate-500 font-medium mt-1">시스템에서 발생한 견적 및 AI 분석 로그입니다.</p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="bg-blue-50 text-blue-600 px-4 py-1.5 rounded-full text-xs font-black">실시간 기록 중</span>
+                                </div>
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead className="bg-slate-50 border-b border-slate-100">
+                                        <tr className="text-slate-400 font-black text-[10px] uppercase tracking-widest">
+                                            <th className="p-6 text-left">일시</th>
+                                            <th className="p-6 text-left">종류</th>
+                                            <th className="p-6 text-left">광고주 / 제품</th>
+                                            <th className="p-6 text-right">총 예산</th>
+                                            <th className="p-6 text-right">평균 CPV</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {usageLogs.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={5} className="p-20 text-center text-slate-400 font-bold italic">기록된 로그가 없습니다.</td>
+                                            </tr>
+                                        ) : (
+                                            usageLogs.map((log) => (
+                                                <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
+                                                    <td className="p-6 text-slate-500 font-mono text-xs">
+                                                        {new Date(log.date).toLocaleString('ko-KR')}
+                                                    </td>
+                                                    <td className="p-6">
+                                                        <span className={`px-2 py-1 rounded text-[10px] font-black uppercase ${log.type === 'analysis' ? 'bg-indigo-50 text-indigo-600' : 'bg-orange-50 text-orange-600'
+                                                            }`}>
+                                                            {log.type === 'analysis' ? 'AI 분석' : '인쇄/저장'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="p-6">
+                                                        <div className="font-bold text-slate-900">{log.advertiser}</div>
+                                                        <div className="text-xs text-slate-400">{log.product}</div>
+                                                    </td>
+                                                    <td className="p-6 text-right font-bold text-slate-700">
+                                                        {log.budget?.toLocaleString()}원
+                                                    </td>
+                                                    <td className="p-6 text-right font-black text-blue-600">
+                                                        {log.cpv?.toFixed(1)}원
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
