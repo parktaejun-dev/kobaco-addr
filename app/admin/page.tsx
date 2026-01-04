@@ -225,11 +225,23 @@ export default function AdminPortal() {
         if (!editingSection) return;
         const toastId = toast.loading("Saving...");
         try {
+            // Sanitize Data for UseCases (Auto-fill missing tags)
+            let finalData = editingSection.content;
+            if (editingSection.type === 'useCases' && Array.isArray(finalData.cases)) {
+                finalData = {
+                    ...finalData,
+                    cases: finalData.cases.map((c: any) => ({
+                        ...c,
+                        tag: c.tag || "General" // Fallback for missing tags
+                    }))
+                };
+            }
+
             // Use New Robust API
             await axios.post('/api/admin/section/save', {
                 id: editingSection.id,
                 type: editingSection.type,
-                data: editingSection.content
+                data: finalData
             });
 
             toast.success("Changes saved!");
@@ -1086,55 +1098,64 @@ export default function AdminPortal() {
                                                     <tbody className="divide-y divide-slate-100">
                                                         {(editingSection.content.cards || editingSection.content.questions || editingSection.content.steps || editingSection.content.cases || []).map((item: any, i: number) => (
                                                             <tr key={i} className="hover:bg-slate-50/50 transition-colors">
-                                                                <td className="p-6 space-y-3">
-                                                                    <input type="text" value={item.title || item.question || item.step + '. ' + (item.title || '')} onChange={e => {
-                                                                        // Logic to update correct field based on type
-                                                                        const listName = editingSection.type === 'faq' ? 'questions' : (editingSection.type === 'howItWorks' ? 'steps' : (editingSection.type === 'useCases' ? 'cases' : 'cards'));
-                                                                        const key = editingSection.type === 'faq' ? 'question' : 'title';
-                                                                        const newList = [...editingSection.content[listName]];
-                                                                        newList[i][key] = e.target.value;
-                                                                        setEditingSection({ ...editingSection, content: { ...editingSection.content, [listName]: newList } });
-                                                                    }} className="w-full bg-transparent outline-none font-black text-lg text-slate-800" placeholder="Title..." />
+                                                                    <td className="p-6 space-y-3">
+                                                                        {editingSection.type === 'useCases' && (
+                                                                            <input type="text" value={item.tag || ''} onChange={e => {
+                                                                                const newList = [...editingSection.content.cases];
+                                                                                newList[i].tag = e.target.value;
+                                                                                setEditingSection({ ...editingSection, content: { ...editingSection.content, cases: newList } });
+                                                                            }} className="w-1/2 bg-blue-50/50 p-2 rounded-lg text-xs font-bold text-blue-600 outline-none" placeholder="Tag..." />
+                                                                        )}
+                                                                        <input type="text" value={item.title || item.question || item.step + '. ' + (item.title || '')} onChange={e => {
+                                                                            // Logic to update correct field based on type
+                                                                            const listName = editingSection.type === 'faq' ? 'questions' : (editingSection.type === 'howItWorks' ? 'steps' : (editingSection.type === 'useCases' ? 'cases' : 'cards'));
+                                                                            const key = editingSection.type === 'faq' ? 'question' : 'title';
+                                                                            const newList = [...editingSection.content[listName]];
+                                                                            newList[i][key] = e.target.value;
+                                                                            setEditingSection({ ...editingSection, content: { ...editingSection.content, [listName]: newList } });
+                                                                        }} className="w-full bg-transparent outline-none font-black text-lg text-slate-800" placeholder="Title..." />
 
-                                                                    <textarea value={item.description || item.answer} onChange={e => {
-                                                                        const listName = editingSection.type === 'faq' ? 'questions' : (editingSection.type === 'howItWorks' ? 'steps' : (editingSection.type === 'useCases' ? 'cases' : 'cards'));
-                                                                        const key = editingSection.type === 'faq' ? 'answer' : 'description';
-                                                                        const newList = [...editingSection.content[listName]];
-                                                                        newList[i][key] = e.target.value;
-                                                                        setEditingSection({ ...editingSection, content: { ...editingSection.content, [listName]: newList } });
-                                                                    }} className="w-full bg-transparent outline-none text-slate-500 leading-relaxed text-sm resize-none" rows={2} placeholder="Content description..." />
-                                                                </td>
-                                                                {(editingSection.type === 'howItWorks' || editingSection.type === 'useCases') && (
-                                                                    <td className="p-6 align-top">
-                                                                        <ImageUploader
-                                                                            label="Img"
-                                                                            value={item.image || ''}
-                                                                            onChange={(url) => {
-                                                                                const listName = editingSection.type === 'howItWorks' ? 'steps' : 'cases';
-                                                                                const newList = [...editingSection.content[listName]];
-                                                                                newList[i].image = url;
-                                                                                setEditingSection({ ...editingSection, content: { ...editingSection.content, [listName]: newList } });
-                                                                            }}
-                                                                        />
+                                                                        <textarea value={item.description || item.answer} onChange={e => {
+                                                                            const listName = editingSection.type === 'faq' ? 'questions' : (editingSection.type === 'howItWorks' ? 'steps' : (editingSection.type === 'useCases' ? 'cases' : 'cards'));
+                                                                            const key = editingSection.type === 'faq' ? 'answer' : 'description';
+                                                                            const newList = [...editingSection.content[listName]];
+                                                                            newList[i][key] = e.target.value;
+                                                                            setEditingSection({ ...editingSection, content: { ...editingSection.content, [listName]: newList } });
+                                                                        }} className="w-full bg-transparent outline-none text-slate-500 leading-relaxed text-sm resize-none" rows={2} placeholder="Content description..." />
                                                                     </td>
-                                                                )}
-                                                                <td className="p-6 text-right">
-                                                                    <button onClick={() => {
-                                                                        const listName = editingSection.type === 'faq' ? 'questions' : (editingSection.type === 'howItWorks' ? 'steps' : (editingSection.type === 'useCases' ? 'cases' : 'cards'));
-                                                                        const newList = editingSection.content[listName].filter((_: any, idx: number) => idx !== i);
-                                                                        setEditingSection({ ...editingSection, content: { ...editingSection.content, [listName]: newList } });
-                                                                    }} className="text-red-300 hover:text-red-500 transition-colors"><Trash2 size={18} /></button>
-                                                                </td>
-                                                            </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
-                                                <button onClick={() => {
-                                                    const listName = editingSection.type === 'faq' ? 'questions' : (editingSection.type === 'howItWorks' ? 'steps' : (editingSection.type === 'useCases' ? 'cases' : 'cards'));
-                                                    const newItem = editingSection.type === 'faq' ? { question: "New Q", answer: "" } : { title: "New Item", description: "" };
-                                                    const newList = [...(editingSection.content[listName] || []), newItem];
-                                                    setEditingSection({ ...editingSection, content: { ...editingSection.content, [listName]: newList } });
-                                                }} className="w-full p-6 bg-slate-50 text-blue-600 hover:bg-blue-50 font-black text-sm flex items-center justify-center gap-2 transition-all border-t"><Plus size={18} /> 항목 추가하기</button>
+                                                                    {(editingSection.type === 'howItWorks' || editingSection.type === 'useCases') && (
+                                                                        <td className="p-6 align-top">
+                                                                            <ImageUploader
+                                                                                label="Img"
+                                                                                value={item.image || ''}
+                                                                                onChange={(url) => {
+                                                                                    const listName = editingSection.type === 'howItWorks' ? 'steps' : 'cases';
+                                                                                    const newList = [...editingSection.content[listName]];
+                                                                                    newList[i].image = url;
+                                                                                    setEditingSection({ ...editingSection, content: { ...editingSection.content, [listName]: newList } });
+                                                                                }}
+                                                                            />
+                                                                        </td>
+                                                                    )}
+                                                                    <td className="p-6 text-right">
+                                                                        <button onClick={() => {
+                                                                            const listName = editingSection.type === 'faq' ? 'questions' : (editingSection.type === 'howItWorks' ? 'steps' : (editingSection.type === 'useCases' ? 'cases' : 'cards'));
+                                                                            const newList = editingSection.content[listName].filter((_: any, idx: number) => idx !== i);
+                                                                            setEditingSection({ ...editingSection, content: { ...editingSection.content, [listName]: newList } });
+                                                                        }} className="text-red-300 hover:text-red-500 transition-colors"><Trash2 size={18} /></button>
+                                                                    </td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                    <button onClick={() => {
+                                                        const listName = editingSection.type === 'faq' ? 'questions' : (editingSection.type === 'howItWorks' ? 'steps' : (editingSection.type === 'useCases' ? 'cases' : 'cards'));
+                                                        const newItem = editingSection.type === 'faq' ? { question: "New Q", answer: "" } :
+                                                            editingSection.type === 'useCases' ? { tag: "New Tag", title: "New Case", description: "" } :
+                                                                { title: "New Item", description: "" };
+                                                        const newList = [...(editingSection.content[listName] || []), newItem];
+                                                        setEditingSection({ ...editingSection, content: { ...editingSection.content, [listName]: newList } });
+                                                    }} className="w-full p-6 bg-slate-50 text-blue-600 hover:bg-blue-50 font-black text-sm flex items-center justify-center gap-2 transition-all border-t"><Plus size={18} /> 항목 추가하기</button>
                                             </div>
                                         </div>
                                     </div>
