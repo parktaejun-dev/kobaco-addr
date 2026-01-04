@@ -13,8 +13,7 @@ import {
 type Tab = 'content' | 'policies' | 'segments' | 'usage';
 
 export default function AdminPortal() {
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [passwordInput, setPasswordInput] = useState('');
+    // Middleware handles authentication - if we reach this page, we're already authenticated
     const [activeTab, setActiveTab] = useState<Tab>('content');
 
     // Data State
@@ -33,16 +32,8 @@ export default function AdminPortal() {
     const [categoryFilters, setCategoryFilters] = useState<Record<string, string>>({});
 
     useEffect(() => {
-        if (sessionStorage.getItem('admin_access') === 'true') {
-            setIsAuthenticated(true);
-        }
-    }, []);
-
-    useEffect(() => {
-        if (isAuthenticated) {
-            loadTabData();
-        }
-    }, [isAuthenticated, activeTab]);
+        loadTabData();
+    }, [activeTab]);
 
     const loadTabData = async () => {
         try {
@@ -73,16 +64,7 @@ export default function AdminPortal() {
         }
     };
 
-    const handleLogin = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (passwordInput === 'password@@') {
-            setIsAuthenticated(true);
-            sessionStorage.setItem('admin_access', 'true');
-            toast.success("Authenticated");
-        } else {
-            toast.error("Invalid password");
-        }
-    };
+    // Login handled by Middleware (HTTP Basic Auth)
 
     // --- Content Builder Handlers ---
 
@@ -174,25 +156,6 @@ export default function AdminPortal() {
     };
 
     // --- Render Helpers ---
-
-    if (!isAuthenticated) {
-        return (
-            <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6">
-                <form onSubmit={handleLogin} className="bg-white p-10 rounded-3xl shadow-2xl w-full max-w-md space-y-8 animate-in zoom-in-95 duration-300">
-                    <div className="flex flex-col items-center text-center space-y-2">
-                        <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mb-4"><Lock size={32} /></div>
-                        <h1 className="text-3xl font-black text-slate-900 tracking-tight">KOBA-TA Admin</h1>
-                        <p className="text-slate-500 font-medium">관리자 비밀번호를 입력하세요.</p>
-                    </div>
-                    <div className="space-y-4">
-                        <input type="password" value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} placeholder="Password"
-                            className="w-full px-5 py-4 border-2 border-slate-100 rounded-2xl outline-none focus:border-blue-500 transition-all text-center text-lg tracking-widest font-mono" autoFocus />
-                        <button type="submit" className="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold text-lg hover:bg-blue-700 active:scale-[0.98] transition-all shadow-lg shadow-blue-200">접속하기</button>
-                    </div>
-                </form>
-            </div>
-        );
-    }
 
     return (
         <div className="min-h-screen bg-slate-50 flex">
