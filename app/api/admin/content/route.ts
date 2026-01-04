@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { getJSON, setJSON } from '@/lib/kv-store';
 
 const TEMPLATES: Record<string, any> = {
@@ -79,6 +80,7 @@ export async function POST(request: Request) {
     // 1. Save Home Config
     if (action === 'save_home' || (!action && type === 'home')) {
       await setJSON('content', 'home', content);
+      revalidatePath('/'); // Refresh Main Page
       return NextResponse.json({ success: true });
     }
 
@@ -86,6 +88,7 @@ export async function POST(request: Request) {
     if (action === 'save_section' || (!action && type === 'section')) {
       if (!id) return NextResponse.json({ error: 'ID is required for section save' }, { status: 400 });
       await setJSON('content', id, content);
+      revalidatePath('/'); // Refresh Main Page
       return NextResponse.json({ success: true });
     }
 
@@ -109,6 +112,7 @@ export async function POST(request: Request) {
       sections.push({ id: newId, type, enabled: true });
       await setJSON('content', 'home', { ...homeData, sections });
 
+      revalidatePath('/'); // Refresh Main Page
       return NextResponse.json({ success: true, id: newId });
     }
 
