@@ -69,6 +69,19 @@ export default function EstimatePrint() {
     : 0;
 
   const handlePrint = () => {
+    // Log usage (Print)
+    fetch('/api/log/usage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        advertiser: info.advertiserName,
+        product: info.productName,
+        budget: result.summary.total_budget,
+        cpv: result.summary.average_cpv,
+        type: 'print'
+      })
+    }).catch(err => console.error('Logging failed:', err));
+
     window.print();
   };
 
@@ -96,118 +109,100 @@ export default function EstimatePrint() {
       <div className="max-w-[210mm] min-h-[297mm] mx-auto bg-white shadow-2xl p-[20mm] print:shadow-none print:p-[15mm]">
 
         {/* Header with Logo */}
-        <div className="flex justify-between items-center border-b-[3px] border-[#004a9e] pb-4 mb-6">
-          <h1 className="text-[28px] font-black text-[#004a9e]">AI 광고 최적화 플랜</h1>
+        <div className="flex justify-between items-center border-b-[2px] border-[#004a9e] pb-2 mb-4">
+          <h1 className="text-[20px] font-black text-[#004a9e]">AI 광고 최적화 플랜</h1>
           <Image
             src="/kobaco_logo.png"
             alt="KOBACO"
-            width={120}
-            height={40}
+            width={100}
+            height={32}
             className="object-contain"
           />
         </div>
 
         {/* Info Table */}
-        <table className="w-full border-collapse mb-6 border-t-2 border-gray-800">
+        <table className="w-full border-collapse mb-4 border-t border-gray-800">
           <tbody>
             <tr>
-              <th className="bg-gray-100 border border-gray-300 px-3 py-3 text-left text-sm font-bold w-[120px]">광고주명</th>
-              <td className="border border-gray-300 px-3 py-3 text-sm">{info.advertiserName || 'N/A'}</td>
-              <th className="bg-gray-100 border border-gray-300 px-3 py-3 text-left text-sm font-bold w-[120px]">제품명</th>
-              <td className="border border-gray-300 px-3 py-3 text-sm">{info.productName || 'N/A'}</td>
+              <th className="bg-gray-50 border border-gray-200 px-2 py-1.5 text-left text-xs font-bold w-[100px]">광고주명</th>
+              <td className="border border-gray-200 px-2 py-1.5 text-xs">{info.advertiserName || 'N/A'}</td>
+              <th className="bg-gray-50 border border-gray-200 px-2 py-1.5 text-left text-xs font-bold w-[100px]">제품명</th>
+              <td className="border border-gray-200 px-2 py-1.5 text-xs">{info.productName || 'N/A'}</td>
             </tr>
             <tr>
-              <th className="bg-gray-100 border border-gray-300 px-3 py-3 text-left text-sm font-bold">총 월 예산</th>
-              <td className="border border-gray-300 px-3 py-3 text-sm">{result.summary.total_budget.toLocaleString()}원</td>
-              <th className="bg-gray-100 border border-gray-300 px-3 py-3 text-left text-sm font-bold">집행 기간</th>
-              <td className="border border-gray-300 px-3 py-3 text-sm">{result.summary.duration_months}개월</td>
-            </tr>
-            <tr>
-              <th className="bg-gray-100 border border-gray-300 px-3 py-3 text-left text-sm font-bold">분석일</th>
-              <td className="border border-gray-300 px-3 py-3 text-sm">{today}</td>
-              <th className="bg-gray-100 border border-gray-300 px-3 py-3 text-left text-sm font-bold">광고 초수</th>
-              <td className="border border-gray-300 px-3 py-3 text-sm">{result.summary.ad_duration}초</td>
+              <th className="bg-gray-50 border border-gray-200 px-2 py-1.5 text-left text-xs font-bold">총 월 예산</th>
+              <td className="border border-gray-200 px-2 py-1.5 text-xs">{result.summary.total_budget.toLocaleString()}원</td>
+              <th className="bg-gray-50 border border-gray-200 px-2 py-1.5 text-left text-xs font-bold">집행 기간</th>
+              <td className="border border-gray-200 px-2 py-1.5 text-xs">{result.summary.duration_months}개월</td>
             </tr>
           </tbody>
         </table>
 
-        {/* AI Strategy Summary (if available) */}
+        {/* AI Strategy Summary */}
         {aiResult?.understanding && (
-          <section className="bg-[#f0f6ff] border border-[#cce0ff] p-5 rounded mb-6">
-            <h2 className="text-[#004a9e] font-bold text-lg border-b-2 border-gray-200 pb-2 mb-3 mt-0">
+          <section className="bg-[#f0f6ff] border border-[#cce0ff] p-3 rounded mb-4">
+            <h2 className="text-[#004a9e] font-black text-sm border-b border-[#cce0ff] pb-1 mb-2 mt-0">
               AI 광고 전략 총평
             </h2>
-            <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">
+            <p className="text-[11px] text-gray-800 leading-normal whitespace-pre-wrap">
               {aiResult.understanding}
             </p>
-            {aiResult.keywords.length > 0 && (
-              <p className="text-sm text-[#004a9e] mt-2">
-                <strong>🔑 확장 키워드:</strong> {aiResult.keywords.join(', ')}
-              </p>
-            )}
           </section>
         )}
 
         {/* Summary Cards */}
-        <h2 className="text-[#004a9e] font-bold text-lg border-b-2 border-gray-200 pb-2 mb-4 mt-6">
-          📊 종합 성과 요약 (월 기준)
-        </h2>
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="bg-gray-100 border border-gray-300 p-4 rounded text-center">
-            <h3 className="text-sm text-gray-600 mb-2 font-bold">총 월 예산</h3>
-            <p className="text-xl font-bold text-[#004a9e]">{result.summary.total_budget.toLocaleString()}원</p>
+        <div className="grid grid-cols-3 gap-3 mb-4">
+          <div className="bg-gray-50 border border-gray-200 p-2 rounded text-center">
+            <h3 className="text-[10px] text-gray-500 mb-1 font-bold">총 월 예산</h3>
+            <p className="text-sm font-black text-[#004a9e]">{result.summary.total_budget.toLocaleString()}원</p>
           </div>
-          <div className="bg-gray-100 border border-gray-300 p-4 rounded text-center">
-            <h3 className="text-sm text-gray-600 mb-2 font-bold">총 월 노출수</h3>
-            <p className="text-xl font-bold text-[#004a9e]">{result.summary.total_impressions.toLocaleString()}회</p>
+          <div className="bg-gray-50 border border-gray-200 p-2 rounded text-center">
+            <h3 className="text-[10px] text-gray-500 mb-1 font-bold">총 월 노출수</h3>
+            <p className="text-sm font-black text-[#004a9e]">{result.summary.total_impressions.toLocaleString()}회</p>
           </div>
-          <div className="bg-gray-100 border border-gray-300 p-4 rounded text-center">
-            <h3 className="text-sm text-gray-600 mb-2 font-bold">평균 CPV</h3>
-            <p className="text-xl font-bold text-[#004a9e]">{result.summary.average_cpv.toFixed(1)}원</p>
+          <div className="bg-gray-50 border border-gray-200 p-2 rounded text-center">
+            <h3 className="text-[10px] text-gray-500 mb-1 font-bold">평균 CPV</h3>
+            <p className="text-sm font-black text-[#004a9e]">{result.summary.average_cpv.toFixed(1)}원</p>
           </div>
         </div>
 
         {/* Channel Detail Table */}
-        <h2 className="text-[#004a9e] font-bold text-lg border-b-2 border-gray-200 pb-2 mb-4 mt-6">
-          📈 채널별 상세 내역 (월 기준)
-        </h2>
-        <div className="overflow-x-auto mb-6">
-          <table className="w-full text-sm border-collapse">
-            <thead className="bg-[#f0f6ff]">
-              <tr>
-                <th className="border border-gray-300 px-3 py-2 text-center font-bold">채널</th>
-                <th className="border border-gray-300 px-3 py-2 text-center font-bold">예산(원)</th>
-                <th className="border border-gray-300 px-3 py-2 text-center font-bold">기본 CPV</th>
-                <th className="border border-gray-300 px-3 py-2 text-center font-bold">보너스율</th>
-                <th className="border border-gray-300 px-3 py-2 text-center font-bold">할증율</th>
-                <th className="border border-gray-300 px-3 py-2 text-center font-bold">최종 CPV</th>
-                <th className="border border-gray-300 px-3 py-2 text-center font-bold">보장 노출수</th>
+        <h2 className="text-[#004a9e] font-black text-xs border-l-4 border-[#004a9e] pl-2 mb-2 mt-4">채널별 상세 내역 (월 기준)</h2>
+        <table className="w-full text-[10px] border-collapse mb-4">
+          <thead className="bg-[#f0f6ff]">
+            <tr>
+              <th className="border border-gray-200 px-1 py-1 text-center font-bold">채널</th>
+              <th className="border border-gray-200 px-1 py-1 text-center font-bold">예산(원)</th>
+              <th className="border border-gray-200 px-1 py-1 text-center font-bold">기본 CPV</th>
+              <th className="border border-gray-200 px-1 py-1 text-center font-bold">보너스율</th>
+              <th className="border border-gray-200 px-1 py-1 text-center font-bold">할증율</th>
+              <th className="border border-gray-200 px-1 py-1 text-center font-bold">최종 CPV</th>
+              <th className="border border-gray-200 px-1 py-1 text-center font-bold">보장 노출수</th>
+            </tr>
+          </thead>
+          <tbody>
+            {result.details.map((detail, i) => (
+              <tr key={i}>
+                <td className="border border-gray-200 px-1 py-1 text-center font-black">{detail.channel}</td>
+                <td className="border border-gray-200 px-1 py-1 text-right">{detail.budget.toLocaleString()}</td>
+                <td className="border border-gray-200 px-1 py-1 text-right">{detail.base_cpv.toFixed(1)}</td>
+                <td className="border border-gray-200 px-1 py-1 text-right">{detail.total_bonus_rate.toFixed(1)}%</td>
+                <td className="border border-gray-200 px-1 py-1 text-right">{detail.total_surcharge_rate.toFixed(1)}%</td>
+                <td className="border border-gray-200 px-1 py-1 text-right font-bold">{detail.final_cpv.toFixed(1)}</td>
+                <td className="border border-gray-200 px-1 py-1 text-right font-black">{detail.guaranteed_impressions.toLocaleString()}</td>
               </tr>
-            </thead>
-            <tbody>
-              {result.details.map((detail, i) => (
-                <tr key={i}>
-                  <td className="border border-gray-300 px-3 py-2 text-center">{detail.channel}</td>
-                  <td className="border border-gray-300 px-3 py-2 text-center">{detail.budget.toLocaleString()}</td>
-                  <td className="border border-gray-300 px-3 py-2 text-center">{detail.base_cpv.toFixed(1)}</td>
-                  <td className="border border-gray-300 px-3 py-2 text-center">{detail.total_bonus_rate.toFixed(1)}%</td>
-                  <td className="border border-gray-300 px-3 py-2 text-center">{detail.total_surcharge_rate.toFixed(1)}%</td>
-                  <td className="border border-gray-300 px-3 py-2 text-center">{detail.final_cpv.toFixed(1)}</td>
-                  <td className="border border-gray-300 px-3 py-2 text-center">{detail.guaranteed_impressions.toLocaleString()}</td>
-                </tr>
-              ))}
-              <tr className="bg-gray-100 font-bold">
-                <td className="border border-gray-300 px-3 py-2 text-center">종합</td>
-                <td className="border border-gray-300 px-3 py-2 text-center">{result.summary.total_budget.toLocaleString()}</td>
-                <td className="border border-gray-300 px-3 py-2 text-center">{baseCpvTotal.toFixed(1)}</td>
-                <td className="border border-gray-300 px-3 py-2 text-center">{totalBonusRatePercent.toFixed(1)}%</td>
-                <td className="border border-gray-300 px-3 py-2 text-center">-</td>
-                <td className="border border-gray-300 px-3 py-2 text-center">{result.summary.average_cpv.toFixed(1)}</td>
-                <td className="border border-gray-300 px-3 py-2 text-center">{result.summary.total_impressions.toLocaleString()}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+            ))}
+            <tr className="bg-gray-50 font-black">
+              <td className="border border-gray-200 px-1 py-1 text-center font-black">종합</td>
+              <td className="border border-gray-200 px-1 py-1 text-right">{result.summary.total_budget.toLocaleString()}</td>
+              <td className="border border-gray-200 px-1 py-1 text-right">{baseCpvTotal.toFixed(1)}</td>
+              <td className="border border-gray-200 px-1 py-1 text-right">{totalBonusRatePercent.toFixed(1)}%</td>
+              <td className="border border-gray-200 px-1 py-1 text-right">-</td>
+              <td className="border border-gray-200 px-1 py-1 text-right">{result.summary.average_cpv.toFixed(1)}</td>
+              <td className="border border-gray-200 px-1 py-1 text-right text-blue-700">{result.summary.total_impressions.toLocaleString()}</td>
+            </tr>
+          </tbody>
+        </table>
 
         {/* AI Target Analysis Detail (if available) */}
         {aiResult && aiResult.segments.length > 0 && (

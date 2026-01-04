@@ -385,10 +385,7 @@ export default function AdminPortal() {
                                         ))}
                                     </tbody>
                                 </table>
-                                <button onClick={() => {
-                                    const newList = [...policies.channels, { channel_name: "새 채널", base_cpv: 10, cpv_audience: 10, cpv_non_target: 10 }];
-                                    setPolicies({ ...policies, channels: newList });
-                                }} className="w-full p-4 bg-slate-50 text-slate-400 font-bold hover:bg-slate-100 transition-all flex items-center justify-center gap-2"><Plus size={16} /> 채널 추가</button>
+                                {/* Redundant add button removed as per Phase 11 */}
                             </div>
                         </div>
 
@@ -474,10 +471,7 @@ export default function AdminPortal() {
                                         </div>
                                     );
                                 })}
-                                <button onClick={() => {
-                                    const newList = [...policies.bonuses, { channel_name: "PP", bonus_type: "volume", condition_type: "min_budget", min_value: 0, rate: 0.1, description: "보너스 명칭" }];
-                                    setPolicies({ ...policies, bonuses: newList });
-                                }} className="w-full p-4 bg-slate-50 text-slate-400 font-bold hover:bg-slate-100 transition-all flex items-center justify-center gap-2"><Plus size={16} /> 보너스 항목 추가</button>
+                                {/* Redundant add button removed as per Phase 11 */}
                             </div>
                         </div>
 
@@ -561,10 +555,7 @@ export default function AdminPortal() {
                                         </div>
                                     );
                                 })}
-                                <button onClick={() => {
-                                    const newList = [...policies.surcharges, { channel_name: "PP", surcharge_type: "region", condition_value: "지역명", rate: 0.2, description: "설명" }];
-                                    setPolicies({ ...policies, surcharges: newList });
-                                }} className="w-full p-4 bg-slate-50 text-slate-400 font-bold hover:bg-slate-100 transition-all flex items-center justify-center gap-2"><Plus size={16} /> 할증 항목 추가</button>
+                                {/* Redundant add button removed as per Phase 11 */}
                             </div>
                         </div>
                     </div>
@@ -846,6 +837,13 @@ export default function AdminPortal() {
                     </div>
                 )}
 
+                <footer className="mt-auto border-t py-10 px-8 flex justify-between items-center text-slate-400 font-medium">
+                    <p className="text-sm tracking-tight">&copy; 2024 KOBACO Addressable TV. All Rights Reserved.</p>
+                    <div className="flex gap-6 text-[10px] font-black uppercase tracking-[0.2em]">
+                        <span className="text-blue-500">System v3.0</span>
+                        <span>Authorized Access Only</span>
+                    </div>
+                </footer>
             </main>
         </div>
     );

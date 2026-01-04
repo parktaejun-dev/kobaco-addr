@@ -26,7 +26,7 @@ export default function EstimatePage() {
     audience_targeting: true,
     ad_duration: 15,
     custom_targeting: false,
-    is_new_advertiser: false,
+    is_new_advertiser: true,
   });
 
   // Client info
@@ -92,6 +92,19 @@ export default function EstimatePage() {
 
       const data = await response.json();
       setAiResult(data);
+
+      // Log usage (Analysis)
+      fetch('/api/log/usage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          advertiser: clientInfo.advertiserName,
+          product: clientInfo.productName,
+          budget: result?.summary.total_budget,
+          cpv: result?.summary.average_cpv,
+          type: 'analysis'
+        })
+      }).catch(err => console.error('Logging failed:', err));
     } catch (e: any) {
       alert(e.message);
     } finally {
@@ -288,22 +301,34 @@ export default function EstimatePage() {
                 </div>
               </div>
 
-              {/* New Advertiser */}
-              <div className="p-4 border rounded-xl">
-                <label className="block text-sm font-medium text-gray-500 mb-3">신규 광고주</label>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-700">KOBACO ATV 첫 집행?</span>
-                  <button
-                    onClick={() => setFormData({ ...formData, is_new_advertiser: !formData.is_new_advertiser })}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${formData.is_new_advertiser ? 'bg-blue-600' : 'bg-gray-200'
-                      }`}
-                  >
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${formData.is_new_advertiser ? 'translate-x-6' : 'translate-x-1'
-                      }`} />
-                  </button>
+              {/* 집행 이력 질문 (기존 신규 광고주) */}
+              <div className="p-5 border rounded-2xl bg-white shadow-sm">
+                <label className="block text-sm font-black text-slate-700 mb-4">어드레서블 광고 집행 이력이 있으신가요?</label>
+                <div className="flex gap-3">
+                  {[
+                    { label: '없음', value: true },
+                    { label: '있음 (최근 6개월 내)', value: false }
+                  ].map((opt) => (
+                    <button
+                      key={opt.label}
+                      onClick={() => setFormData({ ...formData, is_new_advertiser: opt.value })}
+                      className={`flex-1 py-3 px-4 rounded-xl border-2 font-bold transition-all flex items-center justify-center gap-2 ${formData.is_new_advertiser === opt.value
+                        ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-100'
+                        : 'bg-white text-slate-500 border-slate-100 hover:border-blue-200'
+                        }`}
+                    >
+                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${formData.is_new_advertiser === opt.value ? 'border-white' : 'border-slate-200'
+                        }`}>
+                        {formData.is_new_advertiser === opt.value && <div className="w-2 h-2 bg-white rounded-full" />}
+                      </div>
+                      {opt.label}
+                    </button>
+                  ))}
                 </div>
                 {formData.is_new_advertiser && (
-                  <p className="text-xs text-blue-600 mt-2 font-medium">✨ 신규 광고주 프로모션 적용!</p>
+                  <div className="mt-4 p-3 bg-blue-50 rounded-xl flex items-center gap-2 text-xs font-bold text-blue-600 animate-in fade-in slide-in-from-top-2">
+                    <Sparkles size={14} /> ✨ 어드레서블 첫 집행 웰컴 보너스가 적용됩니다.
+                  </div>
                 )}
               </div>
 

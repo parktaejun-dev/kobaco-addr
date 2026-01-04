@@ -1,23 +1,54 @@
 
 import { NextResponse } from 'next/server';
+import fs from 'fs';
+import path from 'path';
 
-// TODO: Install @vercel/kv and uncomment to use real DB
-// import { kv } from '@vercel/kv';
+const LOG_FILE = path.join(process.cwd(), 'policy', 'usage_logs.json');
 
 export async function GET() {
   try {
-    // const logs = await kv.lrange('usage_logs', 0, 100);
-    // return NextResponse.json(logs);
-    
-    // Mock Data for Local Development
-    const logs = [
-      { id: '1', date: new Date().toISOString(), advertiser: '테스트 광고주', product: '신제품 A', budget: 5000, cpv: 120 },
-      { id: '2', date: new Date(Date.now() - 3600000).toISOString(), advertiser: '스타트업 B', product: '앱 런칭', budget: 1000, cpv: 250 },
-      { id: '3', date: new Date(Date.now() - 86400000).toISOString(), advertiser: '(주)코바코', product: '공익광고', budget: 3000, cpv: 80 },
-    ];
-    
+    if (!fs.existsSync(LOG_FILE)) {
+      return NextResponse.json([]);
+    }
+    const data = fs.readFileSync(LOG_FILE, 'utf-8');
+    const logs = JSON.parse(data);
+
+    // Sort by date descending
+    logs.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
     return NextResponse.json(logs);
   } catch (error) {
     return NextResponse.json({ error: 'Failed to fetch logs' }, { status: 500 });
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+    const { advertiser, product, budget, cpv, type } = body;
+
+    const newLog = {
+      id: Date.now().toString(),
+      date: new Date().toISOString(),
+      advertiser: advertiser || 'N/A',
+      product: product || 'N/A',
+      budget: budget || 0,
+      cpv: cpv || 0,
+      type: type || 'analysis' // 'analysis' or 'print'
+    };
+
+    let logs = [];
+    if (fs.existsSync(LOG_FILE)) {
+      const data = fs.readFileSync(LOG_FILE, 'utf-8');
+      logs = JSON.parse(data);
+    }
+
+    logs.push(newLog);
+    fs.writeFileSync(LOG_FILE, JSON.stringify(logs, null, 2));
+
+    return NextResponse.json({ success: true, log: newLog });
+  } catch (error) {
+    console.error('Logging error:', error);
+    return NextResponse.json({ error: 'Failed to save log' }, { status: 500 });
   }
 }
