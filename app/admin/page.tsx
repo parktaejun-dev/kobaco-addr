@@ -157,6 +157,12 @@ export default function AdminPortal() {
             if (['channels', 'bonuses', 'surcharges', 'segments'].includes(jsonEditor.id)) {
                 await axios.post('/api/admin/policy', { type: jsonEditor.id, data: parsed });
                 toast.success("정책 데이터 저장됨!");
+            } else if (jsonEditor.id === 'home') {
+                await axios.post('/api/admin/content', {
+                    action: 'save_home',
+                    content: parsed
+                });
+                toast.success("메인 구성 데이터 저장됨!");
             } else {
                 await axios.post('/api/admin/content', {
                     action: 'save_section',
@@ -768,18 +774,60 @@ export default function AdminPortal() {
                                                 }} className="w-full p-4 bg-slate-50 text-slate-500 hover:bg-slate-100 font-bold flex items-center justify-center gap-2 transition-all"><Plus size={16} /> KPI 추가</button>
                                             </div>
                                         </div>
+
+                                        {/* CTAs */}
+                                        <div className="space-y-4">
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Call to Action Buttons</label>
+                                            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                                                <table className="w-full text-sm">
+                                                    <tbody className="divide-y divide-slate-100">
+                                                        {editingSection.content.ctas?.map((cta: any, i: number) => (
+                                                            <tr key={i}>
+                                                                <td className="p-4 w-1/2">
+                                                                    <label className="text-[10px] text-slate-400 block mb-1">버튼 문구</label>
+                                                                    <input type="text" value={cta.label} onChange={e => {
+                                                                        const newCtas = [...editingSection.content.ctas];
+                                                                        newCtas[i].label = e.target.value;
+                                                                        setEditingSection({ ...editingSection, content: { ...editingSection.content, ctas: newCtas } });
+                                                                    }} className="w-full bg-transparent outline-none font-bold text-slate-700" />
+                                                                </td>
+                                                                <td className="p-4">
+                                                                    <label className="text-[10px] text-slate-400 block mb-1">액션 (URL/ID)</label>
+                                                                    <input type="text" value={cta.actionType || cta.link} onChange={e => {
+                                                                        const newCtas = [...editingSection.content.ctas];
+                                                                        newCtas[i].actionType = e.target.value;
+                                                                        setEditingSection({ ...editingSection, content: { ...editingSection.content, ctas: newCtas } });
+                                                                    }} className="w-full bg-transparent outline-none font-medium text-blue-600" />
+                                                                </td>
+                                                                <td className="p-4 text-right"><button onClick={() => {
+                                                                    const newCtas = editingSection.content.ctas.filter((_: any, idx: number) => idx !== i);
+                                                                    setEditingSection({ ...editingSection, content: { ...editingSection.content, ctas: newCtas } });
+                                                                }} className="text-red-400 hover:text-red-600"><Trash2 size={16} /></button></td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                                <button onClick={() => {
+                                                    const newCtas = [...(editingSection.content.ctas || []), { label: "새 버튼", actionType: "openEstimator" }];
+                                                    setEditingSection({ ...editingSection, content: { ...editingSection.content, ctas: newCtas } });
+                                                }} className="w-full p-4 bg-slate-50 text-slate-500 hover:bg-slate-100 font-bold flex items-center justify-center gap-2 transition-all"><Plus size={16} /> 버튼 추가</button>
+                                            </div>
+                                        </div>
                                     </div>
                                 )}
 
-                                {/* VALUE PROPS / FAQ EDITOR (Table Based) */}
-                                {(editingSection.type === 'valueProps' || editingSection.type === 'faq') && (
+                                {/* VALUE PROPS / FAQ / HOW IT WORKS EDITOR (Table Based) */}
+                                {(editingSection.type === 'valueProps' || editingSection.type === 'faq' || editingSection.type === 'howItWorks') && (
                                     <div className="space-y-8">
                                         <div className="space-y-2">
                                             <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Section Title</label>
                                             <input type="text" value={editingSection.content.title} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, title: e.target.value } })} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-bold focus:border-blue-500 outline-none" />
                                         </div>
                                         <div className="space-y-4">
-                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">{editingSection.type === 'faq' ? 'Questions & Answers' : 'Feature Cards'}</label>
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                                                {editingSection.type === 'faq' ? 'Questions & Answers' :
+                                                    editingSection.type === 'howItWorks' ? 'Development Steps' : 'Feature Cards'}
+                                            </label>
                                             <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
                                                 <table className="w-full text-sm">
                                                     <thead className="bg-slate-50 border-b">
@@ -789,18 +837,18 @@ export default function AdminPortal() {
                                                         </tr>
                                                     </thead>
                                                     <tbody className="divide-y divide-slate-100">
-                                                        {(editingSection.content.cards || editingSection.content.questions || []).map((item: any, i: number) => (
+                                                        {(editingSection.content.cards || editingSection.content.questions || editingSection.content.steps || []).map((item: any, i: number) => (
                                                             <tr key={i} className="hover:bg-slate-50/50 transition-colors">
                                                                 <td className="p-6 space-y-3">
                                                                     <input type="text" value={item.title || item.question} onChange={e => {
-                                                                        const listName = editingSection.type === 'faq' ? 'questions' : 'cards';
+                                                                        const listName = editingSection.type === 'faq' ? 'questions' : (editingSection.type === 'howItWorks' ? 'steps' : 'cards');
                                                                         const key = editingSection.type === 'faq' ? 'question' : 'title';
                                                                         const newList = [...editingSection.content[listName]];
                                                                         newList[i][key] = e.target.value;
                                                                         setEditingSection({ ...editingSection, content: { ...editingSection.content, [listName]: newList } });
                                                                     }} className="w-full bg-transparent outline-none font-black text-lg text-slate-800" placeholder="Title..." />
                                                                     <textarea value={item.description || item.answer} onChange={e => {
-                                                                        const listName = editingSection.type === 'faq' ? 'questions' : 'cards';
+                                                                        const listName = editingSection.type === 'faq' ? 'questions' : (editingSection.type === 'howItWorks' ? 'steps' : 'cards');
                                                                         const key = editingSection.type === 'faq' ? 'answer' : 'description';
                                                                         const newList = [...editingSection.content[listName]];
                                                                         newList[i][key] = e.target.value;
@@ -809,7 +857,7 @@ export default function AdminPortal() {
                                                                 </td>
                                                                 <td className="p-6 text-right">
                                                                     <button onClick={() => {
-                                                                        const listName = editingSection.type === 'faq' ? 'questions' : 'cards';
+                                                                        const listName = editingSection.type === 'faq' ? 'questions' : (editingSection.type === 'howItWorks' ? 'steps' : 'cards');
                                                                         const newList = editingSection.content[listName].filter((_: any, idx: number) => idx !== i);
                                                                         setEditingSection({ ...editingSection, content: { ...editingSection.content, [listName]: newList } });
                                                                     }} className="text-red-300 hover:text-red-500 transition-colors"><Trash2 size={18} /></button>
@@ -819,8 +867,8 @@ export default function AdminPortal() {
                                                     </tbody>
                                                 </table>
                                                 <button onClick={() => {
-                                                    const listName = editingSection.type === 'faq' ? 'questions' : 'cards';
-                                                    const newItem = editingSection.type === 'faq' ? { question: "New Question", answer: "" } : { title: "New Feature", description: "" };
+                                                    const listName = editingSection.type === 'faq' ? 'questions' : (editingSection.type === 'howItWorks' ? 'steps' : 'cards');
+                                                    const newItem = editingSection.type === 'faq' ? { question: "New Question", answer: "" } : { title: "New Item", description: "" };
                                                     const newList = [...(editingSection.content[listName] || []), newItem];
                                                     setEditingSection({ ...editingSection, content: { ...editingSection.content, [listName]: newList } });
                                                 }} className="w-full p-6 bg-slate-50 text-blue-600 hover:bg-blue-50 font-black text-sm flex items-center justify-center gap-2 transition-all border-t"><Plus size={18} /> 항목 추가하기</button>

@@ -95,7 +95,9 @@ export async function POST(request: Request) {
 
     // 2. Save Section Content
     if (action === 'save_section' || (!action && type === 'section')) {
-      fs.writeFileSync(path.join(CONTENT_DIR, 'sections', `${id}.json`), JSON.stringify(content, null, 2));
+      if (!id) return NextResponse.json({ error: 'ID is required for section save' }, { status: 400 });
+      const filePath = path.join(CONTENT_DIR, 'sections', `${id}.json`);
+      fs.writeFileSync(filePath, JSON.stringify(content, null, 2));
       return NextResponse.json({ success: true });
     }
 
