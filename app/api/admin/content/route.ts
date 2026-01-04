@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { getJSON, setJSON } from '@/lib/kv-store';
+import { getSection } from '@/lib/content/kv';
 
 const TEMPLATES: Record<string, any> = {
   valueProps: {
@@ -54,7 +55,7 @@ export async function GET(request: Request) {
       const data = await getJSON('content', 'home');
       return NextResponse.json(data || {});
     } else if (type === 'section' && id) {
-      const data = await getJSON('content', id);
+      const data = await getSection(id);
       return NextResponse.json(data || {});
     }
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
