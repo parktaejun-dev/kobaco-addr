@@ -14,8 +14,8 @@ const whyIcons = [Radio, Shield, FileSpreadsheet];
 
 export default function WhySection({ data }: { data: WhyData }) {
   return (
-    <section className="py-16 sm:py-24 bg-gradient-to-br from-slate-50 to-blue-50/60">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+    <section className="section-pad bg-gradient-to-br from-slate-50 to-blue-50/60">
+      <div className="section-wrap">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -36,7 +36,7 @@ export default function WhySection({ data }: { data: WhyData }) {
             {data.cards.map((c, idx) => {
               const Icon = whyIcons[idx] ?? Shield;
               return (
-                <div key={idx} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div key={idx} className="card p-6">
                   <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
                     <Icon className="h-5 w-5" />
                   </div>

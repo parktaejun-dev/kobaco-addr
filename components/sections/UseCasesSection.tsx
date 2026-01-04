@@ -13,8 +13,8 @@ const useCaseIcons = [TrendingUp, Users];
 
 export default function UseCasesSection({ data }: { data: UseCasesData }) {
   return (
-    <section className="py-16 sm:py-24 bg-white">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+    <section className="section-pad bg-white">
+      <div className="section-wrap">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -34,7 +34,7 @@ export default function UseCasesSection({ data }: { data: UseCasesData }) {
               return (
                 <div
                   key={idx}
-                  className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-6 shadow-sm"
+                  className="card p-6 bg-gradient-to-br from-white to-slate-50"
                 >
                   <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
                     <Icon className="h-3 w-3" />

@@ -12,8 +12,8 @@ type ConceptData = {
 
 export default function ConceptSection({ data }: { data: ConceptData }) {
   return (
-    <section className="py-16 sm:py-24">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+    <section className="section-pad bg-white">
+      <div className="section-wrap">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -46,7 +46,7 @@ export default function ConceptSection({ data }: { data: ConceptData }) {
             ) : null}
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="card p-6">
             <div className="rounded-xl bg-gradient-to-br from-slate-50 to-blue-50 p-6">
               <div className="text-sm font-semibold text-slate-700">요약</div>
               <div className="mt-2 text-2xl font-extrabold tracking-tight text-slate-900">

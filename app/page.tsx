@@ -29,37 +29,42 @@ function getContent(type: string, id?: string) {
 function Hero({ data }: { data: any }) {
   if (!data) return null;
   return (
-    <section className="relative w-full h-[85vh] flex items-center justify-center bg-slate-900 text-white overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-950 via-slate-900 to-black opacity-90 z-0" />
-      <div className="relative z-10 max-w-5xl w-full text-center px-6 space-y-8">
-        <div className="space-y-4">
-          <span className="inline-block text-blue-400 font-bold tracking-[0.2em] uppercase text-sm animate-in fade-in slide-in-from-bottom-2 duration-700">
-            {data.eyebrow}
-          </span>
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight leading-none drop-shadow-md">
-            {data.title}
-          </h1>
-        </div>
-        <p className="text-xl md:text-2xl text-slate-300 max-w-3xl mx-auto leading-relaxed font-light">
-          {data.subtitle}
-        </p>
-        <div className="flex flex-wrap justify-center gap-3 pt-2">
-          {data.kpis?.map((kpi: any, i: number) => (
-            <span key={i} className="px-4 py-1.5 bg-white/5 backdrop-blur-sm rounded-full text-sm font-medium border border-white/10 text-blue-100">
-              {kpi.label}
-            </span>
-          ))}
-        </div>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-10">
-          {data.ctas?.map((cta: any, i: number) => (
-            <Link 
-              key={i}
-              href={cta.actionType === 'openEstimator' ? '/estimate' : '#'}
-              className="w-full sm:w-auto inline-flex h-14 items-center justify-center rounded-full bg-blue-600 px-10 text-lg font-bold text-white shadow-xl shadow-blue-900/40 hover:bg-blue-500 transition-all hover:scale-105"
-            >
-              {cta.label}
-            </Link>
-          ))}
+    <section className="relative w-full min-h-[85vh] flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50/60 overflow-hidden">
+      <div className="section-wrap section-pad">
+        <div className="relative z-10 max-w-5xl mx-auto text-center space-y-8">
+          <div className="space-y-6">
+            {data.eyebrow && (
+              <span className="inline-block text-blue-700 font-bold tracking-wider uppercase text-sm">
+                {data.eyebrow}
+              </span>
+            )}
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.1] text-slate-900">
+              {data.title}
+            </h1>
+          </div>
+          <p className="text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
+            {data.subtitle}
+          </p>
+          {data.kpis?.length > 0 && (
+            <div className="flex flex-wrap justify-center gap-3 pt-2">
+              {data.kpis.map((kpi: any, i: number) => (
+                <span key={i} className="px-4 py-2 bg-white rounded-full text-sm font-medium border border-slate-200 text-slate-700 shadow-sm">
+                  {kpi.label}
+                </span>
+              ))}
+            </div>
+          )}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6">
+            {data.ctas?.map((cta: any, i: number) => (
+              <Link
+                key={i}
+                href={cta.actionType === 'openEstimator' ? '/estimate' : '#'}
+                className="w-full sm:w-auto btn-primary h-14 px-10 text-lg"
+              >
+                {cta.label}
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
     </section>
@@ -68,18 +73,24 @@ function Hero({ data }: { data: any }) {
 
 function ValueProps({ data }: { data: any }) {
   if (!data) return null;
-  const icons = [<Target key="1" className="text-blue-600" />, <BarChart3 key="2" className="text-blue-600" />, <FileText key="3" className="text-blue-600" />];
+  const icons = [
+    <Target key="1" className="h-6 w-6" />,
+    <BarChart3 key="2" className="h-6 w-6" />,
+    <FileText key="3" className="h-6 w-6" />
+  ];
   return (
-    <section id="valueProps" className="py-24 px-6 bg-white">
-      <div className="max-w-6xl mx-auto text-center">
-        <h2 className="text-4xl font-bold text-slate-900 mb-16">{data.title}</h2>
-        <div className="grid md:grid-cols-3 gap-8 text-left">
+    <section id="valueProps" className="section-pad bg-white">
+      <div className="section-wrap">
+        <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 text-center mb-12">
+          {data.title}
+        </h2>
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {data.cards?.map((card: any, i: number) => (
-            <div key={i} className="p-10 rounded-3xl bg-slate-50 border border-slate-100 hover:shadow-2xl transition-all group">
-              <div className="w-14 h-14 bg-white rounded-2xl mb-8 flex items-center justify-center shadow-sm group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
+            <div key={i} className="card card-hover p-8 group">
+              <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-700 mb-6 group-hover:bg-blue-600 group-hover:text-white transition-colors">
                 {icons[i % 3]}
               </div>
-              <h3 className="text-2xl font-bold text-slate-900 mb-4">{card.title}</h3>
+              <h3 className="text-xl font-bold text-slate-900 mb-3">{card.title}</h3>
               <p className="text-slate-600 leading-relaxed">{card.description}</p>
             </div>
           ))}
@@ -120,30 +131,33 @@ function Reporting({ data }: { data: any }) {
 function EstimateGuide({ data }: { data: any }) {
   if (!data) return null;
   return (
-    <section id="estimateGuide" className="py-24 px-6 bg-white overflow-hidden">
-      <div className="max-w-4xl mx-auto text-center">
-        <h2 className="text-4xl font-bold text-slate-900 mb-12">{data.title}</h2>
-        <div className="relative">
-            {/* Connection Line */}
+    <section id="estimateGuide" className="section-pad bg-white">
+      <div className="section-wrap">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 mb-12">
+            {data.title}
+          </h2>
+          <div className="relative">
             <div className="hidden md:block absolute top-1/2 left-0 w-full h-0.5 bg-blue-100 -translate-y-1/2 z-0" />
-            <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-8">
-                {data.steps?.map((step: string, i: number) => (
-                    <div key={i} className="flex flex-col items-center gap-4 group">
-                        <div className="w-12 h-12 bg-white border-4 border-blue-600 text-blue-600 font-black rounded-full flex items-center justify-center text-xl shadow-lg group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
-                            {i + 1}
-                        </div>
-                        <span className="font-bold text-slate-800">{step}</span>
-                    </div>
-                ))}
+            <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-6">
+              {data.steps?.map((step: string, i: number) => (
+                <div key={i} className="flex flex-col items-center gap-4 group">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full border-4 border-blue-600 bg-white text-xl font-extrabold text-blue-600 shadow-sm transition-all group-hover:bg-blue-600 group-hover:text-white">
+                    {i + 1}
+                  </div>
+                  <span className="text-sm font-semibold text-slate-800">{step}</span>
+                </div>
+              ))}
             </div>
-        </div>
-        <div className="mt-20">
-            <Link 
-                href="/estimate"
-                className="inline-flex items-center gap-2 text-2xl font-black text-blue-600 hover:text-blue-800 transition-colors"
+          </div>
+          <div className="mt-16">
+            <Link
+              href="/estimate"
+              className="btn-primary inline-flex items-center gap-2 text-lg"
             >
-                지금 견적 시작하기 <ArrowRight size={28} />
+              지금 견적 시작하기 <ArrowRight className="h-5 w-5" />
             </Link>
+          </div>
         </div>
       </div>
     </section>
