@@ -9,7 +9,8 @@ import { AccordionSection } from '@/components/Accordion';
 import { AIRecommendation } from '@/components/AIRecommendation';
 import {
   FileText, Target, Settings, Wallet, BarChart3,
-  ExternalLink, Sparkles, AlertCircle, Printer
+  ExternalLink, Sparkles, AlertCircle, Printer,
+  ArrowUpRight
 } from 'lucide-react';
 
 export default function EstimatePage() {
@@ -213,9 +214,10 @@ export default function EstimatePage() {
           {/* Section 2: AI Target Analysis */}
           <AccordionSection
             title="2️⃣ AI 타겟 분석"
-            defaultOpen={hasAIResult}
+            defaultOpen={true}
             disabled={!hasProductInfo}
             icon={<Sparkles size={18} />}
+            className={hasProductInfo && !hasAIResult ? "ring-2 ring-blue-400 ring-offset-2 shadow-lg transition-all duration-500" : ""}
           >
             <div className="space-y-4">
               <div className="flex items-center gap-4">
@@ -231,23 +233,33 @@ export default function EstimatePage() {
                 <span className="font-bold text-blue-600 w-8">{numRecommendations}개</span>
               </div>
 
-              <button
-                onClick={handleAIAnalysis}
-                disabled={aiLoading || !hasProductInfo}
-                className="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold rounded-xl hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
-              >
-                {aiLoading ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    분석 중...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles size={20} />
-                    🤖 AI 타겟 분석 요청
-                  </>
+              <div className={hasProductInfo && !hasAIResult ? "animate-pulse" : ""}>
+                <button
+                  onClick={handleAIAnalysis}
+                  disabled={aiLoading || !hasProductInfo}
+                  className={`w-full py-4 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${hasProductInfo
+                    ? "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-md transform hover:-translate-y-1"
+                    : "bg-gray-300 cursor-not-allowed"
+                    }`}
+                >
+                  {aiLoading ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      분석 중...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={20} />
+                      🤖 AI 타겟 분석 요청
+                    </>
+                  )}
+                </button>
+                {hasProductInfo && !hasAIResult && (
+                  <p className="text-center text-blue-600 text-sm mt-2 font-medium animate-bounce">
+                    👆 위 버튼을 눌러 AI 분석을 시작하세요!
+                  </p>
                 )}
-              </button>
+              </div>
 
               <AIRecommendation
                 segments={aiResult?.segments || []}
@@ -263,6 +275,7 @@ export default function EstimatePage() {
             title="3️⃣ 타기팅 & 광고 조건 설정"
             defaultOpen={true}
             icon={<Settings size={18} />}
+            className={hasAIResult ? "ring-2 ring-blue-400 ring-offset-2 shadow-lg transition-all duration-500 delay-300" : ""}
           >
             <p className="text-sm text-gray-500 mb-4">
               타깃이 명확할수록 광고 효율이 높아집니다.
@@ -270,7 +283,7 @@ export default function EstimatePage() {
 
             <div className="grid md:grid-cols-2 gap-6">
               {/* Ad Duration */}
-              <div className="p-4 border rounded-xl">
+              <div className="p-4 border rounded-xl bg-white">
                 <label className="block text-sm font-medium text-gray-500 mb-3">광고 초수</label>
                 <div className="flex gap-3">
                   {[15, 30].map((sec) => (
@@ -350,9 +363,9 @@ export default function EstimatePage() {
             </p>
 
             <div className="space-y-6">
-              {/* Total Budget Input & Auto Distribution */}
+              {/* Total Budget Input & Two-way Distribution */}
               <div className="bg-gray-50 p-6 rounded-xl border">
-                <div className="mb-6">
+                <div className="mb-8">
                   <label className="block text-sm font-bold text-gray-700 mb-2">💰 총 월 예산 (단위: 만원)</label>
                   <input
                     type="number"
@@ -383,20 +396,36 @@ export default function EstimatePage() {
                       }));
                     }}
                     placeholder="예: 5000"
-                    className="w-full px-4 py-3 text-right text-lg font-bold border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full px-4 py-4 text-right text-2xl font-black text-blue-600 border-2 border-blue-100 rounded-2x focus:border-blue-500 focus:ring-4 focus:ring-blue-50 outline-none shadow-sm transition-all"
                   />
-                  <p className="text-xs text-gray-500 mt-2 text-right">
-                    * 입력하신 예산은 MBC(30%), EBS(20%), PP(50%) 비율로 자동 배분됩니다.
-                  </p>
                 </div>
 
-                <h4 className="font-medium text-gray-700 mb-4 text-sm">📊 채널별 배분 결과 (자동 계산)</h4>
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-bold text-gray-700 text-sm flex items-center gap-2">
+                    <ArrowUpRight size={16} className="text-blue-500" /> 채널별 예산 세부 설정
+                  </h4>
+                  <span className="text-[10px] text-gray-400 font-medium">* 개별 예산을 직접 수정할 수 있습니다.</span>
+                </div>
+
                 <div className="grid grid-cols-3 gap-4">
                   {['MBC', 'EBS', 'PP'].map(ch => (
-                    <div key={ch} className="bg-white p-3 rounded-lg border">
-                      <span className="block text-xs font-semibold text-gray-500 mb-1">{ch}</span>
-                      <div className="text-right font-bold text-gray-900">
-                        {(formData.channel_budgets[ch] || 0).toLocaleString()} <span className="text-xs font-normal">만원</span>
+                    <div key={ch} className="bg-white p-4 rounded-xl border-2 border-white shadow-sm hover:border-blue-200 transition-all">
+                      <span className="block text-xs font-bold text-gray-400 mb-2">{ch}</span>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          value={formData.channel_budgets[ch] || 0}
+                          onChange={(e) => {
+                            const val = parseFloat(e.target.value) || 0;
+                            const newBudgets = { ...formData.channel_budgets, [ch]: val };
+                            setFormData(prev => ({
+                              ...prev,
+                              channel_budgets: newBudgets
+                            }));
+                          }}
+                          className="w-full text-right font-black text-gray-900 pr-8 bg-transparent outline-none focus:text-blue-600"
+                        />
+                        <span className="absolute right-0 top-1/2 -translate-y-1/2 text-xs font-normal text-gray-400">만원</span>
                       </div>
                     </div>
                   ))}

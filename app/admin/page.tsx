@@ -49,9 +49,11 @@ export default function AdminPortal() {
                 setPolicies({ channels: ch.data, bonuses: bo.data, surcharges: sc.data });
             } else if (activeTab === 'segments') {
                 const res = await axios.get('/api/admin/policy?type=segments');
-                setSegments(res.data);
-                const cats = res.data.reduce((acc: any, curr: any) => {
-                    acc[curr.category_large || 'Uncategorized'] = true;
+                // segments.json has { version, data: [] } structure
+                const segmentData = res.data.data || res.data;
+                setSegments(segmentData);
+                const cats = segmentData.reduce((acc: any, curr: any) => {
+                    acc[curr['대분류'] || '기타'] = true;
                     return acc;
                 }, {});
                 setExpandedCats(cats);
@@ -193,17 +195,11 @@ export default function AdminPortal() {
 
             {/* Main Area */}
             <main className="flex-1 ml-64 p-12">
-                <header className="mb-12 flex justify-between items-end">
-                    <div>
-                        <h1 className="text-4xl font-black text-slate-900 capitalize tracking-tight">{activeTab}</h1>
-                        <p className="text-slate-500 mt-2 font-medium">JSON 데이터를 표와 폼 형식으로 관리합니다.</p>
-                    </div>
-                    {activeTab === 'content' && (
-                        <button onClick={() => setShowAddModal(true)} className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-blue-700 shadow-xl shadow-blue-200 transition-all active:scale-95">
-                            <Plus size={20} /> 섹션 추가하기
-                        </button>
-                    )}
-                </header>
+                <div>
+                    <h1 className="text-4xl font-black text-slate-900 capitalize tracking-tight">
+                        {activeTab === 'content' ? '섹션 관리' : activeTab === 'policies' ? '정책 관리' : activeTab === 'segments' ? '세그먼트 DB' : '사용 기록'}
+                    </h1>
+                </div>
 
                 {/* Tab: Content (Section Manager) */}
                 {activeTab === 'content' && homeConfig && (
@@ -243,27 +239,259 @@ export default function AdminPortal() {
                     </div>
                 )}
 
-                {/* Tab: Policies (Inherited logic from previous dashboard) */}
+                {/* Tab: Policies (Editable Table UI) */}
                 {activeTab === 'policies' && (
-                    <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200">
-                        <p className="text-center text-slate-400 py-8 font-medium italic">정책 데이터를 수정하려면 아래 버튼을 클릭하세요.</p>
-                        <div className="grid grid-cols-3 gap-6">
-                            {[
-                                { key: 'channels', label: '채널', desc: '광고 채널 및 기본 CPV' },
-                                { key: 'bonuses', label: '보너스', desc: '볼륨/기간 보너스 정책' },
-                                { key: 'surcharges', label: '할증', desc: '지역/커스텀 할증 정책' },
-                            ].map(t => (
-                                <div key={t.key} className="p-6 bg-slate-50 rounded-2xl border border-slate-100 text-center space-y-4">
-                                    <h3 className="font-black text-slate-700 text-lg">{t.label}</h3>
-                                    <p className="text-xs text-slate-400">{t.desc}</p>
-                                    <button
-                                        onClick={() => setJsonEditor({ id: t.key, content: JSON.stringify(policies[t.key as keyof typeof policies] || [], null, 2) })}
-                                        className="text-blue-600 font-bold text-sm hover:underline"
-                                    >
-                                        {t.label} 데이터 편집 →
+                    <div className="space-y-12 pb-20">
+                        {/* 1. Channels */}
+                        <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-2xl font-black text-slate-800">1. 채널 설정</h3>
+                                <div className="flex gap-2">
+                                    <button onClick={() => setJsonEditor({ id: 'channels', content: JSON.stringify(policies.channels, null, 2) })} className="px-4 py-2 text-xs font-bold text-slate-400 hover:text-blue-500 border border-slate-100 rounded-lg">JSON 직접 편집</button>
+                                    <button onClick={() => savePolicyEdit('channels', policies.channels)} className="px-6 py-2 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all flex items-center gap-2">
+                                        <Save size={16} /> 변경사항 저장
                                     </button>
                                 </div>
-                            ))}
+                            </div>
+                            <div className="overflow-x-auto border rounded-2xl overflow-hidden">
+                                <table className="w-full text-sm">
+                                    <thead className="bg-slate-50 border-b border-slate-100">
+                                        <tr className="text-slate-500 font-bold">
+                                            <th className="p-4 text-left">채널명</th>
+                                            <th className="p-4 text-right">기본 CPV</th>
+                                            <th className="p-4 text-right">오디언스 CPV</th>
+                                            <th className="p-4 text-right">논타겟 CPV</th>
+                                            <th className="p-4 w-16"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-50">
+                                        {policies.channels.map((ch, i) => (
+                                            <tr key={i} className="hover:bg-slate-50/50 transition-colors group">
+                                                <td className="p-3"><input type="text" value={ch.channel_name} onChange={e => {
+                                                    const newList = [...policies.channels];
+                                                    newList[i].channel_name = e.target.value;
+                                                    setPolicies({ ...policies, channels: newList });
+                                                }} className="w-full bg-transparent p-2 outline-none font-bold text-slate-700 focus:bg-white focus:ring-2 focus:ring-blue-100 rounded-lg" /></td>
+                                                <td className="p-3"><input type="number" value={ch.base_cpv} onChange={e => {
+                                                    const newList = [...policies.channels];
+                                                    newList[i].base_cpv = parseFloat(e.target.value);
+                                                    setPolicies({ ...policies, channels: newList });
+                                                }} className="w-full bg-transparent p-2 outline-none text-right font-bold text-blue-600 focus:bg-white focus:ring-2 focus:ring-blue-100 rounded-lg" /></td>
+                                                <td className="p-3"><input type="number" value={ch.cpv_audience} onChange={e => {
+                                                    const newList = [...policies.channels];
+                                                    newList[i].cpv_audience = parseFloat(e.target.value);
+                                                    setPolicies({ ...policies, channels: newList });
+                                                }} className="w-full bg-transparent p-2 outline-none text-right font-medium text-slate-500 focus:bg-white focus:ring-2 focus:ring-blue-100 rounded-lg" /></td>
+                                                <td className="p-3"><input type="number" value={ch.cpv_non_target} onChange={e => {
+                                                    const newList = [...policies.channels];
+                                                    newList[i].cpv_non_target = parseFloat(e.target.value);
+                                                    setPolicies({ ...policies, channels: newList });
+                                                }} className="w-full bg-transparent p-2 outline-none text-right font-medium text-slate-500 focus:bg-white focus:ring-2 focus:ring-blue-100 rounded-lg" /></td>
+                                                <td className="p-3 text-center">
+                                                    <button onClick={() => {
+                                                        const newList = policies.channels.filter((_, idx) => idx !== i);
+                                                        setPolicies({ ...policies, channels: newList });
+                                                    }} className="text-slate-200 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"><Trash2 size={16} /></button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                                <button onClick={() => {
+                                    const newList = [...policies.channels, { channel_name: "새 채널", base_cpv: 10, cpv_audience: 10, cpv_non_target: 10 }];
+                                    setPolicies({ ...policies, channels: newList });
+                                }} className="w-full p-4 bg-slate-50 text-slate-400 font-bold hover:bg-slate-100 transition-all flex items-center justify-center gap-2"><Plus size={16} /> 채널 추가</button>
+                            </div>
+                        </div>
+
+                        {/* 2. Bonuses */}
+                        <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-2xl font-black text-slate-800">2. 보너스 정책</h3>
+                                <div className="flex gap-2">
+                                    <button onClick={() => setJsonEditor({ id: 'bonuses', content: JSON.stringify(policies.bonuses, null, 2) })} className="px-4 py-2 text-xs font-bold text-slate-400 hover:text-blue-500 border border-slate-100 rounded-lg">JSON 직접 편집</button>
+                                    <button onClick={() => savePolicyEdit('bonuses', policies.bonuses)} className="px-6 py-2 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all flex items-center gap-2">
+                                        <Save size={16} /> 변경사항 저장
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="overflow-x-auto border rounded-2xl overflow-hidden">
+                                <table className="w-full text-xs">
+                                    <thead className="bg-slate-50 border-b border-slate-100">
+                                        <tr className="text-slate-500 font-bold">
+                                            <th className="p-4 text-left">채널</th>
+                                            <th className="p-4 text-left">종류</th>
+                                            <th className="p-4 text-left">조건</th>
+                                            <th className="p-4 text-right">기준값</th>
+                                            <th className="p-4 text-right">보너스율</th>
+                                            <th className="p-4 text-left">설명</th>
+                                            <th className="p-4 w-12"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-50">
+                                        {policies.bonuses.map((bo, i) => (
+                                            <tr key={i} className="hover:bg-slate-50/50 transition-colors group text-[11px]">
+                                                <td className="p-2 min-w-[80px]"><input type="text" value={bo.channel_name} onChange={e => {
+                                                    const newList = [...policies.bonuses];
+                                                    newList[i].channel_name = e.target.value;
+                                                    setPolicies({ ...policies, bonuses: newList });
+                                                }} className="w-full bg-transparent p-1 outline-none font-bold focus:bg-white rounded" /></td>
+                                                <td className="p-2 min-w-[80px]"><input type="text" value={bo.bonus_type} onChange={e => {
+                                                    const newList = [...policies.bonuses];
+                                                    newList[i].bonus_type = e.target.value;
+                                                    setPolicies({ ...policies, bonuses: newList });
+                                                }} className="w-full bg-transparent p-1 outline-none focus:bg-white rounded" /></td>
+                                                <td className="p-2 text-slate-400 italic font-mono min-w-[100px]">{bo.condition_type}</td>
+                                                <td className="p-2 min-w-[100px]"><input type="number" value={bo.min_value} onChange={e => {
+                                                    const newList = [...policies.bonuses];
+                                                    newList[i].min_value = parseFloat(e.target.value);
+                                                    setPolicies({ ...policies, bonuses: newList });
+                                                }} className="w-full bg-transparent p-1 outline-none text-right font-medium focus:bg-white rounded" /></td>
+                                                <td className="p-2 min-w-[80px]"><input type="number" step="0.01" value={bo.rate} onChange={e => {
+                                                    const newList = [...policies.bonuses];
+                                                    newList[i].rate = parseFloat(e.target.value);
+                                                    setPolicies({ ...policies, bonuses: newList });
+                                                }} className="w-full bg-transparent p-1 outline-none text-right font-bold text-green-600 focus:bg-white rounded" /></td>
+                                                <td className="p-2"><input type="text" value={bo.description} onChange={e => {
+                                                    const newList = [...policies.bonuses];
+                                                    newList[i].description = e.target.value;
+                                                    setPolicies({ ...policies, bonuses: newList });
+                                                }} className="w-full bg-transparent p-1 outline-none text-slate-400 focus:bg-white rounded" /></td>
+                                                <td className="p-2 text-center">
+                                                    <button onClick={() => {
+                                                        const newList = policies.bonuses.filter((_, idx) => idx !== i);
+                                                        setPolicies({ ...policies, bonuses: newList });
+                                                    }} className="text-slate-200 hover:text-red-500 opacity-0 group-hover:opacity-100"><Trash2 size={14} /></button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                                <button onClick={() => {
+                                    const newList = [...policies.bonuses, { channel_name: "MBC", bonus_type: "volume", condition_type: "min_budget", min_value: 0, rate: 0.1, description: "보너스 명칭" }];
+                                    setPolicies({ ...policies, bonuses: newList });
+                                }} className="w-full p-4 bg-slate-50 text-slate-400 font-bold hover:bg-slate-100 transition-all flex items-center justify-center gap-2"><Plus size={16} /> 보너스 항목 추가</button>
+                            </div>
+                        </div>
+
+                        {/* 3. Surcharges */}
+                        <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-2xl font-black text-slate-800">3. 할증 정책</h3>
+                                <div className="flex gap-2">
+                                    <button onClick={() => setJsonEditor({ id: 'surcharges', content: JSON.stringify(policies.surcharges, null, 2) })} className="px-4 py-2 text-xs font-bold text-slate-400 hover:text-blue-500 border border-slate-100 rounded-lg">JSON 직접 편집</button>
+                                    <button onClick={() => savePolicyEdit('surcharges', policies.surcharges)} className="px-6 py-2 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all flex items-center gap-2">
+                                        <Save size={16} /> 변경사항 저장
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="overflow-x-auto border rounded-2xl overflow-hidden">
+                                <table className="w-full text-xs">
+                                    <thead className="bg-slate-50 border-b border-slate-100">
+                                        <tr className="text-slate-500 font-bold">
+                                            <th className="p-4 text-left border-r border-slate-100">채널</th>
+                                            <th className="p-4 text-left border-r border-slate-100">종류</th>
+                                            <th className="p-4 text-left border-r border-slate-100">조건값</th>
+                                            <th className="p-4 text-right border-r border-slate-100">할증률</th>
+                                            <th className="p-4 text-left">설명</th>
+                                            <th className="p-4 w-12"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-50">
+                                        {policies.surcharges.map((sc, i) => (
+                                            <tr key={i} className="hover:bg-slate-50/50 transition-colors group">
+                                                <td className="p-2 border-r border-slate-50"><input type="text" value={sc.channel_name} onChange={e => {
+                                                    const newList = [...policies.surcharges];
+                                                    newList[i].channel_name = e.target.value;
+                                                    setPolicies({ ...policies, surcharges: newList });
+                                                }} className="w-20 bg-transparent p-1 outline-none font-bold focus:bg-white rounded" /></td>
+                                                <td className="p-2 border-r border-slate-50"><input type="text" value={sc.surcharge_type} onChange={e => {
+                                                    const newList = [...policies.surcharges];
+                                                    newList[i].surcharge_type = e.target.value;
+                                                    setPolicies({ ...policies, surcharges: newList });
+                                                }} className="w-24 bg-transparent p-1 outline-none focus:bg-white rounded" /></td>
+                                                <td className="p-2 border-r border-slate-50"><input type="text" value={sc.condition_value} onChange={e => {
+                                                    const newList = [...policies.surcharges];
+                                                    newList[i].condition_value = e.target.value;
+                                                    setPolicies({ ...policies, surcharges: newList });
+                                                }} className="w-full bg-transparent p-1 outline-none focus:bg-white rounded" /></td>
+                                                <td className="p-2 border-r border-slate-50"><input type="number" step="0.01" value={sc.rate} onChange={e => {
+                                                    const newList = [...policies.surcharges];
+                                                    newList[i].rate = parseFloat(e.target.value);
+                                                    setPolicies({ ...policies, surcharges: newList });
+                                                }} className="w-16 bg-transparent p-1 outline-none text-right font-bold text-orange-600 focus:bg-white rounded" /></td>
+                                                <td className="p-2"><input type="text" value={sc.description} onChange={e => {
+                                                    const newList = [...policies.surcharges];
+                                                    newList[i].description = e.target.value;
+                                                    setPolicies({ ...policies, surcharges: newList });
+                                                }} className="w-full bg-transparent p-1 outline-none text-slate-400 focus:bg-white rounded" /></td>
+                                                <td className="p-2 text-center">
+                                                    <button onClick={() => {
+                                                        const newList = policies.surcharges.filter((_, idx) => idx !== i);
+                                                        setPolicies({ ...policies, surcharges: newList });
+                                                    }} className="text-slate-200 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"><Trash2 size={14} /></button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                                <button onClick={() => {
+                                    const newList = [...policies.surcharges, { channel_name: "MBC", surcharge_type: "region", condition_value: "지역명", rate: 0.2, description: "설명" }];
+                                    setPolicies({ ...policies, surcharges: newList });
+                                }} className="w-full p-4 bg-slate-50 text-slate-400 font-bold hover:bg-slate-100 transition-all flex items-center justify-center gap-2"><Plus size={16} /> 할증 항목 추가</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Tab: Segments DB (View Only Table with Filtering) */}
+                {activeTab === 'segments' && (
+                    <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div className="p-8 border-b bg-slate-50/50 flex justify-between items-center">
+                            <div>
+                                <h3 className="text-2xl font-black text-slate-800 tracking-tight">세그먼트 데이터 조회</h3>
+                                <p className="text-slate-500 font-medium mt-1">총 {segments.length}개의 세그먼트 데이터가 로드되었습니다.</p>
+                            </div>
+                            <div className="flex gap-4">
+                                <button onClick={() => setJsonEditor({ id: 'segments', content: JSON.stringify(segments, null, 2) })} className="px-5 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 font-bold text-sm transition-all shadow-sm">
+                                    JSON 직접 편집
+                                </button>
+                                <button onClick={() => savePolicyEdit('segments', segments)} className="px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-bold text-sm transition-all shadow-xl shadow-blue-100">
+                                    저장하기
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead className="bg-slate-50 border-b border-slate-100">
+                                    <tr className="text-slate-400 font-black text-[10px] uppercase tracking-widest">
+                                        <th className="p-6 text-left w-40">대분류</th>
+                                        <th className="p-6 text-left w-40">중분류</th>
+                                        <th className="p-6 text-left">세그먼트명</th>
+                                        <th className="p-6 text-left">설명</th>
+                                        <th className="p-6 text-left">추천 광고주</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {segments.slice(0, 100).map((seg, i) => (
+                                        <tr key={i} className="hover:bg-slate-50/50 transition-colors">
+                                            <td className="p-6">
+                                                <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-[10px] font-black">{seg['대분류']}</span>
+                                            </td>
+                                            <td className="p-6 font-bold text-slate-600">{seg['중분류']}</td>
+                                            <td className="p-6 font-black text-slate-900">{seg.name}</td>
+                                            <td className="p-6 text-slate-500 leading-relaxed text-xs">{seg.description}</td>
+                                            <td className="p-6 text-slate-400 text-xs italic">{seg.recommended_advertisers}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                            {segments.length > 100 && (
+                                <div className="p-8 text-center bg-slate-50 text-slate-400 font-bold italic text-sm border-t border-slate-100">
+                                    상위 100개 항목만 표시 중입니다. (전체 {segments.length}개)
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
@@ -275,10 +503,17 @@ export default function AdminPortal() {
                             <div className="p-10 border-b flex justify-between items-center bg-white">
                                 <div>
                                     <div className="flex items-center gap-3">
-                                        <h3 className="text-3xl font-black text-slate-900 tracking-tighter capitalize">{editingSection.id} 편집</h3>
+                                        <h3 className="text-3xl font-black text-slate-900 tracking-tighter">
+                                            {editingSection.id === 'hero' ? '히어로 섹션' :
+                                                editingSection.id === 'valueProps' ? '서비스 특장점' :
+                                                    editingSection.id === 'howItWorks' ? '작동 방식' :
+                                                        editingSection.id === 'faq' ? '자주 묻는 질문' :
+                                                            editingSection.id === 'reporting' ? '리포트 안내' :
+                                                                editingSection.id === 'estimateGuide' ? '견적 가이드' : editingSection.id} 편집
+                                        </h3>
                                         <span className="bg-blue-600 text-white text-[10px] font-black px-2 py-1 rounded-lg uppercase tracking-widest">{editingSection.type}</span>
                                     </div>
-                                    <p className="text-slate-500 mt-2 font-medium">JSON 대신 폼과 표를 사용하여 안전하게 수정하세요.</p>
+                                    <p className="text-slate-500 mt-2 font-medium">관리자 전용 편집 모드입니다. 수정 후 저장 버튼을 눌러주세요.</p>
                                 </div>
                                 <button onClick={() => setEditingSection(null)} className="w-12 h-12 rounded-full hover:bg-slate-100 flex items-center justify-center transition-all text-slate-400 active:scale-90">✕</button>
                             </div>

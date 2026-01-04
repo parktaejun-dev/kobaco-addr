@@ -10,6 +10,7 @@ interface AccordionSectionProps {
     defaultOpen?: boolean;
     disabled?: boolean;
     icon?: ReactNode;
+    className?: string;
 }
 
 export function AccordionSection({
@@ -18,12 +19,13 @@ export function AccordionSection({
     defaultOpen = false,
     disabled = false,
     icon,
+    className = '',
 }: AccordionSectionProps) {
     const [isOpen, setIsOpen] = useState(defaultOpen);
 
     return (
         <div className={`border rounded-xl mb-4 overflow-hidden transition-all ${disabled ? 'opacity-50' : ''
-            }`}>
+            } ${className}`}>
             <button
                 onClick={() => !disabled && setIsOpen(!isOpen)}
                 disabled={disabled}
