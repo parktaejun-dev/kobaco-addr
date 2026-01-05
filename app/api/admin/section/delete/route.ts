@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { deleteSection, getHome, saveHome } from '@/lib/content/kv';
 
 export async function DELETE(request: Request): Promise<NextResponse> {
@@ -18,6 +19,8 @@ export async function DELETE(request: Request): Promise<NextResponse> {
             home.sections = home.sections.filter((s: any) => s.id !== id);
             await saveHome(home);
         }
+
+        revalidatePath('/'); // Refresh Landing Page
 
         return NextResponse.json({ success: true });
     } catch (error) {

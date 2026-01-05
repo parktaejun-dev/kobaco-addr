@@ -2,7 +2,7 @@ import { createClient } from 'redis';
 import fs from 'fs';
 import path from 'path';
 import { SECTION_SCHEMAS, SectionType } from '@/lib/sections/schemas';
-import { getJSON as getFallbackJSON } from '@/lib/kv-store'; // Use fallback logic from previous implementation for initial seed
+import { getJSON as getFallbackJSON, setJSON as setFallbackJSON } from '@/lib/kv-store'; // Use fallback logic from previous implementation for initial seed
 
 // Priority: REDIS_URL -> KV_URL
 const REDIS_URL = process.env.REDIS_URL || process.env.KV_URL;
@@ -88,8 +88,7 @@ export async function getSection(id: string) {
 
 export async function saveHome(homeData: any) {
     const redis = await getClient();
-    if (!redis) throw new Error("Redis not configured");
-
+    
     // Basic Validation
     if (!homeData.sections || !Array.isArray(homeData.sections)) {
         throw new Error("Invalid Home Data: sections array required");
@@ -101,23 +100,27 @@ export async function saveHome(homeData: any) {
         sections: homeData.sections
     };
 
-    const multi = redis.multi();
-    multi.set(KEYS.HOME, JSON.stringify(payload));
+    if (redis) {
+        const multi = redis.multi();
+        multi.set(KEYS.HOME, JSON.stringify(payload));
 
-    // Bump Etag
-    multi.set(KEYS.ETAG, `v${Date.now()}`);
+        // Bump Etag
+        multi.set(KEYS.ETAG, `v${Date.now()}`);
 
-    // Stats: Admin Save
-    const { date } = getKSTDateStrings();
-    multi.incr(KEYS.STATS.ADMIN_SAVE_DAY(date));
+        // Stats: Admin Save
+        const { date } = getKSTDateStrings();
+        multi.incr(KEYS.STATS.ADMIN_SAVE_DAY(date));
 
-    await multi.exec();
+        await multi.exec();
+    }
+
+    // Also Save to File System (Persist for Git)
+    await setFallbackJSON('content', 'home', payload);
 }
 
 export async function saveSection(id: string, type: string, data: any) {
     const redis = await getClient();
-    if (!redis) throw new Error("Redis not configured");
-
+    
     // 1. Validate Schema
     const schema = SECTION_SCHEMAS[type];
     if (!schema) throw new Error(`Unknown Section Type: ${type}`);
@@ -129,25 +132,40 @@ export async function saveSection(id: string, type: string, data: any) {
     const safeData = parseResult.data; // Stripped of unknown fields
 
     // 2. Save
-    const multi = redis.multi();
-    multi.set(KEYS.SECTION(id), JSON.stringify(safeData));
-    multi.set(KEYS.ETAG, `v${Date.now()}`); // Bump Etag
+    if (redis) {
+        const multi = redis.multi();
+        multi.set(KEYS.SECTION(id), JSON.stringify(safeData));
+        multi.set(KEYS.ETAG, `v${Date.now()}`); // Bump Etag
 
-    // Stats: Admin Save
-    const { date } = getKSTDateStrings();
-    multi.incr(KEYS.STATS.ADMIN_SAVE_DAY(date));
+        // Stats: Admin Save
+        const { date } = getKSTDateStrings();
+        multi.incr(KEYS.STATS.ADMIN_SAVE_DAY(date));
 
-    await multi.exec();
+        await multi.exec();
+    }
+    
+    // Also Save to File System (Persist for Git)
+    await setFallbackJSON('content', id, safeData);
 }
 
 export async function deleteSection(id: string) {
     const redis = await getClient();
-    if (!redis) throw new Error("Redis not configured");
-
-    const multi = redis.multi();
-    multi.del(KEYS.SECTION(id));
-    multi.set(KEYS.ETAG, `v${Date.now()}`); // Bump Etag
-    await multi.exec();
+    if (redis) {
+        const multi = redis.multi();
+        multi.del(KEYS.SECTION(id));
+        multi.set(KEYS.ETAG, `v${Date.now()}`); // Bump Etag
+        await multi.exec();
+    }
+    
+    // Also Delete from File System
+    try {
+        const filePath = path.join(process.cwd(), 'content', 'sections', `${id}.json`);
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+        }
+    } catch (e) {
+        console.error(`Failed to delete section file: ${id}`, e);
+    }
 }
 
 // --- Stats Service ---
