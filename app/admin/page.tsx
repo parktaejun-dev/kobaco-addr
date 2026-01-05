@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import {
     Lock, Layout, ShieldCheck, Database, BarChart3,
     Edit, Trash2, Plus, ChevronDown, Check, X,
-    Eye, Save, Settings, Move, GripVertical, Image as ImageIcon, Upload, Loader2, MousePointerClick, Search
+    Eye, Save, Settings, Move, GripVertical, Image as ImageIcon, Upload, Loader2, MousePointerClick, Search, Menu
 } from 'lucide-react';
 
 type Tab = 'home' | 'content' | 'policies' | 'segments' | 'usage' | 'dashboard';
@@ -121,6 +121,8 @@ export default function AdminPortal() {
     const [jsonEditor, setJsonEditor] = useState<{ id: string, content: string } | null>(null);
     // Stats State
     const [stats, setStats] = useState<any>(null);
+    // Mobile Sidebar State
+    const [sidebarOpen, setSidebarOpen] = useState(false);
 
     // Segment Filter State
     const [segFilters, setSegFilters] = useState({ category: '', subcategory: '' });
@@ -310,36 +312,52 @@ export default function AdminPortal() {
 
     return (
         <div className="min-h-screen bg-slate-50 flex">
+            {/* Mobile Header */}
+            <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-slate-900 z-30 flex items-center px-4 gap-3">
+                <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-white p-2">
+                    <Menu size={24} />
+                </button>
+                <span className="text-white font-bold">KOBACO Admin</span>
+            </div>
+
+            {/* Sidebar Overlay (Mobile) */}
+            {sidebarOpen && (
+                <div
+                    className="md:hidden fixed inset-0 bg-black/50 z-20"
+                    onClick={() => setSidebarOpen(false)}
+                />
+            )}
+
             {/* Sidebar */}
-            <aside className="w-64 bg-slate-900 text-white flex flex-col fixed inset-y-0 shadow-2xl z-20">
+            <aside className={`w-64 bg-slate-900 text-white flex flex-col fixed inset-y-0 shadow-2xl z-30 transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
                 <button
-                    onClick={() => setActiveTab('home')}
+                    onClick={() => { setActiveTab('home'); setSidebarOpen(false); }}
                     className="p-8 border-b border-white/10 text-left hover:bg-white/5 transition-all group"
                 >
                     <h2 className="text-xl font-black tracking-tighter text-blue-400 group-hover:text-blue-300">KOBACO Addressable</h2>
                     <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-widest font-bold">관리자 페이지</p>
                 </button>
-                <nav className="flex-1 p-4 space-y-2 mt-4">
+                <nav className="flex-1 p-4 space-y-2 mt-4 overflow-y-auto">
                     {[
                         { id: 'content', label: '섹션 관리', icon: Layout },
                         { id: 'policies', label: '정책 관리', icon: ShieldCheck },
                         { id: 'segments', label: '세그먼트 DB', icon: Database },
                         { id: 'usage', label: '사용 기록', icon: BarChart3 },
                     ].map(item => (
-                        <button key={item.id} onClick={() => setActiveTab(item.id as Tab)}
+                        <button key={item.id} onClick={() => { setActiveTab(item.id as Tab); setSidebarOpen(false); }}
                             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-sm ${activeTab === item.id ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
                             <item.icon size={18} /> {item.label}
                         </button>
                     ))}
                 </nav>
-                <div className="p-6 border-t border-white/10 flex flex-col gap-4">
+                <div className="p-6 border-t border-white/10 flex flex-col gap-4 flex-shrink-0">
                     <a href="/" target="_blank" className="flex items-center gap-2 text-xs text-blue-400 hover:text-blue-300 font-bold"><Eye size={12} /> 미리보기 (Home)</a>
                     <button onClick={() => { sessionStorage.removeItem('admin_access'); window.location.reload(); }} className="text-xs text-slate-500 hover:text-red-400 flex items-center gap-2 font-bold"><X size={12} /> 로그아웃</button>
                 </div>
             </aside>
 
             {/* Main Area */}
-            <main className="flex-1 ml-64 p-12 flex flex-col min-h-screen">
+            <main className="flex-1 md:ml-64 p-4 md:p-12 pt-20 md:pt-12 flex flex-col min-h-screen">
                 {activeTab !== 'home' && (
                     <header className="mb-12">
                         <h1 className="text-4xl font-black text-slate-900 capitalize tracking-tight">
@@ -357,7 +375,7 @@ export default function AdminPortal() {
                         </header>
 
                         {/* Top Stats Cards */}
-                        <div className="grid grid-cols-4 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                             <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between h-40">
                                 <div className="flex justify-between items-start">
                                     <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl"><Search size={20} /></div>
@@ -403,7 +421,7 @@ export default function AdminPortal() {
                         {/* Quick Navigation Panel */}
                         <div>
                             <h3 className="text-xl font-black text-slate-800 mb-6 tracking-tight">빠른 메뉴 이동</h3>
-                            <div className="grid grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                                 {[
                                     { id: 'content', label: '섹션 관리', desc: '메인 페이지의 구성 요소를 편집하고 배치 순서를 변경합니다.', icon: Layout, color: 'bg-blue-500' },
                                     { id: 'policies', label: '정책 관리', icon: ShieldCheck, desc: '채널별 CPV, 보너스 비율, 할증 조건 등을 표 형식으로 수정합니다.', color: 'bg-indigo-500' },
@@ -1098,64 +1116,64 @@ export default function AdminPortal() {
                                                     <tbody className="divide-y divide-slate-100">
                                                         {(editingSection.content.cards || editingSection.content.questions || editingSection.content.steps || editingSection.content.cases || []).map((item: any, i: number) => (
                                                             <tr key={i} className="hover:bg-slate-50/50 transition-colors">
-                                                                    <td className="p-6 space-y-3">
-                                                                        {editingSection.type === 'useCases' && (
-                                                                            <input type="text" value={item.tag || ''} onChange={e => {
-                                                                                const newList = [...editingSection.content.cases];
-                                                                                newList[i].tag = e.target.value;
-                                                                                setEditingSection({ ...editingSection, content: { ...editingSection.content, cases: newList } });
-                                                                            }} className="w-1/2 bg-blue-50/50 p-2 rounded-lg text-xs font-bold text-blue-600 outline-none" placeholder="Tag..." />
-                                                                        )}
-                                                                        <input type="text" value={item.title || item.question || item.step + '. ' + (item.title || '')} onChange={e => {
-                                                                            // Logic to update correct field based on type
-                                                                            const listName = editingSection.type === 'faq' ? 'questions' : (editingSection.type === 'howItWorks' ? 'steps' : (editingSection.type === 'useCases' ? 'cases' : 'cards'));
-                                                                            const key = editingSection.type === 'faq' ? 'question' : 'title';
-                                                                            const newList = [...editingSection.content[listName]];
-                                                                            newList[i][key] = e.target.value;
-                                                                            setEditingSection({ ...editingSection, content: { ...editingSection.content, [listName]: newList } });
-                                                                        }} className="w-full bg-transparent outline-none font-black text-lg text-slate-800" placeholder="Title..." />
-
-                                                                        <textarea value={item.description || item.answer} onChange={e => {
-                                                                            const listName = editingSection.type === 'faq' ? 'questions' : (editingSection.type === 'howItWorks' ? 'steps' : (editingSection.type === 'useCases' ? 'cases' : 'cards'));
-                                                                            const key = editingSection.type === 'faq' ? 'answer' : 'description';
-                                                                            const newList = [...editingSection.content[listName]];
-                                                                            newList[i][key] = e.target.value;
-                                                                            setEditingSection({ ...editingSection, content: { ...editingSection.content, [listName]: newList } });
-                                                                        }} className="w-full bg-transparent outline-none text-slate-500 leading-relaxed text-sm resize-none" rows={2} placeholder="Content description..." />
-                                                                    </td>
-                                                                    {(editingSection.type === 'howItWorks' || editingSection.type === 'useCases') && (
-                                                                        <td className="p-6 align-top">
-                                                                            <ImageUploader
-                                                                                label="Img"
-                                                                                value={item.image || ''}
-                                                                                onChange={(url) => {
-                                                                                    const listName = editingSection.type === 'howItWorks' ? 'steps' : 'cases';
-                                                                                    const newList = [...editingSection.content[listName]];
-                                                                                    newList[i].image = url;
-                                                                                    setEditingSection({ ...editingSection, content: { ...editingSection.content, [listName]: newList } });
-                                                                                }}
-                                                                            />
-                                                                        </td>
+                                                                <td className="p-6 space-y-3">
+                                                                    {editingSection.type === 'useCases' && (
+                                                                        <input type="text" value={item.tag || ''} onChange={e => {
+                                                                            const newList = [...editingSection.content.cases];
+                                                                            newList[i].tag = e.target.value;
+                                                                            setEditingSection({ ...editingSection, content: { ...editingSection.content, cases: newList } });
+                                                                        }} className="w-1/2 bg-blue-50/50 p-2 rounded-lg text-xs font-bold text-blue-600 outline-none" placeholder="Tag..." />
                                                                     )}
-                                                                    <td className="p-6 text-right">
-                                                                        <button onClick={() => {
-                                                                            const listName = editingSection.type === 'faq' ? 'questions' : (editingSection.type === 'howItWorks' ? 'steps' : (editingSection.type === 'useCases' ? 'cases' : 'cards'));
-                                                                            const newList = editingSection.content[listName].filter((_: any, idx: number) => idx !== i);
-                                                                            setEditingSection({ ...editingSection, content: { ...editingSection.content, [listName]: newList } });
-                                                                        }} className="text-red-300 hover:text-red-500 transition-colors"><Trash2 size={18} /></button>
+                                                                    <input type="text" value={item.title || item.question || item.step + '. ' + (item.title || '')} onChange={e => {
+                                                                        // Logic to update correct field based on type
+                                                                        const listName = editingSection.type === 'faq' ? 'questions' : (editingSection.type === 'howItWorks' ? 'steps' : (editingSection.type === 'useCases' ? 'cases' : 'cards'));
+                                                                        const key = editingSection.type === 'faq' ? 'question' : 'title';
+                                                                        const newList = [...editingSection.content[listName]];
+                                                                        newList[i][key] = e.target.value;
+                                                                        setEditingSection({ ...editingSection, content: { ...editingSection.content, [listName]: newList } });
+                                                                    }} className="w-full bg-transparent outline-none font-black text-lg text-slate-800" placeholder="Title..." />
+
+                                                                    <textarea value={item.description || item.answer} onChange={e => {
+                                                                        const listName = editingSection.type === 'faq' ? 'questions' : (editingSection.type === 'howItWorks' ? 'steps' : (editingSection.type === 'useCases' ? 'cases' : 'cards'));
+                                                                        const key = editingSection.type === 'faq' ? 'answer' : 'description';
+                                                                        const newList = [...editingSection.content[listName]];
+                                                                        newList[i][key] = e.target.value;
+                                                                        setEditingSection({ ...editingSection, content: { ...editingSection.content, [listName]: newList } });
+                                                                    }} className="w-full bg-transparent outline-none text-slate-500 leading-relaxed text-sm resize-none" rows={2} placeholder="Content description..." />
+                                                                </td>
+                                                                {(editingSection.type === 'howItWorks' || editingSection.type === 'useCases') && (
+                                                                    <td className="p-6 align-top">
+                                                                        <ImageUploader
+                                                                            label="Img"
+                                                                            value={item.image || ''}
+                                                                            onChange={(url) => {
+                                                                                const listName = editingSection.type === 'howItWorks' ? 'steps' : 'cases';
+                                                                                const newList = [...editingSection.content[listName]];
+                                                                                newList[i].image = url;
+                                                                                setEditingSection({ ...editingSection, content: { ...editingSection.content, [listName]: newList } });
+                                                                            }}
+                                                                        />
                                                                     </td>
-                                                                </tr>
-                                                            ))}
-                                                        </tbody>
-                                                    </table>
-                                                    <button onClick={() => {
-                                                        const listName = editingSection.type === 'faq' ? 'questions' : (editingSection.type === 'howItWorks' ? 'steps' : (editingSection.type === 'useCases' ? 'cases' : 'cards'));
-                                                        const newItem = editingSection.type === 'faq' ? { question: "New Q", answer: "" } :
-                                                            editingSection.type === 'useCases' ? { tag: "New Tag", title: "New Case", description: "" } :
-                                                                { title: "New Item", description: "" };
-                                                        const newList = [...(editingSection.content[listName] || []), newItem];
-                                                        setEditingSection({ ...editingSection, content: { ...editingSection.content, [listName]: newList } });
-                                                    }} className="w-full p-6 bg-slate-50 text-blue-600 hover:bg-blue-50 font-black text-sm flex items-center justify-center gap-2 transition-all border-t"><Plus size={18} /> 항목 추가하기</button>
+                                                                )}
+                                                                <td className="p-6 text-right">
+                                                                    <button onClick={() => {
+                                                                        const listName = editingSection.type === 'faq' ? 'questions' : (editingSection.type === 'howItWorks' ? 'steps' : (editingSection.type === 'useCases' ? 'cases' : 'cards'));
+                                                                        const newList = editingSection.content[listName].filter((_: any, idx: number) => idx !== i);
+                                                                        setEditingSection({ ...editingSection, content: { ...editingSection.content, [listName]: newList } });
+                                                                    }} className="text-red-300 hover:text-red-500 transition-colors"><Trash2 size={18} /></button>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                                <button onClick={() => {
+                                                    const listName = editingSection.type === 'faq' ? 'questions' : (editingSection.type === 'howItWorks' ? 'steps' : (editingSection.type === 'useCases' ? 'cases' : 'cards'));
+                                                    const newItem = editingSection.type === 'faq' ? { question: "New Q", answer: "" } :
+                                                        editingSection.type === 'useCases' ? { tag: "New Tag", title: "New Case", description: "" } :
+                                                            { title: "New Item", description: "" };
+                                                    const newList = [...(editingSection.content[listName] || []), newItem];
+                                                    setEditingSection({ ...editingSection, content: { ...editingSection.content, [listName]: newList } });
+                                                }} className="w-full p-6 bg-slate-50 text-blue-600 hover:bg-blue-50 font-black text-sm flex items-center justify-center gap-2 transition-all border-t"><Plus size={18} /> 항목 추가하기</button>
                                             </div>
                                         </div>
                                     </div>
