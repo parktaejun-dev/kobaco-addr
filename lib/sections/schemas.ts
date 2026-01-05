@@ -22,8 +22,12 @@ export const heroSchema = z.object({
         value: z.string(),
         label: z.string()
     })).max(4).optional(),
+    kpis: z.array(z.object({
+        value: z.string(),
+        label: z.string()
+    })).optional(), // Legacy field, same as stats
     backgroundImage: urlSchema
-}).strict();
+}).passthrough(); // Allow extra fields for backwards compatibility
 
 // 2. Value Props (Fixed 3 cards)
 export const valuePropsSchema = z.object({
