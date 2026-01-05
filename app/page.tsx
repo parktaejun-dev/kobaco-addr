@@ -24,11 +24,15 @@ function Hero({ data }: { data: any }) {
               </span>
             )}
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.1] text-white text-balance">
-              {data.title}
+              {data.title?.split('\n').map((line: string, i: number) => (
+                <span key={i}>{line}{i < data.title.split('\n').length - 1 && <br />}</span>
+              ))}
             </h1>
           </div>
           <p className="text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed text-balance">
-            {data.subtitle}
+            {data.subtitle?.split('\n').map((line: string, i: number) => (
+              <span key={i}>{line}{i < (data.subtitle?.split('\n').length || 1) - 1 && <br />}</span>
+            ))}
           </p>
           {data.stats?.length > 0 && (
             <div className="flex flex-wrap justify-center gap-4 pt-4">
