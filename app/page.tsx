@@ -28,8 +28,21 @@ function Hero({ data }: { data: any }) {
     xl: 'text-2xl',
   };
 
-  const titleClass = titleSizeClasses[data.titleSize || 'lg'];
-  const subtitleClass = subtitleSizeClasses[data.subtitleSize || 'lg'];
+  // Font color mappings
+  const colorClasses: Record<string, string> = {
+    white: 'text-white',
+    slate: 'text-slate-300',
+    blue: 'text-blue-400',
+    green: 'text-green-400',
+    purple: 'text-purple-400',
+    orange: 'text-orange-400',
+    red: 'text-red-400',
+  };
+
+  const titleSizeClass = titleSizeClasses[data.titleSize || 'lg'];
+  const titleColorClass = colorClasses[data.titleColor || 'white'];
+  const subtitleSizeClass = subtitleSizeClasses[data.subtitleSize || 'lg'];
+  const subtitleColorClass = colorClasses[data.subtitleColor || 'slate'];
 
   // Eyebrow background color mappings
   const eyebrowBgClasses: Record<string, string> = {
@@ -53,13 +66,13 @@ function Hero({ data }: { data: any }) {
                 {data.eyebrow}
               </span>
             )}
-            <h1 className={`${titleClass} font-extrabold tracking-tight leading-[1.1] text-white text-balance`}>
+            <h1 className={`${titleSizeClass} ${titleColorClass} font-extrabold tracking-tight leading-[1.1] text-balance`}>
               {data.title?.split('\n').map((line: string, i: number) => (
                 <span key={i}>{line}{i < data.title.split('\n').length - 1 && <br />}</span>
               ))}
             </h1>
           </div>
-          <p className={`${subtitleClass} text-slate-300 max-w-2xl mx-auto leading-relaxed text-balance`}>
+          <p className={`${subtitleSizeClass} ${subtitleColorClass} max-w-2xl mx-auto leading-relaxed text-balance`}>
             {data.subtitle?.split('\n').map((line: string, i: number) => (
               <span key={i}>{line}{i < (data.subtitle?.split('\n').length || 1) - 1 && <br />}</span>
             ))}

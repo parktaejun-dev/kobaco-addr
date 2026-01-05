@@ -3,6 +3,10 @@ import { z } from 'zod';
 // Shared Helpers
 const urlSchema = z.string().url().optional().or(z.literal(''));
 
+// Common Style Fields - can be added to any section
+const sizeEnum = z.enum(['sm', 'md', 'lg', 'xl']).optional();
+const colorEnum = z.enum(['white', 'slate', 'blue', 'green', 'purple', 'orange', 'red']).optional();
+
 const ctaSchema = z.object({
     label: z.string().min(1),
     actionType: z.enum(['link', 'scroll', 'openEstimator']).default('link'),
@@ -14,11 +18,13 @@ const ctaSchema = z.object({
 // 1. Hero Template
 export const heroSchema = z.object({
     eyebrow: z.string().optional(),
-    eyebrowBg: z.enum(['blue', 'green', 'purple', 'orange', 'red', 'slate', 'none']).optional(), // Eyebrow badge background
+    eyebrowBg: z.enum(['blue', 'green', 'purple', 'orange', 'red', 'slate', 'none']).optional(),
     title: z.string().min(1, "Title is required"),
-    titleSize: z.enum(['sm', 'md', 'lg', 'xl']).optional(), // sm=4xl, md=5xl, lg=6xl, xl=7xl
+    titleSize: sizeEnum,
+    titleColor: colorEnum,
     subtitle: z.string().optional(),
-    subtitleSize: z.enum(['sm', 'md', 'lg', 'xl']).optional(), // sm=base, md=lg, lg=xl, xl=2xl
+    subtitleSize: sizeEnum,
+    subtitleColor: colorEnum,
     ctas: z.array(ctaSchema).optional(),
     stats: z.any().optional(),
     kpis: z.any().optional(),
@@ -28,6 +34,8 @@ export const heroSchema = z.object({
 // 2. Value Props
 export const valuePropsSchema = z.object({
     title: z.string().min(1),
+    titleSize: sizeEnum,
+    titleColor: colorEnum,
     description: z.string().optional(),
     cards: z.array(z.object({
         icon: z.string().optional(),
@@ -40,31 +48,35 @@ export const valuePropsSchema = z.object({
 export const conceptSchema = z.object({
     eyebrow: z.string().optional(),
     title: z.string().min(1),
+    titleSize: sizeEnum,
+    titleColor: colorEnum,
     subtitle: z.string().optional(),
     description: z.string().optional(),
     image: urlSchema,
     features: z.array(z.string()).optional(),
-    bullets: z.array(z.string()).optional() // Legacy field
+    bullets: z.array(z.string()).optional()
 }).passthrough();
 
 // 4. Comparison
 export const comparisonSchema = z.object({
     title: z.string().min(1),
+    titleSize: sizeEnum,
+    titleColor: colorEnum,
     left: z.object({
         title: z.string().optional(),
-        label: z.string().optional(), // Legacy
-        headline: z.string().optional(), // Legacy
+        label: z.string().optional(),
+        headline: z.string().optional(),
         description: z.string().optional(),
         items: z.array(z.string()).optional(),
-        points: z.array(z.string()).optional() // Legacy
+        points: z.array(z.string()).optional()
     }).passthrough(),
     right: z.object({
         title: z.string().optional(),
-        label: z.string().optional(), // Legacy
-        headline: z.string().optional(), // Legacy
+        label: z.string().optional(),
+        headline: z.string().optional(),
         description: z.string().optional(),
         items: z.array(z.string()).optional(),
-        points: z.array(z.string()).optional(), // Legacy
+        points: z.array(z.string()).optional(),
         highlight: z.boolean().optional()
     }).passthrough()
 }).passthrough();
@@ -72,9 +84,11 @@ export const comparisonSchema = z.object({
 // 5. How It Works
 export const howItWorksSchema = z.object({
     title: z.string().min(1),
+    titleSize: sizeEnum,
+    titleColor: colorEnum,
     subtitle: z.string().optional(),
     steps: z.array(z.object({
-        step: z.number().optional(), // Optional now
+        step: z.number().optional(),
         title: z.string().optional(),
         description: z.string().optional(),
         image: urlSchema
@@ -84,6 +98,8 @@ export const howItWorksSchema = z.object({
 // 6. Use Cases
 export const useCasesSchema = z.object({
     title: z.string().min(1),
+    titleSize: sizeEnum,
+    titleColor: colorEnum,
     subtitle: z.string().optional(),
     description: z.string().optional(),
     cases: z.array(z.object({
@@ -99,6 +115,8 @@ export const useCasesSchema = z.object({
 export const whySchema = z.object({
     eyebrow: z.string().optional(),
     title: z.string().min(1),
+    titleSize: sizeEnum,
+    titleColor: colorEnum,
     description: z.string().optional(),
     cards: z.array(z.object({
         title: z.string().optional(),
@@ -110,12 +128,16 @@ export const whySchema = z.object({
 // 8. Estimate Guide
 export const estimateGuideSchema = z.object({
     title: z.string().min(1),
+    titleSize: sizeEnum,
+    titleColor: colorEnum,
     steps: z.array(z.string()).optional()
 }).passthrough();
 
 // 9. CTA (Global Bottom CTA)
 export const globalCtaSchema = z.object({
     title: z.string().optional(),
+    titleSize: sizeEnum,
+    titleColor: colorEnum,
     description: z.string().optional(),
     buttonText: z.string().optional(),
     buttonLink: z.string().optional()
@@ -129,12 +151,16 @@ const faqItemSchema = z.object({
 
 export const faqSchema = z.object({
     title: z.string().optional(),
+    titleSize: sizeEnum,
+    titleColor: colorEnum,
     questions: z.array(faqItemSchema).optional()
 }).passthrough();
 
 // 11. Reporting
 export const reportingSchema = z.object({
     title: z.string().optional(),
+    titleSize: sizeEnum,
+    titleColor: colorEnum,
     description: z.string().optional(),
     image: urlSchema
 }).passthrough();

@@ -1018,6 +1018,22 @@ export default function AdminPortal() {
                                                 </select>
                                             </div>
                                             <div className="space-y-2">
+                                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">제목 색상</label>
+                                                <select
+                                                    value={editingSection.content.titleColor || 'white'}
+                                                    onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, titleColor: e.target.value } })}
+                                                    className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold focus:border-blue-500 outline-none"
+                                                >
+                                                    <option value="white">흰색 (기본)</option>
+                                                    <option value="slate">회색</option>
+                                                    <option value="blue">파란색</option>
+                                                    <option value="green">초록색</option>
+                                                    <option value="purple">보라색</option>
+                                                    <option value="orange">주황색</option>
+                                                    <option value="red">빨간색</option>
+                                                </select>
+                                            </div>
+                                            <div className="space-y-2">
                                                 <label className="text-xs font-black text-slate-400 uppercase tracking-widest">부제목 크기</label>
                                                 <select
                                                     value={editingSection.content.subtitleSize || 'lg'}
@@ -1028,6 +1044,22 @@ export default function AdminPortal() {
                                                     <option value="md">보통</option>
                                                     <option value="lg">크게 (기본)</option>
                                                     <option value="xl">매우 크게</option>
+                                                </select>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">부제목 색상</label>
+                                                <select
+                                                    value={editingSection.content.subtitleColor || 'slate'}
+                                                    onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, subtitleColor: e.target.value } })}
+                                                    className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold focus:border-blue-500 outline-none"
+                                                >
+                                                    <option value="white">흰색</option>
+                                                    <option value="slate">회색 (기본)</option>
+                                                    <option value="blue">파란색</option>
+                                                    <option value="green">초록색</option>
+                                                    <option value="purple">보라색</option>
+                                                    <option value="orange">주황색</option>
+                                                    <option value="red">빨간색</option>
                                                 </select>
                                             </div>
                                         </div>
@@ -1126,6 +1158,38 @@ export default function AdminPortal() {
                                             <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Title (줄바꿈: Enter)</label>
                                             <textarea value={editingSection.content.title || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, title: e.target.value } })} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-bold focus:border-blue-500 outline-none min-h-[80px]" />
                                         </div>
+                                        {/* Style Options */}
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">제목 크기</label>
+                                                <select
+                                                    value={editingSection.content.titleSize || 'lg'}
+                                                    onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, titleSize: e.target.value } })}
+                                                    className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold focus:border-blue-500 outline-none"
+                                                >
+                                                    <option value="sm">작게</option>
+                                                    <option value="md">보통</option>
+                                                    <option value="lg">크게 (기본)</option>
+                                                    <option value="xl">매우 크게</option>
+                                                </select>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">제목 색상</label>
+                                                <select
+                                                    value={editingSection.content.titleColor || 'slate'}
+                                                    onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, titleColor: e.target.value } })}
+                                                    className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold focus:border-blue-500 outline-none"
+                                                >
+                                                    <option value="white">흰색</option>
+                                                    <option value="slate">검정 (기본)</option>
+                                                    <option value="blue">파란색</option>
+                                                    <option value="green">초록색</option>
+                                                    <option value="purple">보라색</option>
+                                                    <option value="orange">주황색</option>
+                                                    <option value="red">빨간색</option>
+                                                </select>
+                                            </div>
+                                        </div>
                                         <div className="space-y-2">
                                             <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Description</label>
                                             <textarea value={editingSection.content.description || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, description: e.target.value } })} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-bold focus:border-blue-500 outline-none min-h-[100px]" />
@@ -1147,6 +1211,38 @@ export default function AdminPortal() {
                                         <div className="space-y-2">
                                             <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Section Title (줄바꿈: Enter)</label>
                                             <textarea value={editingSection.content.title || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, title: e.target.value } })} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-bold focus:border-blue-500 outline-none min-h-[80px]" />
+                                        </div>
+                                        {/* Style Options */}
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">제목 크기</label>
+                                                <select
+                                                    value={editingSection.content.titleSize || 'lg'}
+                                                    onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, titleSize: e.target.value } })}
+                                                    className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold focus:border-blue-500 outline-none"
+                                                >
+                                                    <option value="sm">작게</option>
+                                                    <option value="md">보통</option>
+                                                    <option value="lg">크게 (기본)</option>
+                                                    <option value="xl">매우 크게</option>
+                                                </select>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">제목 색상</label>
+                                                <select
+                                                    value={editingSection.content.titleColor || 'slate'}
+                                                    onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, titleColor: e.target.value } })}
+                                                    className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold focus:border-blue-500 outline-none"
+                                                >
+                                                    <option value="white">흰색</option>
+                                                    <option value="slate">검정 (기본)</option>
+                                                    <option value="blue">파란색</option>
+                                                    <option value="green">초록색</option>
+                                                    <option value="purple">보라색</option>
+                                                    <option value="orange">주황색</option>
+                                                    <option value="red">빨간색</option>
+                                                </select>
+                                            </div>
                                         </div>
                                         <div className="space-y-4">
                                             <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Items / Cards / Steps</label>
