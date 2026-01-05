@@ -1284,6 +1284,25 @@ export default function AdminPortal() {
                                                 </select>
                                             </div>
                                         </div>
+
+                                        {/* Description/Subtitle for sections that have it */}
+                                        {['why', 'useCases', 'howItWorks'].includes(editingSection.type) && (
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                                                    {editingSection.type === 'why' ? 'Description' : 'Subtitle'}
+                                                </label>
+                                                <textarea
+                                                    value={editingSection.content.description || editingSection.content.subtitle || ''}
+                                                    onChange={e => {
+                                                        const fieldName = editingSection.type === 'why' ? 'description' : 'subtitle';
+                                                        setEditingSection({ ...editingSection, content: { ...editingSection.content, [fieldName]: e.target.value } });
+                                                    }}
+                                                    className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-medium focus:border-blue-500 outline-none min-h-[100px]"
+                                                    placeholder="섹션 설명을 입력하세요..."
+                                                />
+                                            </div>
+                                        )}
+
                                         <div className="space-y-4">
                                             <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Items / Cards / Steps</label>
                                             <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
