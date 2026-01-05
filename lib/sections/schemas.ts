@@ -22,10 +22,7 @@ export const heroSchema = z.object({
         value: z.string(),
         label: z.string()
     })).max(4).optional(),
-    kpis: z.array(z.object({
-        value: z.string(),
-        label: z.string()
-    })).optional(), // Legacy field, same as stats
+    kpis: z.any().optional(), // Legacy field, flexible structure
     backgroundImage: urlSchema
 }).passthrough(); // Allow extra fields for backwards compatibility
 
