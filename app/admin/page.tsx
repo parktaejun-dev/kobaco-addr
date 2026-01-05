@@ -1441,8 +1441,7 @@ export default function AdminPortal() {
                     </div>
                 )}
 
-                <footer className="mt-auto border-t py-10 px-8 flex justify-between items-center text-slate-400 font-medium">
-                    <p className="text-sm tracking-tight">&copy; 2024 KOBACO Addressable TV. All Rights Reserved.</p>
+                <footer className="mt-auto border-t py-10 px-8 flex justify-end items-center text-slate-400 font-medium">
                     <div className="flex gap-6 text-[10px] font-black uppercase tracking-[0.2em]">
                         <span className="text-blue-500">System v3.0</span>
                         <span>Authorized Access Only</span>

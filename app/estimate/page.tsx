@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AccordionSection } from '@/components/Accordion';
 import { AIRecommendation } from '@/components/AIRecommendation';
+import Footer from '@/components/Footer';
 import {
   FileText, Target, Settings, Wallet, BarChart3,
   ExternalLink, Sparkles, AlertCircle, Printer,
@@ -540,6 +541,7 @@ export default function EstimatePage() {
         </div>
 
       </main>
+      <Footer />
     </div>
   );
 }

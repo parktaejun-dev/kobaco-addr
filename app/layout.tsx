@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import "@fontsource/pretendard";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
-import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
   title: "KOBACO Addressable TV",
@@ -18,7 +17,6 @@ export default function RootLayout({
     <html lang="ko">
       <body className="font-sans antialiased bg-slate-50 text-slate-900">
         {children}
-        <Footer />
         <Toaster />
       </body>
     </html>

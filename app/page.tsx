@@ -304,6 +304,7 @@ export default async function Home() {
           default: return null;
         }
       })}
+      <Footer />
     </main>
   );
 }
