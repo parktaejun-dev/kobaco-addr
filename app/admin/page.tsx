@@ -657,7 +657,7 @@ export default function AdminPortal() {
                                                     <Plus size={14} /> 항목 추가
                                                 </button>
                                             </div>
-                                            <table className="w-full text-xs">
+                                            <table className="w-full text-sm">
                                                 <thead className="bg-white/50 border-b border-slate-100">
                                                     <tr className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">
                                                         <th className="p-4 text-left w-32">종류</th>
@@ -672,28 +672,28 @@ export default function AdminPortal() {
                                                     {channelBonuses.map((bo, originalIndex) => {
                                                         const i = policies.bonuses.indexOf(bo);
                                                         return (
-                                                            <tr key={i} className="hover:bg-slate-50/50 transition-colors group text-[11px]">
+                                                            <tr key={i} className="hover:bg-slate-50/50 transition-colors group">
                                                                 <td className="p-3"><input type="text" value={bo.bonus_type} onChange={e => {
                                                                     const newList = [...policies.bonuses];
                                                                     newList[i].bonus_type = e.target.value;
                                                                     setPolicies({ ...policies, bonuses: newList });
-                                                                }} className="w-full bg-transparent p-1.5 outline-none font-bold text-slate-700 focus:bg-white rounded border border-transparent focus:border-slate-200" /></td>
-                                                                <td className="p-3 text-slate-400 italic font-mono px-4">{bo.condition_type}</td>
+                                                                }} className="w-full bg-transparent p-2 outline-none font-bold text-slate-700 focus:bg-white focus:ring-2 focus:ring-blue-100 rounded-lg" /></td>
+                                                                <td className="p-3 text-slate-400 italic font-mono px-4 text-xs">{bo.condition_type}</td>
                                                                 <td className="p-3"><input type="number" value={bo.min_value} onChange={e => {
                                                                     const newList = [...policies.bonuses];
                                                                     newList[i].min_value = parseFloat(e.target.value);
                                                                     setPolicies({ ...policies, bonuses: newList });
-                                                                }} className="w-full bg-transparent p-1.5 outline-none text-right font-medium focus:bg-white rounded border border-transparent focus:border-slate-200" /></td>
+                                                                }} className="w-full bg-transparent p-2 outline-none text-right font-medium text-slate-500 focus:bg-white focus:ring-2 focus:ring-blue-100 rounded-lg" /></td>
                                                                 <td className="p-3"><input type="number" step="0.01" value={bo.rate} onChange={e => {
                                                                     const newList = [...policies.bonuses];
                                                                     newList[i].rate = parseFloat(e.target.value);
                                                                     setPolicies({ ...policies, bonuses: newList });
-                                                                }} className="w-full bg-transparent p-1.5 outline-none text-right font-black text-green-600 focus:bg-white rounded border border-transparent focus:border-slate-200" /></td>
+                                                                }} className="w-full bg-transparent p-2 outline-none text-right font-black text-green-600 focus:bg-white focus:ring-2 focus:ring-blue-100 rounded-lg" /></td>
                                                                 <td className="p-3"><input type="text" value={bo.description} onChange={e => {
                                                                     const newList = [...policies.bonuses];
                                                                     newList[i].description = e.target.value;
                                                                     setPolicies({ ...policies, bonuses: newList });
-                                                                }} className="w-full bg-transparent p-1.5 outline-none text-slate-500 focus:bg-white rounded border border-transparent focus:border-slate-200" /></td>
+                                                                }} className="w-full bg-transparent p-2 outline-none text-slate-500 focus:bg-white focus:ring-2 focus:ring-blue-100 rounded-lg" /></td>
                                                                 <td className="p-3 text-center">
                                                                     <button onClick={() => {
                                                                         const newList = policies.bonuses.filter((_, idx) => idx !== i);
@@ -743,7 +743,7 @@ export default function AdminPortal() {
                                                     <Plus size={14} /> 항목 추가
                                                 </button>
                                             </div>
-                                            <table className="w-full text-xs">
+                                            <table className="w-full text-sm">
                                                 <thead className="bg-white/50 border-b border-slate-100">
                                                     <tr className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">
                                                         <th className="p-4 text-left w-32">종류</th>
@@ -762,22 +762,22 @@ export default function AdminPortal() {
                                                                     const newList = [...policies.surcharges];
                                                                     newList[i].surcharge_type = e.target.value;
                                                                     setPolicies({ ...policies, surcharges: newList });
-                                                                }} className="w-full bg-transparent p-1.5 outline-none font-bold text-slate-700 focus:bg-white rounded border border-transparent focus:border-slate-200" /></td>
+                                                                }} className="w-full bg-transparent p-2 outline-none font-bold text-slate-700 focus:bg-white focus:ring-2 focus:ring-blue-100 rounded-lg" /></td>
                                                                 <td className="p-3"><input type="text" value={sc.condition_value} onChange={e => {
                                                                     const newList = [...policies.surcharges];
                                                                     newList[i].condition_value = e.target.value;
                                                                     setPolicies({ ...policies, surcharges: newList });
-                                                                }} className="w-full bg-transparent p-1.5 outline-none font-medium text-slate-700 focus:bg-white rounded border border-transparent focus:border-slate-200" /></td>
+                                                                }} className="w-full bg-transparent p-2 outline-none font-medium text-slate-700 focus:bg-white focus:ring-2 focus:ring-blue-100 rounded-lg" /></td>
                                                                 <td className="p-3"><input type="number" step="0.01" value={sc.rate} onChange={e => {
                                                                     const newList = [...policies.surcharges];
                                                                     newList[i].rate = parseFloat(e.target.value);
                                                                     setPolicies({ ...policies, surcharges: newList });
-                                                                }} className="w-full bg-transparent p-1.5 outline-none text-right font-black text-orange-600 focus:bg-white rounded border border-transparent focus:border-slate-200" /></td>
+                                                                }} className="w-full bg-transparent p-2 outline-none text-right font-black text-orange-600 focus:bg-white focus:ring-2 focus:ring-blue-100 rounded-lg" /></td>
                                                                 <td className="p-3"><input type="text" value={sc.description} onChange={e => {
                                                                     const newList = [...policies.surcharges];
                                                                     newList[i].description = e.target.value;
                                                                     setPolicies({ ...policies, surcharges: newList });
-                                                                }} className="w-full bg-transparent p-1.5 outline-none text-slate-500 focus:bg-white rounded border border-transparent focus:border-slate-200" /></td>
+                                                                }} className="w-full bg-transparent p-2 outline-none text-slate-500 focus:bg-white focus:ring-2 focus:ring-blue-100 rounded-lg" /></td>
                                                                 <td className="p-3 text-center">
                                                                     <button onClick={() => {
                                                                         const newList = policies.surcharges.filter((_, idx) => idx !== i);
