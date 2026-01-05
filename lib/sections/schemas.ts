@@ -14,6 +14,7 @@ const ctaSchema = z.object({
 // 1. Hero Template
 export const heroSchema = z.object({
     eyebrow: z.string().optional(),
+    eyebrowBg: z.enum(['blue', 'green', 'purple', 'orange', 'red', 'slate', 'none']).optional(), // Eyebrow badge background
     title: z.string().min(1, "Title is required"),
     titleSize: z.enum(['sm', 'md', 'lg', 'xl']).optional(), // sm=4xl, md=5xl, lg=6xl, xl=7xl
     subtitle: z.string().optional(),

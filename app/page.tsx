@@ -31,13 +31,25 @@ function Hero({ data }: { data: any }) {
   const titleClass = titleSizeClasses[data.titleSize || 'lg'];
   const subtitleClass = subtitleSizeClasses[data.subtitleSize || 'lg'];
 
+  // Eyebrow background color mappings
+  const eyebrowBgClasses: Record<string, string> = {
+    blue: 'bg-blue-50 text-blue-700 border-blue-100',
+    green: 'bg-green-50 text-green-700 border-green-100',
+    purple: 'bg-purple-50 text-purple-700 border-purple-100',
+    orange: 'bg-orange-50 text-orange-700 border-orange-100',
+    red: 'bg-red-50 text-red-700 border-red-100',
+    slate: 'bg-slate-700 text-slate-200 border-slate-600',
+    none: 'bg-transparent text-white border-white/20',
+  };
+  const eyebrowClass = eyebrowBgClasses[data.eyebrowBg || 'blue'];
+
   return (
     <section className="relative w-full min-h-[90vh] flex items-center justify-center overflow-hidden bg-slate-950 text-white">
       <div className="section-wrap section-pad">
         <div className="relative z-10 max-w-5xl mx-auto text-center space-y-10">
           <div className="space-y-6">
             {data.eyebrow && (
-              <span className="inline-block text-blue-700 font-bold tracking-wider uppercase text-xs sm:text-sm bg-blue-50 px-3 py-1 rounded-full border border-blue-100 mb-2">
+              <span className={`inline-block font-bold tracking-wider uppercase text-xs sm:text-sm px-3 py-1 rounded-full border mb-2 ${eyebrowClass}`}>
                 {data.eyebrow}
               </span>
             )}
