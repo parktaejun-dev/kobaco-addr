@@ -977,13 +977,59 @@ export default function AdminPortal() {
                                                 <input type="text" value={editingSection.content.eyebrow || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, eyebrow: e.target.value } })} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-bold focus:border-blue-500 outline-none transition-all" />
                                             </div>
                                             <div className="space-y-2">
-                                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Title</label>
-                                                <input type="text" value={editingSection.content.title || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, title: e.target.value } })} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-bold focus:border-blue-500 outline-none transition-all" />
+                                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Title (줄바꿈: Enter)</label>
+                                                <textarea value={editingSection.content.title || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, title: e.target.value } })} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-bold focus:border-blue-500 outline-none transition-all min-h-[80px]" />
                                             </div>
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Subtitle</label>
-                                            <textarea value={editingSection.content.subtitle || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, subtitle: e.target.value } })} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-bold focus:border-blue-500 outline-none transition-all min-h-[100px]" />
+                                            <textarea value={editingSection.content.subtitle || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, subtitle: e.target.value } })} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-bold focus:border-blue-500 outline-none transition-all min-h-[100px]" placeholder="줄바꿈은 Enter로 입력" />
+                                        </div>
+
+                                        {/* Style Options */}
+                                        <div className="grid grid-cols-3 gap-4">
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">아이브로우 배경</label>
+                                                <select
+                                                    value={editingSection.content.eyebrowBg || 'blue'}
+                                                    onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, eyebrowBg: e.target.value } })}
+                                                    className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold focus:border-blue-500 outline-none"
+                                                >
+                                                    <option value="blue">파란색</option>
+                                                    <option value="green">초록색</option>
+                                                    <option value="purple">보라색</option>
+                                                    <option value="orange">주황색</option>
+                                                    <option value="red">빨간색</option>
+                                                    <option value="slate">회색</option>
+                                                    <option value="none">투명</option>
+                                                </select>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">제목 크기</label>
+                                                <select
+                                                    value={editingSection.content.titleSize || 'lg'}
+                                                    onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, titleSize: e.target.value } })}
+                                                    className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold focus:border-blue-500 outline-none"
+                                                >
+                                                    <option value="sm">작게</option>
+                                                    <option value="md">보통</option>
+                                                    <option value="lg">크게 (기본)</option>
+                                                    <option value="xl">매우 크게</option>
+                                                </select>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">부제목 크기</label>
+                                                <select
+                                                    value={editingSection.content.subtitleSize || 'lg'}
+                                                    onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, subtitleSize: e.target.value } })}
+                                                    className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold focus:border-blue-500 outline-none"
+                                                >
+                                                    <option value="sm">작게</option>
+                                                    <option value="md">보통</option>
+                                                    <option value="lg">크게 (기본)</option>
+                                                    <option value="xl">매우 크게</option>
+                                                </select>
+                                            </div>
                                         </div>
 
                                         <div className="space-y-2">
@@ -1077,8 +1123,8 @@ export default function AdminPortal() {
                                 {['concept', 'reporting'].includes(editingSection.type) && (
                                     <div className="space-y-8">
                                         <div className="space-y-2">
-                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Title</label>
-                                            <input type="text" value={editingSection.content.title} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, title: e.target.value } })} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-bold focus:border-blue-500 outline-none" />
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Title (줄바꿈: Enter)</label>
+                                            <textarea value={editingSection.content.title || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, title: e.target.value } })} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-bold focus:border-blue-500 outline-none min-h-[80px]" />
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Description</label>
@@ -1099,8 +1145,8 @@ export default function AdminPortal() {
                                 {['valueProps', 'howItWorks', 'useCases', 'why', 'faq'].includes(editingSection.type) && (
                                     <div className="space-y-8">
                                         <div className="space-y-2">
-                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Section Title</label>
-                                            <input type="text" value={editingSection.content.title} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, title: e.target.value } })} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-bold focus:border-blue-500 outline-none" />
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Section Title (줄바꿈: Enter)</label>
+                                            <textarea value={editingSection.content.title || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, title: e.target.value } })} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-bold focus:border-blue-500 outline-none min-h-[80px]" />
                                         </div>
                                         <div className="space-y-4">
                                             <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Items / Cards / Steps</label>
