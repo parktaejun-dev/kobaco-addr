@@ -94,9 +94,36 @@ const ImageUploader = ({ value, onChange, label }: { value: string, onChange: (u
                             {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
                             업로드
                         </button>
+                        {value && (
+                            <>
+                                <button
+                                    onClick={() => onChange('')}
+                                    className="px-3 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-200 transition-all"
+                                    title="URL만 제거 (파일 유지)"
+                                >
+                                    해제
+                                </button>
+                                <button
+                                    onClick={async () => {
+                                        if (!confirm('Blob 스토리지에서 영구 삭제하시겠습니까?')) return;
+                                        try {
+                                            await axios.delete('/api/admin/blob/delete', { data: { url: value } });
+                                            onChange('');
+                                            toast.success('이미지가 삭제되었습니다');
+                                        } catch (err) {
+                                            toast.error('삭제 실패');
+                                        }
+                                    }}
+                                    className="px-3 py-2 bg-red-50 text-red-600 rounded-lg text-xs font-bold hover:bg-red-100 transition-all"
+                                    title="Blob에서 영구 삭제"
+                                >
+                                    삭제
+                                </button>
+                            </>
+                        )}
                     </div>
                     <p className="text-[10px] text-slate-400 font-medium">
-                        * 직접 URL을 입력하거나 이미지를 업로드하세요. (Vercel Blob Storage)
+                        * 해제: URL만 비움 | 삭제: Blob에서 영구 제거
                     </p>
                 </div>
             </div>
