@@ -58,11 +58,19 @@ function Hero({ data }: { data: any }) {
 
   return (
     <section className="relative w-full min-h-[90vh] flex items-center justify-center overflow-hidden bg-slate-950 text-white">
-      <div className="section-wrap section-pad">
-        <div className="relative z-10 max-w-5xl mx-auto text-center space-y-10">
+      {/* Background Glow Effects */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-blue-500/10 rounded-full blur-[120px] -translate-x-1/2 -translate-y-1/2" />
+        <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-indigo-500/10 rounded-full blur-[100px] translate-x-1/2 translate-y-1/2" />
+        <div className="absolute top-1/2 left-1/2 w-[800px] h-[400px] bg-slate-800/50 rounded-full blur-[80px] -translate-x-1/2 -translate-y-1/2" />
+      </div>
+
+      <div className="section-wrap section-pad relative z-10">
+        <div className="max-w-5xl mx-auto text-center space-y-10">
           <div className="space-y-6">
             {data.eyebrow && (
-              <span className={`inline-block font-bold tracking-wider uppercase text-xs sm:text-sm px-3 py-1 rounded-full border mb-2 ${eyebrowClass}`}>
+              <span className={`inline-flex items-center gap-2 text-[11px] font-semibold tracking-[0.2em] uppercase px-4 py-2 rounded-full border backdrop-blur-sm ${eyebrowClass}`}>
+                <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60" />
                 {data.eyebrow}
               </span>
             )}
