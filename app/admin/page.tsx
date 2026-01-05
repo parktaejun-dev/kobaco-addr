@@ -240,9 +240,22 @@ export default function AdminPortal() {
     };
 
     const deleteSection = async (id: string) => {
-        if (!window.confirm("정말 이 섹션을 삭제하시겠습니까? (비활성화 처리됩니다)")) return;
-        await toggleSection(id, true); // Set to disabled
-        toast.info("Section disabled (soft delete)");
+        if (!window.confirm("정말 이 섹션을 영구 삭제하시겠습니까?\n\n⚠️ 이 작업은 되돌릴 수 없습니다.")) return;
+
+        const toastId = toast.loading("삭제 중...");
+        try {
+            await axios.delete('/api/admin/section/delete', { data: { id } });
+            // Remove from local state
+            setHomeConfig((prev: any) => ({
+                ...prev,
+                sections: prev.sections.filter((s: any) => s.id !== id)
+            }));
+            toast.success("섹션이 삭제되었습니다");
+        } catch (err) {
+            toast.error("삭제 실패");
+        } finally {
+            toast.dismiss(toastId);
+        }
     };
 
     const openEditor = async (section: any) => {

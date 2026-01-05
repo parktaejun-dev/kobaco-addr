@@ -140,6 +140,16 @@ export async function saveSection(id: string, type: string, data: any) {
     await multi.exec();
 }
 
+export async function deleteSection(id: string) {
+    const redis = await getClient();
+    if (!redis) throw new Error("Redis not configured");
+
+    const multi = redis.multi();
+    multi.del(KEYS.SECTION(id));
+    multi.set(KEYS.ETAG, `v${Date.now()}`); // Bump Etag
+    await multi.exec();
+}
+
 // --- Stats Service ---
 
 export async function trackSearch(term: string) {
