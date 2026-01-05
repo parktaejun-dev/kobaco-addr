@@ -38,7 +38,7 @@ export const valuePropsSchema = z.object({
         title: z.string().min(1),
         description: z.string().min(1)
     })).min(3).max(3)
-}).strict();
+}).passthrough();
 
 // 3. Concept (Addressable TV)
 export const conceptSchema = z.object({
@@ -47,7 +47,7 @@ export const conceptSchema = z.object({
     description: z.string().optional(),
     image: urlSchema, // Diagram or concept image
     features: z.array(z.string()).optional()
-}).strict();
+}).passthrough();
 
 // 4. Comparison (Traditional vs Addressable)
 export const comparisonSchema = z.object({
@@ -61,7 +61,7 @@ export const comparisonSchema = z.object({
         items: z.array(z.string()),
         highlight: z.boolean().default(true).optional()
     })
-}).strict();
+}).passthrough();
 
 // 5. How It Works (4 Steps)
 export const howItWorksSchema = z.object({
@@ -72,7 +72,7 @@ export const howItWorksSchema = z.object({
         description: z.string(),
         image: urlSchema.optional()
     })).min(4).max(4)
-}).strict();
+}).passthrough();
 
 // 6. Use Cases (Flexible Grid)
 export const useCasesSchema = z.object({
@@ -86,7 +86,7 @@ export const useCasesSchema = z.object({
         metrics: z.array(z.string()).optional(), // Optional now
         image: urlSchema.optional()
     })).min(1).max(6) // Relaxed limit
-}).strict();
+}).passthrough();
 
 // 7. Why (Extra Reach)
 export const whySchema = z.object({
@@ -97,13 +97,13 @@ export const whySchema = z.object({
         value: z.string(),
         description: z.string().optional()
     })).optional()
-}).strict();
+}).passthrough();
 
 // 8. Estimate Guide
 export const estimateGuideSchema = z.object({
     title: z.string().min(1),
     steps: z.array(z.string()).min(1)
-}).strict();
+}).passthrough();
 
 // 9. CTA (Global Bottom CTA)
 export const globalCtaSchema = z.object({
@@ -111,7 +111,7 @@ export const globalCtaSchema = z.object({
     description: z.string().optional(),
     buttonText: z.string().min(1),
     buttonLink: z.string().optional()
-}).strict();
+}).passthrough();
 
 // FAQ (Optional but present in code)
 const faqItemSchema = z.object({
@@ -121,14 +121,14 @@ const faqItemSchema = z.object({
 export const faqSchema = z.object({
     title: z.string(),
     questions: z.array(faqItemSchema)
-}).strict();
+}).passthrough();
 
 // Reporting (Optional but present in code)
 export const reportingSchema = z.object({
     title: z.string(),
     description: z.string(),
     image: urlSchema
-}).strict();
+}).passthrough();
 
 
 // Type Registry for Validation
