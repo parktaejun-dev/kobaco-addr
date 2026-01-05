@@ -13,6 +13,24 @@ import Footer from '@/components/Footer';
 
 function Hero({ data }: { data: any }) {
   if (!data) return null;
+
+  // Font size mappings
+  const titleSizeClasses: Record<string, string> = {
+    sm: 'text-3xl sm:text-4xl lg:text-5xl',
+    md: 'text-4xl sm:text-5xl lg:text-6xl',
+    lg: 'text-5xl sm:text-6xl lg:text-7xl',
+    xl: 'text-6xl sm:text-7xl lg:text-8xl',
+  };
+  const subtitleSizeClasses: Record<string, string> = {
+    sm: 'text-base',
+    md: 'text-lg',
+    lg: 'text-xl',
+    xl: 'text-2xl',
+  };
+
+  const titleClass = titleSizeClasses[data.titleSize || 'lg'];
+  const subtitleClass = subtitleSizeClasses[data.subtitleSize || 'lg'];
+
   return (
     <section className="relative w-full min-h-[90vh] flex items-center justify-center overflow-hidden bg-slate-950 text-white">
       <div className="section-wrap section-pad">
@@ -23,13 +41,13 @@ function Hero({ data }: { data: any }) {
                 {data.eyebrow}
               </span>
             )}
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.1] text-white text-balance">
+            <h1 className={`${titleClass} font-extrabold tracking-tight leading-[1.1] text-white text-balance`}>
               {data.title?.split('\n').map((line: string, i: number) => (
                 <span key={i}>{line}{i < data.title.split('\n').length - 1 && <br />}</span>
               ))}
             </h1>
           </div>
-          <p className="text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed text-balance">
+          <p className={`${subtitleClass} text-slate-300 max-w-2xl mx-auto leading-relaxed text-balance`}>
             {data.subtitle?.split('\n').map((line: string, i: number) => (
               <span key={i}>{line}{i < (data.subtitle?.split('\n').length || 1) - 1 && <br />}</span>
             ))}

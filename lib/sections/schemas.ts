@@ -15,7 +15,9 @@ const ctaSchema = z.object({
 export const heroSchema = z.object({
     eyebrow: z.string().optional(),
     title: z.string().min(1, "Title is required"),
+    titleSize: z.enum(['sm', 'md', 'lg', 'xl']).optional(), // sm=4xl, md=5xl, lg=6xl, xl=7xl
     subtitle: z.string().optional(),
+    subtitleSize: z.enum(['sm', 'md', 'lg', 'xl']).optional(), // sm=base, md=lg, lg=xl, xl=2xl
     ctas: z.array(ctaSchema).optional(),
     stats: z.any().optional(),
     kpis: z.any().optional(),
