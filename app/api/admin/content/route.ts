@@ -43,6 +43,45 @@ const TEMPLATES: Record<string, any> = {
       { title: "카드 제목 2", description: "설명을 입력하세요.", image: "" },
       { title: "카드 제목 3", description: "설명을 입력하세요.", image: "" }
     ]
+  },
+  concept: {
+    eyebrow: "Concept",
+    title: "새로운 컨셉 섹션",
+    description: "컨셉에 대한 설명을 입력하세요.",
+    image: ""
+  },
+  comparison: {
+    title: "비교 섹션",
+    left: {
+      label: "기존 방식",
+      headline: "Headline",
+      description: "Description",
+      points: ["Point 1", "Point 2"]
+    },
+    right: {
+      label: "새로운 방식",
+      headline: "Headline",
+      description: "Description",
+      points: ["Point 1", "Point 2"]
+    }
+  },
+  useCases: {
+    title: "활용 사례",
+    description: "다양한 활용 사례를 소개합니다.",
+    cases: [
+      { tag: "Tag 1", title: "Case 1", description: "Description 1" },
+      { tag: "Tag 2", title: "Case 2", description: "Description 2" }
+    ]
+  },
+  why: {
+    eyebrow: "Why Us",
+    title: "왜 선택해야 할까요?",
+    description: "서비스의 강점을 설명하세요.",
+    cards: [
+      { title: "Reason 1", description: "Description 1" },
+      { title: "Reason 2", description: "Description 2" },
+      { title: "Reason 3", description: "Description 3" }
+    ]
   }
 };
 

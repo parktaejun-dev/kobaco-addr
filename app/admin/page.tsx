@@ -1888,7 +1888,11 @@ export default function AdminPortal() {
                             <div className="grid grid-cols-1 gap-3">
                                 {[
                                     { id: 'valueProps', label: 'Value Props (카드형)', icon: Layout },
+                                    { id: 'concept', label: 'Concept (컨셉 소개)', icon: Sparkles },
+                                    { id: 'comparison', label: 'Comparison (비교)', icon: Settings },
                                     { id: 'howItWorks', label: 'How It Works (단계별)', icon: Move },
+                                    { id: 'useCases', label: 'Use Cases (활용 사례)', icon: Target },
+                                    { id: 'why', label: 'Why (특장점 나열)', icon: CheckCircle2 },
                                     { id: 'imageCards', label: 'Image Cards (이미지 카드)', icon: ImageIcon },
                                     { id: 'reporting', label: 'Reporting (리포트 강조)', icon: BarChart3 },
                                     { id: 'faq', label: 'FAQ (질의응답)', icon: Database },
