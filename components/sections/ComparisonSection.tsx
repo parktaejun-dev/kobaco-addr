@@ -23,16 +23,16 @@ export default function ComparisonSection({ data }: { data: ComparisonData }) {
             {data.title}
           </h2>
 
-          <div className="mt-8 grid gap-6 lg:grid-cols-2">
-            <div className="card p-6 overflow-hidden">
+          <div className="mt-8 grid gap-6 lg:grid-cols-2 items-start">
+            <div className="card p-6 overflow-hidden h-full flex flex-col">
               <div className="flex items-center gap-2 text-sm font-semibold text-slate-600 mb-4">
                 <Tv2 className="h-4 w-4" />
                 {data.left.label}
               </div>
               
               {data.left.image && (
-                <div className="mb-6 rounded-xl overflow-hidden border border-slate-100 aspect-video bg-slate-50">
-                   <img src={data.left.image} alt={data.left.headline} className="w-full h-full object-cover" />
+                <div className="mb-6 rounded-xl overflow-hidden border border-slate-100 bg-slate-50">
+                   <img src={data.left.image} alt={data.left.headline} className="w-full h-auto block" />
                 </div>
               )}
 
@@ -40,7 +40,7 @@ export default function ComparisonSection({ data }: { data: ComparisonData }) {
                 {data.left.headline}
               </div>
               <p className="mt-3 text-slate-600">{data.left.description}</p>
-              <ul className="mt-6 space-y-2 text-slate-700">
+              <ul className="mt-6 space-y-2 text-slate-700 flex-1">
                 {data.left.points.map((p, i) => (
                   <li key={i} className="flex gap-3">
                     <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-slate-400" />
@@ -50,15 +50,15 @@ export default function ComparisonSection({ data }: { data: ComparisonData }) {
               </ul>
             </div>
 
-            <div className="card border-blue-200 p-6 overflow-hidden shadow-lg shadow-blue-50">
+            <div className="card border-blue-200 p-6 overflow-hidden shadow-lg shadow-blue-50 h-full flex flex-col">
               <div className="flex items-center gap-2 text-sm font-semibold text-blue-700 mb-4">
                 <Target className="h-4 w-4" />
                 {data.right.label}
               </div>
               
               {data.right.image && (
-                <div className="mb-6 rounded-xl overflow-hidden border border-blue-100 aspect-video bg-blue-50">
-                   <img src={data.right.image} alt={data.right.headline} className="w-full h-full object-cover" />
+                <div className="mb-6 rounded-xl overflow-hidden border border-blue-100 bg-blue-50">
+                   <img src={data.right.image} alt={data.right.headline} className="w-full h-auto block" />
                 </div>
               )}
 
@@ -66,7 +66,7 @@ export default function ComparisonSection({ data }: { data: ComparisonData }) {
                 {data.right.headline}
               </div>
               <p className="mt-3 text-slate-600">{data.right.description}</p>
-              <ul className="mt-6 space-y-2 text-slate-700">
+              <ul className="mt-6 space-y-2 text-slate-700 flex-1">
                 {data.right.points.map((p, i) => (
                   <li key={i} className="flex gap-3">
                     <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-500" />
