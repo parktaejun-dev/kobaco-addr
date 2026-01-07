@@ -95,7 +95,7 @@ const ImageUploader = ({ value, onChange, label }: { value: string, onChange: (u
             const formData = new FormData();
             formData.append('file', file);
 
-            // Using the new Blob API pattern requested by user
+            // Using the new Blob API pattern
             const res = await axios.post(`/api/admin/blob/upload?filename=${file.name}`, file, {
                 headers: { 'Content-Type': file.type }
             });
@@ -116,80 +116,85 @@ const ImageUploader = ({ value, onChange, label }: { value: string, onChange: (u
         <div className="space-y-3">
             <ImageLibraryModal isOpen={showLibrary} onClose={() => setShowLibrary(false)} onSelect={onChange} />
             <label className="text-xs font-black text-slate-400 uppercase tracking-widest">{label}</label>
-            <div className="flex items-start gap-4">
-                <div className="w-32 h-20 bg-slate-100 rounded-lg flex items-center justify-center overflow-hidden border border-slate-200 relative group">
+            <div className="flex flex-col sm:flex-row items-start gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                <div className="w-32 h-24 bg-white rounded-xl flex items-center justify-center overflow-hidden border border-slate-200 relative group flex-shrink-0 shadow-sm">
                     {value ? (
                         <>
                             <img src={value} alt="Preview" className="w-full h-full object-cover" />
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <a href={value} target="_blank" rel="noreferrer" className="text-white p-2 hover:text-blue-200"><Eye size={16} /></a>
+                                <a href={value} target="_blank" rel="noreferrer" className="text-white p-2 hover:text-blue-200"><Eye size={20} /></a>
                             </div>
                         </>
                     ) : (
-                        <ImageIcon className="text-slate-300" />
+                        <div className="text-slate-300 flex flex-col items-center gap-1">
+                            <ImageIcon size={24} />
+                            <span className="text-[10px] font-bold">No Image</span>
+                        </div>
                     )}
                 </div>
-                <div className="flex-1 space-y-3">
-                    <div className="flex gap-2">
+                <div className="flex-1 space-y-3 w-full">
+                    <div className="flex gap-2 w-full">
                         <input
                             type="text"
                             value={value || ''}
                             onChange={(e) => onChange(e.target.value)}
                             placeholder="https://..."
-                            className="flex-1 p-2 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-500 transition-all font-mono text-slate-500"
+                            className="flex-1 p-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium outline-none focus:border-blue-500 transition-all font-mono text-slate-500 shadow-sm"
                         />
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={handleFileChange}
-                        />
+                    </div>
+                    
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleFileChange}
+                    />
+                    
+                    <div className="flex flex-wrap gap-2">
                         <button
                             disabled={uploading}
                             onClick={() => fileInputRef.current?.click()}
-                            className="px-4 py-2 bg-slate-800 text-white rounded-lg text-xs font-bold hover:bg-slate-700 transition-all flex items-center gap-2 disabled:opacity-50"
+                            className="px-4 py-2 bg-slate-800 text-white rounded-lg text-xs font-bold hover:bg-slate-700 transition-all flex items-center gap-2 disabled:opacity-50 shadow-sm"
                         >
                             {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
-                            업로드
+                            PC 업로드
                         </button>
                         <button
                             onClick={() => setShowLibrary(true)}
-                            className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-100 transition-all flex items-center gap-2"
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition-all flex items-center gap-2 shadow-sm shadow-blue-200"
                         >
-                            <ImageIcon size={14} /> 라이브러리
+                            <Database size={14} /> 라이브러리
                         </button>
-                        {value && (
-                            <>
-                                <button
-                                    onClick={() => onChange('')}
-                                    className="px-3 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-200 transition-all"
-                                    title="URL만 제거 (파일 유지)"
-                                >
-                                    해제
-                                </button>
-                                <button
-                                    onClick={async () => {
-                                        if (!confirm('Blob 스토리지에서 영구 삭제하시겠습니까?')) return;
-                                        try {
-                                            await axios.delete('/api/admin/blob/delete', { data: { url: value } });
-                                            onChange('');
-                                            toast.success('이미지가 삭제되었습니다');
-                                        } catch (err) {
-                                            toast.error('삭제 실패');
-                                        }
-                                    }}
-                                    className="px-3 py-2 bg-red-50 text-red-600 rounded-lg text-xs font-bold hover:bg-red-100 transition-all"
-                                    title="Blob에서 영구 삭제"
-                                >
-                                    삭제
-                                </button>
-                            </>
-                        )}
+                        
+                        <div className="w-px h-8 bg-slate-200 mx-1 hidden sm:block" />
+
+                        <button
+                            disabled={!value}
+                            onClick={() => onChange('')}
+                            className="px-3 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="URL만 제거"
+                        >
+                            해제
+                        </button>
+                        <button
+                            disabled={!value}
+                            onClick={async () => {
+                                if (!confirm('Blob 스토리지에서 영구 삭제하시겠습니까?')) return;
+                                try {
+                                    await axios.delete('/api/admin/blob/delete', { data: { url: value } });
+                                    onChange('');
+                                    toast.success('이미지가 삭제되었습니다');
+                                } catch (err) {
+                                    toast.error('삭제 실패');
+                                }
+                            }}
+                            className="px-3 py-2 bg-red-50 text-red-600 rounded-lg text-xs font-bold hover:bg-red-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Blob 영구 삭제"
+                        >
+                            삭제
+                        </button>
                     </div>
-                    <p className="text-[10px] text-slate-400 font-medium">
-                        * 해제: URL만 비움 | 삭제: Blob에서 영구 제거
-                    </p>
                 </div>
             </div>
         </div>
