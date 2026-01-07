@@ -112,6 +112,9 @@ export const useCasesSchema = z.object({
     titleColor: colorEnum,
     subtitle: z.string().optional(),
     description: z.string().optional(),
+    layout: z.enum(['grid', 'split']).default('grid').optional(),
+    imagePosition: z.enum(['left', 'right']).default('right').optional(),
+    image: urlSchema, // Main image for split layout
     cases: z.array(z.object({
         tag: z.string().optional(),
         title: z.string().optional(),

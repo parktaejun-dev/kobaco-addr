@@ -1578,6 +1578,49 @@ export default function AdminPortal() {
                                             </div>
                                         )}
 
+                                        {/* Use Cases Special Options */}
+                                        {editingSection.type === 'useCases' && (
+                                            <div className="space-y-4 bg-slate-50 p-6 rounded-2xl border border-slate-200">
+                                                <h4 className="font-bold text-slate-800 text-sm">Layout Options</h4>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="space-y-2">
+                                                        <label className="text-[10px] font-bold text-slate-400 uppercase">Type</label>
+                                                        <select
+                                                            value={editingSection.content.layout || 'grid'}
+                                                            onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, layout: e.target.value } })}
+                                                            className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm font-bold"
+                                                        >
+                                                            <option value="grid">Grid (Cards)</option>
+                                                            <option value="split">Split (Text + Image)</option>
+                                                        </select>
+                                                    </div>
+                                                    {editingSection.content.layout === 'split' && (
+                                                        <div className="space-y-2">
+                                                            <label className="text-[10px] font-bold text-slate-400 uppercase">Image Position</label>
+                                                            <select
+                                                                value={editingSection.content.imagePosition || 'right'}
+                                                                onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, imagePosition: e.target.value } })}
+                                                                className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm font-bold"
+                                                            >
+                                                                <option value="right">Right</option>
+                                                                <option value="left">Left</option>
+                                                            </select>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                {editingSection.content.layout === 'split' && (
+                                                    <div className="space-y-2">
+                                                        <label className="text-[10px] font-bold text-slate-400 uppercase">Main Split Image</label>
+                                                        <ImageUploader
+                                                            label="Split Layout Image"
+                                                            value={editingSection.content.image || ''}
+                                                            onChange={(url) => setEditingSection({ ...editingSection, content: { ...editingSection.content, image: url } })}
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
                                         <div className="space-y-4">
                                             <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Items / Cards / Steps</label>
                                             <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
