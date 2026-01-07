@@ -267,27 +267,34 @@ function EstimateGuide({ data }: { data: any }) {
 
         {/* Steps */}
         <div className="divide-y divide-slate-200 border border-slate-200 rounded-xl">
-          {data.steps?.map((step: string, i: number) => (
-            <div
-              key={i}
-              className="flex items-start gap-6 px-6 py-5"
-            >
-              {/* Index */}
-              <div className="text-sm font-medium text-slate-400 pt-1 w-8">
-                {String(i + 1).padStart(2, '0')}
-              </div>
+          {data.steps?.map((step: any, i: number) => {
+            const title = typeof step === 'string' ? step : step.title;
+            const description = typeof step === 'string' ? '설명을 입력해주세요.' : step.description;
+            
+            return (
+              <div
+                key={i}
+                className="flex items-start gap-6 px-6 py-5"
+              >
+                {/* Index */}
+                <div className="text-sm font-medium text-slate-400 pt-1 w-8">
+                  {String(i + 1).padStart(2, '0')}
+                </div>
 
-              {/* Content */}
-              <div className="flex-1">
-                <div className="text-base font-medium text-slate-900">
-                  {step}
-                </div>
-                <div className="mt-1 text-sm text-slate-500">
-                  입력 항목에 따라 실시간으로 결과가 업데이트됩니다.
+                {/* Content */}
+                <div className="flex-1">
+                  <div className="text-base font-medium text-slate-900">
+                    {title}
+                  </div>
+                  {description && (
+                    <div className="mt-1 text-sm text-slate-500">
+                      {description}
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Action */}

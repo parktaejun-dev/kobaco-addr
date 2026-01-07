@@ -145,7 +145,15 @@ export const estimateGuideSchema = z.object({
     description: z.string().optional(),
     subtitleSize: sizeEnum,
     subtitleColor: colorEnum,
-    steps: z.array(z.string()).optional()
+    steps: z.array(
+        z.union([
+            z.string(),
+            z.object({
+                title: z.string(),
+                description: z.string().optional()
+            }).passthrough()
+        ])
+    ).optional()
 }).passthrough();
 
 // 9. CTA (Global Bottom CTA)

@@ -1674,28 +1674,52 @@ export default function AdminPortal() {
                                             <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Steps (단계별 설명)</label>
                                             <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
                                                 <div className="divide-y divide-slate-100">
-                                                    {(editingSection.content.steps || []).map((step: string, i: number) => (
-                                                        <div key={i} className="flex items-center gap-4 p-4 hover:bg-slate-50 transition-colors">
-                                                            <span className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-xs">{i + 1}</span>
-                                                            <input 
-                                                                type="text" 
-                                                                value={step} 
-                                                                onChange={e => {
-                                                                    const newSteps = [...editingSection.content.steps];
-                                                                    newSteps[i] = e.target.value;
-                                                                    setEditingSection({ ...editingSection, content: { ...editingSection.content, steps: newSteps } });
-                                                                }} 
-                                                                className="flex-1 bg-transparent outline-none font-medium text-slate-700"
-                                                            />
-                                                            <button onClick={() => {
-                                                                const newSteps = editingSection.content.steps.filter((_: any, idx: number) => idx !== i);
-                                                                setEditingSection({ ...editingSection, content: { ...editingSection.content, steps: newSteps } });
-                                                            }} className="text-red-300 hover:text-red-500"><Trash2 size={16} /></button>
-                                                        </div>
-                                                    ))}
+                                                    {(editingSection.content.steps || []).map((step: any, i: number) => {
+                                                        const title = typeof step === 'string' ? step : step.title;
+                                                        const description = typeof step === 'string' ? '' : step.description;
+                                                        
+                                                        return (
+                                                            <div key={i} className="flex flex-col gap-2 p-4 hover:bg-slate-50 transition-colors">
+                                                                <div className="flex items-center gap-4">
+                                                                    <span className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-xs flex-shrink-0">{i + 1}</span>
+                                                                    <input 
+                                                                        type="text" 
+                                                                        value={title} 
+                                                                        placeholder="단계 제목"
+                                                                        onChange={e => {
+                                                                            const newSteps = [...editingSection.content.steps];
+                                                                            // Ensure object structure
+                                                                            const oldDesc = typeof newSteps[i] === 'string' ? '' : newSteps[i].description;
+                                                                            newSteps[i] = { title: e.target.value, description: oldDesc };
+                                                                            setEditingSection({ ...editingSection, content: { ...editingSection.content, steps: newSteps } });
+                                                                        }} 
+                                                                        className="flex-1 bg-transparent outline-none font-bold text-slate-800"
+                                                                    />
+                                                                    <button onClick={() => {
+                                                                        const newSteps = editingSection.content.steps.filter((_: any, idx: number) => idx !== i);
+                                                                        setEditingSection({ ...editingSection, content: { ...editingSection.content, steps: newSteps } });
+                                                                    }} className="text-red-300 hover:text-red-500"><Trash2 size={16} /></button>
+                                                                </div>
+                                                                <div className="pl-12">
+                                                                    <input 
+                                                                        type="text"
+                                                                        value={description || ''}
+                                                                        placeholder="부가 설명을 입력하세요..."
+                                                                        onChange={e => {
+                                                                            const newSteps = [...editingSection.content.steps];
+                                                                            const oldTitle = typeof newSteps[i] === 'string' ? newSteps[i] : newSteps[i].title;
+                                                                            newSteps[i] = { title: oldTitle, description: e.target.value };
+                                                                            setEditingSection({ ...editingSection, content: { ...editingSection.content, steps: newSteps } });
+                                                                        }}
+                                                                        className="w-full bg-transparent outline-none text-sm text-slate-500 font-medium"
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
                                                 </div>
                                                 <button onClick={() => {
-                                                    const newSteps = [...(editingSection.content.steps || []), "새로운 단계 설명"];
+                                                    const newSteps = [...(editingSection.content.steps || []), { title: "새로운 단계", description: "설명을 입력하세요" }];
                                                     setEditingSection({ ...editingSection, content: { ...editingSection.content, steps: newSteps } });
                                                 }} className="w-full p-4 bg-slate-50 text-blue-600 font-bold text-sm flex items-center justify-center gap-2 hover:bg-blue-50 transition-colors"><Plus size={16} /> 단계 추가</button>
                                             </div>
