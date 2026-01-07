@@ -1655,6 +1655,78 @@ export default function AdminPortal() {
                                     </div>
                                 )}
 
+                                {/* ESTIMATE GUIDE EDITOR */}
+                                {editingSection.type === 'estimateGuide' && (
+                                    <div className="space-y-8">
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Guide Title</label>
+                                            <input type="text" value={editingSection.content.title || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, title: e.target.value } })} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-bold focus:border-blue-500 outline-none" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Steps (단계별 설명)</label>
+                                            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                                                <div className="divide-y divide-slate-100">
+                                                    {(editingSection.content.steps || []).map((step: string, i: number) => (
+                                                        <div key={i} className="flex items-center gap-4 p-4 hover:bg-slate-50 transition-colors">
+                                                            <span className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-xs">{i + 1}</span>
+                                                            <input 
+                                                                type="text" 
+                                                                value={step} 
+                                                                onChange={e => {
+                                                                    const newSteps = [...editingSection.content.steps];
+                                                                    newSteps[i] = e.target.value;
+                                                                    setEditingSection({ ...editingSection, content: { ...editingSection.content, steps: newSteps } });
+                                                                }} 
+                                                                className="flex-1 bg-transparent outline-none font-medium text-slate-700"
+                                                            />
+                                                            <button onClick={() => {
+                                                                const newSteps = editingSection.content.steps.filter((_: any, idx: number) => idx !== i);
+                                                                setEditingSection({ ...editingSection, content: { ...editingSection.content, steps: newSteps } });
+                                                            }} className="text-red-300 hover:text-red-500"><Trash2 size={16} /></button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                <button onClick={() => {
+                                                    const newSteps = [...(editingSection.content.steps || []), "새로운 단계 설명"];
+                                                    setEditingSection({ ...editingSection, content: { ...editingSection.content, steps: newSteps } });
+                                                }} className="w-full p-4 bg-slate-50 text-blue-600 font-bold text-sm flex items-center justify-center gap-2 hover:bg-blue-50 transition-colors"><Plus size={16} /> 단계 추가</button>
+                                            </div>
+                                        </div>
+                                        {/* Style Options */}
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">제목 크기</label>
+                                                <select
+                                                    value={editingSection.content.titleSize || 'lg'}
+                                                    onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, titleSize: e.target.value } })}
+                                                    className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold focus:border-blue-500 outline-none"
+                                                >
+                                                    <option value="sm">작게</option>
+                                                    <option value="md">보통</option>
+                                                    <option value="lg">크게 (기본)</option>
+                                                    <option value="xl">매우 크게</option>
+                                                </select>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">제목 색상</label>
+                                                <select
+                                                    value={editingSection.content.titleColor || 'slate'}
+                                                    onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, titleColor: e.target.value } })}
+                                                    className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold focus:border-blue-500 outline-none"
+                                                >
+                                                    <option value="white">흰색</option>
+                                                    <option value="slate">검정 (기본)</option>
+                                                    <option value="blue">파란색</option>
+                                                    <option value="green">초록색</option>
+                                                    <option value="purple">보라색</option>
+                                                    <option value="orange">주황색</option>
+                                                    <option value="red">빨간색</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
                             </div>
 
                             <div className="p-10 border-t bg-white flex justify-between items-center">
