@@ -165,6 +165,19 @@ export const reportingSchema = z.object({
     image: urlSchema
 }).passthrough();
 
+// 12. Image Cards (New)
+export const imageCardsSchema = z.object({
+    title: z.string().optional(),
+    titleSize: sizeEnum,
+    titleColor: colorEnum,
+    subtitle: z.string().optional(),
+    cards: z.array(z.object({
+        image: urlSchema,
+        title: z.string().optional(),
+        description: z.string().optional()
+    }).passthrough()).optional()
+}).passthrough();
+
 
 // Type Registry for Validation
 export const SECTION_SCHEMAS: Record<string, z.ZodObject<any>> = {
@@ -178,7 +191,8 @@ export const SECTION_SCHEMAS: Record<string, z.ZodObject<any>> = {
     estimateGuide: estimateGuideSchema,
     cta: globalCtaSchema,
     faq: faqSchema,
-    reporting: reportingSchema
+    reporting: reportingSchema,
+    imageCards: imageCardsSchema
 };
 
 export type SectionType = keyof typeof SECTION_SCHEMAS;

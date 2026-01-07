@@ -535,7 +535,8 @@ export default function AdminPortal() {
                                                                 section.id === 'howItWorks' ? '작동 방식' :
                                                                     section.id === 'faq' ? '자주 묻는 질문' :
                                                                         section.id === 'reporting' ? '리포트 안내' :
-                                                                            section.id === 'estimateGuide' ? '견적 가이드' : section.id
+                                                                            section.id === 'estimateGuide' ? '견적 가이드' : 
+                                                                                section.id.includes('imageCards') ? '이미지 카드 섹션' : section.id
                                                     }</span>
                                                     <span className="bg-slate-100 text-slate-500 text-[10px] font-black px-2 py-0.5 rounded uppercase">{section.type}</span>
                                                 </div>
@@ -1245,8 +1246,8 @@ export default function AdminPortal() {
                                     </div>
                                 )}
 
-                                {/* GENERIC REPEATER EDITOR (ValueProps, HowItWorks, UseCases, Why, FAQ) */}
-                                {['valueProps', 'howItWorks', 'useCases', 'why', 'faq'].includes(editingSection.type) && (
+                                {/* GENERIC REPEATER EDITOR (ValueProps, HowItWorks, UseCases, Why, FAQ, ImageCards) */}
+                                {['valueProps', 'howItWorks', 'useCases', 'why', 'faq', 'imageCards'].includes(editingSection.type) && (
                                     <div className="space-y-8">
                                         <div className="space-y-2">
                                             <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Section Title (줄바꿈: Enter)</label>
@@ -1286,7 +1287,7 @@ export default function AdminPortal() {
                                         </div>
 
                                         {/* Description/Subtitle for sections that have it */}
-                                        {['why', 'useCases', 'howItWorks'].includes(editingSection.type) && (
+                                        {['why', 'useCases', 'howItWorks', 'imageCards'].includes(editingSection.type) && (
                                             <div className="space-y-2">
                                                 <label className="text-xs font-black text-slate-400 uppercase tracking-widest">
                                                     {editingSection.type === 'why' ? 'Description' : 'Subtitle'}
@@ -1294,8 +1295,10 @@ export default function AdminPortal() {
                                                 <textarea
                                                     value={editingSection.content.description || editingSection.content.subtitle || ''}
                                                     onChange={e => {
-                                                        const fieldName = editingSection.type === 'why' ? 'description' : 'subtitle';
-                                                        setEditingSection({ ...editingSection, content: { ...editingSection.content, [fieldName]: e.target.value } });
+                                                        const fieldName = (editingSection.type === 'why' || editingSection.type === 'imageCards' && editingSection.content.description !== undefined) ? 'description' : 'subtitle';
+                                                        // For imageCards, prefer subtitle but handle description if it exists
+                                                        const targetField = (editingSection.type === 'imageCards') ? 'subtitle' : fieldName;
+                                                        setEditingSection({ ...editingSection, content: { ...editingSection.content, [targetField]: e.target.value } });
                                                     }}
                                                     className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-medium focus:border-blue-500 outline-none min-h-[100px]"
                                                     placeholder="섹션 설명을 입력하세요..."
@@ -1310,7 +1313,7 @@ export default function AdminPortal() {
                                                     <thead className="bg-slate-50 border-b">
                                                         <tr>
                                                             <th className="p-4 text-left text-slate-400 font-black text-[10px] uppercase">Content</th>
-                                                            {(editingSection.type === 'howItWorks' || editingSection.type === 'useCases') && <th className="p-4 text-left text-slate-400 font-black text-[10px] uppercase w-40">Image</th>}
+                                                            {(editingSection.type === 'howItWorks' || editingSection.type === 'useCases' || editingSection.type === 'imageCards') && <th className="p-4 text-left text-slate-400 font-black text-[10px] uppercase w-40">Image</th>}
                                                             <th className="p-4 w-20"></th>
                                                         </tr>
                                                     </thead>
@@ -1325,7 +1328,7 @@ export default function AdminPortal() {
                                                                             setEditingSection({ ...editingSection, content: { ...editingSection.content, cases: newList } });
                                                                         }} className="w-1/2 bg-blue-50/50 p-2 rounded-lg text-xs font-bold text-blue-600 outline-none" placeholder="Tag..." />
                                                                     )}
-                                                                    <input type="text" value={item.title || item.question || item.step + '. ' + (item.title || '')} onChange={e => {
+                                                                    <input type="text" value={item.title || item.question || (item.step !== undefined ? item.step + '. ' + (item.title || '') : (item.title || ''))} onChange={e => {
                                                                         // Logic to update correct field based on type
                                                                         const listName = editingSection.type === 'faq' ? 'questions' : (editingSection.type === 'howItWorks' ? 'steps' : (editingSection.type === 'useCases' ? 'cases' : 'cards'));
                                                                         const key = editingSection.type === 'faq' ? 'question' : 'title';
@@ -1342,13 +1345,13 @@ export default function AdminPortal() {
                                                                         setEditingSection({ ...editingSection, content: { ...editingSection.content, [listName]: newList } });
                                                                     }} className="w-full bg-transparent outline-none text-slate-500 leading-relaxed text-sm resize-none" rows={2} placeholder="Content description..." />
                                                                 </td>
-                                                                {(editingSection.type === 'howItWorks' || editingSection.type === 'useCases') && (
+                                                                {(editingSection.type === 'howItWorks' || editingSection.type === 'useCases' || editingSection.type === 'imageCards') && (
                                                                     <td className="p-6 align-top">
                                                                         <ImageUploader
                                                                             label="Img"
                                                                             value={item.image || ''}
                                                                             onChange={(url) => {
-                                                                                const listName = editingSection.type === 'howItWorks' ? 'steps' : 'cases';
+                                                                                const listName = editingSection.type === 'howItWorks' ? 'steps' : (editingSection.type === 'useCases' ? 'cases' : 'cards');
                                                                                 const newList = [...editingSection.content[listName]];
                                                                                 newList[i].image = url;
                                                                                 setEditingSection({ ...editingSection, content: { ...editingSection.content, [listName]: newList } });
@@ -1371,7 +1374,7 @@ export default function AdminPortal() {
                                                     const listName = editingSection.type === 'faq' ? 'questions' : (editingSection.type === 'howItWorks' ? 'steps' : (editingSection.type === 'useCases' ? 'cases' : 'cards'));
                                                     const newItem = editingSection.type === 'faq' ? { question: "New Q", answer: "" } :
                                                         editingSection.type === 'useCases' ? { tag: "New Tag", title: "New Case", description: "" } :
-                                                            { title: "New Item", description: "" };
+                                                            { title: "New Item", description: "", image: "" };
                                                     const newList = [...(editingSection.content[listName] || []), newItem];
                                                     setEditingSection({ ...editingSection, content: { ...editingSection.content, [listName]: newList } });
                                                 }} className="w-full p-6 bg-slate-50 text-blue-600 hover:bg-blue-50 font-black text-sm flex items-center justify-center gap-2 transition-all border-t"><Plus size={18} /> 항목 추가하기</button>
@@ -1407,6 +1410,7 @@ export default function AdminPortal() {
                                 {[
                                     { id: 'valueProps', label: 'Value Props (카드형)', icon: Layout },
                                     { id: 'howItWorks', label: 'How It Works (단계별)', icon: Move },
+                                    { id: 'imageCards', label: 'Image Cards (이미지 카드)', icon: ImageIcon },
                                     { id: 'reporting', label: 'Reporting (리포트 강조)', icon: BarChart3 },
                                     { id: 'faq', label: 'FAQ (질의응답)', icon: Database },
                                     { id: 'estimateGuide', label: 'Estimate Guide (견적안내)', icon: ShieldCheck },

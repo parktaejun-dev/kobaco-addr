@@ -34,6 +34,15 @@ const TEMPLATES: Record<string, any> = {
       { step: 3, title: "Step 3", description: "설명을 입력하세요." },
       { step: 4, title: "Step 4", description: "설명을 입력하세요." }
     ]
+  },
+  imageCards: {
+    title: "이미지 카드 섹션",
+    subtitle: "이미지와 설명을 통해 내용을 효과적으로 전달하세요.",
+    cards: [
+      { title: "카드 제목 1", description: "설명을 입력하세요.", image: "" },
+      { title: "카드 제목 2", description: "설명을 입력하세요.", image: "" },
+      { title: "카드 제목 3", description: "설명을 입력하세요.", image: "" }
+    ]
   }
 };
 
