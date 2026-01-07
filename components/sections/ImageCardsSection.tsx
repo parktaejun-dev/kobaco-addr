@@ -73,12 +73,12 @@ export default function ImageCardsSection({ data }: ImageCardsSectionProps) {
           {data.cards?.map((card, i) => (
             <div key={i} className="group flex flex-col bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300">
               {/* Image Area */}
-              <div className="relative w-full rounded-t-2xl overflow-hidden bg-slate-50">
+              <div className="w-full bg-slate-50 rounded-t-2xl overflow-hidden">
                 {card.image ? (
                   <img
                     src={card.image}
                     alt={card.title || 'Section image'}
-                    className="w-full h-auto object-contain group-hover:scale-105 transition-transform duration-500"
+                    className="w-full h-auto block"
                   />
                 ) : (
                   <div className="aspect-video w-full flex items-center justify-center text-slate-300">
