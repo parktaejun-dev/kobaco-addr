@@ -273,7 +273,7 @@ export default async function Home() {
   const resolvedSections = await Promise.all(sectionsDataPromises);
 
   return (
-    <main className="min-h-screen bg-white relative">
+    <main className="min-h-screen bg-white relative flex flex-col">
       {/* Global Header / Logo */}
       <header className="absolute top-0 left-0 w-full z-50 p-6 md:p-10 pointer-events-none">
         <div className="section-wrap pointer-events-auto">
