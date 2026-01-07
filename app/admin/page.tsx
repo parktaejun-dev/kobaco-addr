@@ -1246,6 +1246,82 @@ export default function AdminPortal() {
                                     </div>
                                 )}
 
+                                {/* COMPARISON EDITOR */}
+                                {editingSection.type === 'comparison' && (
+                                    <div className="space-y-8">
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Section Title</label>
+                                            <input type="text" value={editingSection.content.title || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, title: e.target.value } })} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-bold focus:border-blue-500 outline-none" />
+                                        </div>
+
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                            {/* Left Side */}
+                                            <div className="space-y-6 bg-white p-6 rounded-3xl border border-slate-200">
+                                                <div className="flex items-center gap-2 mb-4">
+                                                    <span className="bg-slate-100 text-slate-500 text-xs font-black px-2 py-1 rounded">LEFT</span>
+                                                    <h4 className="font-bold text-slate-800">기존 방식 (비교군)</h4>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-bold text-slate-400 uppercase">Label (Small)</label>
+                                                    <input type="text" value={editingSection.content.left?.label || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, left: { ...editingSection.content.left, label: e.target.value } } })} className="w-full p-3 bg-slate-50 border-none rounded-xl font-bold text-sm outline-none" />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-bold text-slate-400 uppercase">Headline</label>
+                                                    <input type="text" value={editingSection.content.left?.headline || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, left: { ...editingSection.content.left, headline: e.target.value } } })} className="w-full p-3 bg-slate-50 border-none rounded-xl font-black text-lg outline-none" />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-bold text-slate-400 uppercase">Description</label>
+                                                    <textarea value={editingSection.content.left?.description || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, left: { ...editingSection.content.left, description: e.target.value } } })} className="w-full p-3 bg-slate-50 border-none rounded-xl font-medium text-slate-600 text-sm outline-none h-24 resize-none" />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-bold text-slate-400 uppercase">Points (Enter로 구분)</label>
+                                                    <textarea 
+                                                        value={editingSection.content.left?.points ? (Array.isArray(editingSection.content.left.points) ? editingSection.content.left.points.join('\n') : editingSection.content.left.points) : ''} 
+                                                        onChange={e => {
+                                                            const points = e.target.value.split('\n');
+                                                            setEditingSection({ ...editingSection, content: { ...editingSection.content, left: { ...editingSection.content.left, points } } });
+                                                        }} 
+                                                        className="w-full p-3 bg-slate-50 border-none rounded-xl font-medium text-slate-600 text-sm outline-none h-32 resize-none" 
+                                                        placeholder="한 줄에 하나씩 입력하세요"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Right Side */}
+                                            <div className="space-y-6 bg-blue-50/50 p-6 rounded-3xl border border-blue-100">
+                                                <div className="flex items-center gap-2 mb-4">
+                                                    <span className="bg-blue-100 text-blue-600 text-xs font-black px-2 py-1 rounded">RIGHT</span>
+                                                    <h4 className="font-bold text-blue-900">Addressable TV (대조군)</h4>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-bold text-blue-400 uppercase">Label (Small)</label>
+                                                    <input type="text" value={editingSection.content.right?.label || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, right: { ...editingSection.content.right, label: e.target.value } } })} className="w-full p-3 bg-white border border-blue-100 rounded-xl font-bold text-sm outline-none text-blue-600" />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-bold text-blue-400 uppercase">Headline</label>
+                                                    <input type="text" value={editingSection.content.right?.headline || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, right: { ...editingSection.content.right, headline: e.target.value } } })} className="w-full p-3 bg-white border border-blue-100 rounded-xl font-black text-lg outline-none text-blue-900" />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-bold text-blue-400 uppercase">Description</label>
+                                                    <textarea value={editingSection.content.right?.description || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, right: { ...editingSection.content.right, description: e.target.value } } })} className="w-full p-3 bg-white border border-blue-100 rounded-xl font-medium text-slate-600 text-sm outline-none h-24 resize-none" />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-bold text-blue-400 uppercase">Points (Enter로 구분)</label>
+                                                    <textarea 
+                                                        value={editingSection.content.right?.points ? (Array.isArray(editingSection.content.right.points) ? editingSection.content.right.points.join('\n') : editingSection.content.right.points) : ''} 
+                                                        onChange={e => {
+                                                            const points = e.target.value.split('\n');
+                                                            setEditingSection({ ...editingSection, content: { ...editingSection.content, right: { ...editingSection.content.right, points } } });
+                                                        }} 
+                                                        className="w-full p-3 bg-white border border-blue-100 rounded-xl font-medium text-slate-600 text-sm outline-none h-32 resize-none" 
+                                                        placeholder="한 줄에 하나씩 입력하세요"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* GENERIC REPEATER EDITOR (ValueProps, HowItWorks, UseCases, Why, FAQ, ImageCards) */}
                                 {['valueProps', 'howItWorks', 'useCases', 'why', 'faq', 'imageCards'].includes(editingSection.type) && (
                                     <div className="space-y-8">
