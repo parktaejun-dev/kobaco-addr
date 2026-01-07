@@ -172,14 +172,15 @@ function Reporting({ data }: { data: any }) {
             ))}
           </p>
           <div className="pt-4 flex flex-col gap-4">
-            <div className="flex items-center gap-3 text-slate-700 font-bold bg-white p-4 rounded-xl border border-slate-200 shadow-sm w-fit">
-              <div className="bg-blue-100 text-blue-700 p-1 rounded-lg"><Check size={16} /></div>
-              실시간 캠페인 대시보드 제공
-            </div>
-            <div className="flex items-center gap-3 text-slate-700 font-bold bg-white p-4 rounded-xl border border-slate-200 shadow-sm w-fit">
-              <div className="bg-blue-100 text-blue-700 p-1 rounded-lg"><Check size={16} /></div>
-              채널별/권역별 상세 성과 리포트
-            </div>
+            {(data.features && data.features.length > 0 ? data.features : [
+              "실시간 캠페인 대시보드 제공",
+              "채널별/권역별 상세 성과 리포트"
+            ]).map((feature: string, i: number) => (
+              <div key={i} className="flex items-center gap-3 text-slate-700 font-bold bg-white p-4 rounded-xl border border-slate-200 shadow-sm w-fit">
+                <div className="bg-blue-100 text-blue-700 p-1 rounded-lg"><Check size={16} /></div>
+                {feature}
+              </div>
+            ))}
           </div>
         </div>
 

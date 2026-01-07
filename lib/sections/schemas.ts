@@ -188,7 +188,8 @@ export const reportingSchema = z.object({
     titleSize: sizeEnum,
     titleColor: colorEnum,
     description: z.string().optional(),
-    image: urlSchema
+    image: urlSchema,
+    features: z.array(z.string()).optional()
 }).passthrough();
 
 // 12. Image Cards (New)

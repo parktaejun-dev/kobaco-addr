@@ -1315,8 +1315,40 @@ export default function AdminPortal() {
                                             <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Description</label>
                                             <textarea value={editingSection.content.description || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, description: e.target.value } })} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-bold focus:border-blue-500 outline-none min-h-[100px]" />
                                         </div>
+                                        
+                                        {/* Features List (Reporting Only) */}
+                                        {editingSection.type === 'reporting' && (
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Features (특징 목록)</label>
+                                                <div className="space-y-2">
+                                                    {(editingSection.content.features || []).map((feature: string, i: number) => (
+                                                        <div key={i} className="flex gap-2">
+                                                            <input 
+                                                                type="text" 
+                                                                value={feature} 
+                                                                onChange={e => {
+                                                                    const newFeatures = [...editingSection.content.features];
+                                                                    newFeatures[i] = e.target.value;
+                                                                    setEditingSection({ ...editingSection, content: { ...editingSection.content, features: newFeatures } });
+                                                                }} 
+                                                                className="flex-1 p-3 bg-white border border-slate-200 rounded-xl font-medium outline-none text-sm"
+                                                            />
+                                                            <button onClick={() => {
+                                                                const newFeatures = editingSection.content.features.filter((_: any, idx: number) => idx !== i);
+                                                                setEditingSection({ ...editingSection, content: { ...editingSection.content, features: newFeatures } });
+                                                            }} className="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-colors"><Trash2 size={16} /></button>
+                                                        </div>
+                                                    ))}
+                                                    <button onClick={() => {
+                                                        const newFeatures = [...(editingSection.content.features || []), "새로운 특징"];
+                                                        setEditingSection({ ...editingSection, content: { ...editingSection.content, features: newFeatures } });
+                                                    }} className="w-full p-3 bg-slate-50 text-slate-500 rounded-xl font-bold text-xs hover:bg-slate-100 transition-colors">+ 특징 추가</button>
+                                                </div>
+                                            </div>
+                                        )}
+
                                         <div className="space-y-2">
-                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Main Image (Left/Bg)</label>
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Concept Image</label>
                                             <ImageUploader
                                                 label="Upload Image"
                                                 value={editingSection.content.image || ''}
