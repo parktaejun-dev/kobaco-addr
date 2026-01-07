@@ -23,7 +23,7 @@ export default function Footer() {
             <div className="flex items-center gap-4 font-bold text-slate-300">
               <Link href="/estimate" className="hover:text-white transition-colors">견적 시뮬레이션</Link>
               <span className="text-slate-700">|</span>
-              <Link href="/admin" className="hover:text-white transition-colors">관리자 로그인</Link>
+              <Link href="/admin" className="hover:text-white transition-colors" prefetch={false}>관리자 로그인</Link>
             </div>
             <p className="text-sm text-slate-500 font-medium">
               © 2026 Korea Broadcast Advertising Corp. All rights reserved.
