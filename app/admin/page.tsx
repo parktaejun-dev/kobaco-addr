@@ -21,10 +21,68 @@ interface DashboardStats {
     recentTerms: string[];
 }
 
+    recentTerms: string[];
+}
+
+// Helper: Image Library Modal
+const ImageLibraryModal = ({ isOpen, onClose, onSelect }: { isOpen: boolean, onClose: () => void, onSelect: (url: string) => void }) => {
+    const [images, setImages] = useState<any[]>([]);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (isOpen) {
+            setLoading(true);
+            axios.get('/api/admin/blob/list')
+                .then(res => setImages(res.data))
+                .catch(() => toast.error("Failed to load images"))
+                .finally(() => setLoading(false));
+        }
+    }, [isOpen]);
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-10 animate-in fade-in duration-200">
+            <div className="bg-white rounded-3xl w-full max-w-4xl max-h-[80vh] flex flex-col overflow-hidden">
+                <div className="p-6 border-b flex justify-between items-center">
+                    <h3 className="font-black text-xl text-slate-800">이미지 라이브러리</h3>
+                    <button onClick={onClose}><X className="text-slate-400 hover:text-slate-600" /></button>
+                </div>
+                <div className="flex-1 overflow-y-auto p-6 bg-slate-50">
+                    {loading ? (
+                        <div className="flex items-center justify-center h-40 text-slate-400 gap-2 font-bold"><Loader2 className="animate-spin" /> 불러오는 중...</div>
+                    ) : images.length === 0 ? (
+                        <div className="text-center py-20 text-slate-400 font-bold">이미지가 없습니다.</div>
+                    ) : (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                            {images.map((img) => (
+                                <button
+                                    key={img.url}
+                                    onClick={() => { onSelect(img.url); onClose(); }}
+                                    className="group relative aspect-square bg-white rounded-xl overflow-hidden border border-slate-200 hover:border-blue-500 hover:ring-2 hover:ring-blue-200 transition-all"
+                                >
+                                    <img src={img.url} alt="Library Item" className="w-full h-full object-cover" />
+                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white font-bold text-xs">
+                                        선택하기
+                                    </div>
+                                    <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] p-1 truncate px-2">
+                                        {new Date(img.uploadedAt).toLocaleDateString()}
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // Helper: Image Upload Component
 const ImageUploader = ({ value, onChange, label }: { value: string, onChange: (url: string) => void, label: string }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [uploading, setUploading] = useState(false);
+    const [showLibrary, setShowLibrary] = useState(false);
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files?.[0]) return;
@@ -56,6 +114,7 @@ const ImageUploader = ({ value, onChange, label }: { value: string, onChange: (u
 
     return (
         <div className="space-y-3">
+            <ImageLibraryModal isOpen={showLibrary} onClose={() => setShowLibrary(false)} onSelect={onChange} />
             <label className="text-xs font-black text-slate-400 uppercase tracking-widest">{label}</label>
             <div className="flex items-start gap-4">
                 <div className="w-32 h-20 bg-slate-100 rounded-lg flex items-center justify-center overflow-hidden border border-slate-200 relative group">
@@ -93,6 +152,12 @@ const ImageUploader = ({ value, onChange, label }: { value: string, onChange: (u
                         >
                             {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
                             업로드
+                        </button>
+                        <button
+                            onClick={() => setShowLibrary(true)}
+                            className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-100 transition-all flex items-center gap-2"
+                        >
+                            <ImageIcon size={14} /> 라이브러리
                         </button>
                         {value && (
                             <>
