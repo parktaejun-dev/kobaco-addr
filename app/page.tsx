@@ -287,14 +287,10 @@ function EstimateGuide({ data }: { data: any }) {
         <div className="mt-12 flex items-center justify-end">
           <Link
             href="/estimate"
-            className="inline-flex items-center gap-2 rounded-lg
-              bg-slate-900 px-6 py-3
-              text-sm font-medium text-white
-              hover:bg-slate-800
-              transition-colors"
+            className="inline-flex items-center gap-2 btn-primary h-14 px-8 text-lg font-bold"
           >
             예상 비용 계산하기
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="h-5 w-5" />
           </Link>
         </div>
       </div>
