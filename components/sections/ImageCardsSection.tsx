@@ -42,7 +42,7 @@ export default function ImageCardsSection({ data }: ImageCardsSectionProps) {
   const titleColorClass = colorClasses[data.titleColor || 'slate'];
 
   return (
-    <section className="section-pad bg-white overflow-hidden">
+    <section className="section-pad bg-white">
       <div className="section-wrap">
         {/* Header Section */}
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
@@ -69,19 +69,19 @@ export default function ImageCardsSection({ data }: ImageCardsSectionProps) {
         </div>
 
         {/* Cards Grid */}
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 items-stretch">
           {data.cards?.map((card, i) => (
-            <div key={i} className="group flex flex-col bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-slate-100">
+            <div key={i} className="group flex flex-col bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300">
               {/* Image Area */}
-              <div className="relative aspect-[4/3] bg-slate-100 overflow-hidden">
+              <div className="relative w-full rounded-t-2xl overflow-hidden bg-slate-50">
                 {card.image ? (
                   <img
                     src={card.image}
                     alt={card.title || 'Section image'}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    className="w-full h-auto object-contain group-hover:scale-105 transition-transform duration-500"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-slate-300">
+                  <div className="aspect-video w-full flex items-center justify-center text-slate-300">
                     <span className="text-sm font-medium">No Image</span>
                   </div>
                 )}
@@ -89,15 +89,20 @@ export default function ImageCardsSection({ data }: ImageCardsSectionProps) {
               
               {/* Content Area */}
               {(card.title || card.description) && (
-                <div className="p-6 space-y-2 flex-1 flex flex-col">
+                <div className="p-8 space-y-3 flex-1 flex flex-col">
                   {card.title && (
-                    <h3 className="text-lg font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+                    <h3 className="text-xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors leading-tight">
                       {card.title}
                     </h3>
                   )}
                   {card.description && (
-                    <p className="text-sm text-slate-600 leading-relaxed flex-1">
-                      {card.description}
+                    <p className="text-sm text-slate-500 leading-relaxed flex-1">
+                      {card.description.split('\n').map((line, idx) => (
+                        <React.Fragment key={idx}>
+                          {line}
+                          {idx < card.description!.split('\n').length - 1 && <br />}
+                        </React.Fragment>
+                      ))}
                     </p>
                   )}
                 </div>
