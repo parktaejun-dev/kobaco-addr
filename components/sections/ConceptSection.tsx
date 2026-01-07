@@ -1,5 +1,6 @@
 "use client";
 
+import React from 'react';
 import { motion } from "framer-motion";
 import { Sparkles, CheckCircle2 } from "lucide-react";
 
@@ -8,6 +9,7 @@ type ConceptData = {
   title: string;
   description: string;
   bullets?: string[];
+  image?: string;
 };
 
 export default function ConceptSection({ data }: { data: ConceptData }) {
@@ -28,11 +30,21 @@ export default function ConceptSection({ data }: { data: ConceptData }) {
                 <span>{data.eyebrow}</span>
               </div>
             )}
-            <h2 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
-              {data.title}
+            <h2 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl text-balance">
+              {data.title.split('\n').map((line, i) => (
+                <React.Fragment key={i}>
+                  {line}
+                  {i < data.title.split('\n').length - 1 && <br />}
+                </React.Fragment>
+              ))}
             </h2>
-            <p className="mt-4 text-lg leading-relaxed text-slate-600">
-              {data.description}
+            <p className="mt-4 text-lg leading-relaxed text-slate-600 text-balance">
+              {data.description.split('\n').map((line, i) => (
+                <React.Fragment key={i}>
+                  {line}
+                  {i < data.description.split('\n').length - 1 && <br />}
+                </React.Fragment>
+              ))}
             </p>
             {data.bullets?.length ? (
               <ul className="mt-6 space-y-3">
@@ -46,26 +58,22 @@ export default function ConceptSection({ data }: { data: ConceptData }) {
             ) : null}
           </div>
 
-          <div className="card p-6">
-            <div className="rounded-xl bg-gradient-to-br from-slate-50 to-blue-50 p-6">
-              <div className="text-sm font-semibold text-slate-700">요약</div>
-              <div className="mt-2 text-2xl font-extrabold tracking-tight text-slate-900">
-                "같은 채널, 다른 광고"
-              </div>
-              <p className="mt-3 text-slate-600">
-                셋톱박스 기반으로 오디언스를 분류하고, 가구 단위로 맞춤형 메시지를 전달합니다.
-              </p>
-              <div className="mt-6 grid grid-cols-2 gap-3">
-                <div className="rounded-xl border border-slate-200 bg-white p-4">
-                  <div className="text-sm text-slate-500">구매 단위</div>
-                  <div className="mt-1 font-semibold text-slate-900">오디언스</div>
+          <div className="relative overflow-hidden rounded-2xl bg-slate-50">
+             {data.image ? (
+               <img src={data.image} alt={data.title} className="h-full w-full object-cover" />
+             ) : (
+                <div className="card p-6 h-full">
+                  <div className="rounded-xl bg-gradient-to-br from-slate-50 to-blue-50 p-6 h-full flex flex-col justify-center">
+                    <div className="text-sm font-semibold text-slate-700">요약</div>
+                    <div className="mt-2 text-2xl font-extrabold tracking-tight text-slate-900">
+                      "같은 채널, 다른 광고"
+                    </div>
+                    <p className="mt-3 text-slate-600">
+                      셋톱박스 기반으로 오디언스를 분류하고, 가구 단위로 맞춤형 메시지를 전달합니다.
+                    </p>
+                  </div>
                 </div>
-                <div className="rounded-xl border border-slate-200 bg-white p-4">
-                  <div className="text-sm text-slate-500">운영 방식</div>
-                  <div className="mt-1 font-semibold text-slate-900">타겟 중심</div>
-                </div>
-              </div>
-            </div>
+             )}
           </div>
         </motion.div>
       </div>
