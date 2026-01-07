@@ -19,6 +19,7 @@ const ctaSchema = z.object({
 export const heroSchema = z.object({
     eyebrow: z.string().optional(),
     eyebrowBg: z.enum(['blue', 'green', 'purple', 'orange', 'red', 'slate', 'none']).optional(),
+    eyebrowSize: sizeEnum, // Added size option
     title: z.string().min(1, "Title is required"),
     titleSize: sizeEnum,
     titleColor: colorEnum,

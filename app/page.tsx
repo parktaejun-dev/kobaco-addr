@@ -45,15 +45,24 @@ function Hero({ data }: { data: any }) {
   const subtitleSizeClass = subtitleSizeClasses[data.subtitleSize || 'lg'];
   const subtitleColorClass = colorClasses[data.subtitleColor || 'slate'];
 
+  // Eyebrow size mappings
+  const eyebrowSizeClasses: Record<string, string> = {
+    sm: 'text-sm',
+    md: 'text-base',
+    lg: 'text-lg',
+    xl: 'text-xl',
+  };
+  const eyebrowSizeClass = eyebrowSizeClasses[data.eyebrowSize || 'sm'];
+
   // Eyebrow background color mappings
   const eyebrowBgClasses: Record<string, string> = {
-    blue: 'bg-blue-50 text-blue-700 border-blue-100',
-    green: 'bg-green-50 text-green-700 border-green-100',
-    purple: 'bg-purple-50 text-purple-700 border-purple-100',
-    orange: 'bg-orange-50 text-orange-700 border-orange-100',
-    red: 'bg-red-50 text-red-700 border-red-100',
-    slate: 'bg-slate-700 text-slate-200 border-slate-600',
-    none: 'bg-transparent text-white border-white/20',
+    blue: 'bg-blue-500/10 text-blue-300 border border-blue-500/20',
+    green: 'bg-green-500/10 text-green-300 border border-green-500/20',
+    purple: 'bg-purple-500/10 text-purple-300 border border-purple-500/20',
+    orange: 'bg-orange-500/10 text-orange-300 border border-orange-500/20',
+    red: 'bg-red-500/10 text-red-300 border border-red-500/20',
+    slate: 'bg-slate-700/50 text-slate-300 border border-slate-600',
+    none: 'text-blue-400 font-bold',
   };
   const eyebrowClass = eyebrowBgClasses[data.eyebrowBg || 'blue'];
 
@@ -70,10 +79,11 @@ function Hero({ data }: { data: any }) {
         <div className="max-w-5xl mx-auto text-center space-y-10">
           <div className="space-y-6">
             {data.eyebrow && (
-              <span className={`inline-flex items-center gap-2 text-[11px] font-semibold tracking-[0.2em] uppercase px-4 py-2 rounded-full border backdrop-blur-sm ${eyebrowClass}`}>
-                <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60" />
-                {data.eyebrow}
-              </span>
+              <div className="flex justify-center">
+                <span className={`${eyebrowSizeClass} ${eyebrowClass} ${data.eyebrowBg !== 'none' ? 'px-4 py-1.5 rounded-full backdrop-blur-sm' : ''}`}>
+                  {data.eyebrow}
+                </span>
+              </div>
             )}
             <h1 className={`${titleSizeClass} ${titleColorClass} font-extrabold tracking-tight leading-[1.1] text-balance`}>
               {data.title?.split('\n').map((line: string, i: number) => (

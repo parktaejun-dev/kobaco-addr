@@ -1103,13 +1103,26 @@ export default function AdminPortal() {
                                                     onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, eyebrowBg: e.target.value } })}
                                                     className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold focus:border-blue-500 outline-none"
                                                 >
-                                                    <option value="blue">파란색</option>
+                                                    <option value="blue">파란색 (기본)</option>
                                                     <option value="green">초록색</option>
                                                     <option value="purple">보라색</option>
                                                     <option value="orange">주황색</option>
                                                     <option value="red">빨간색</option>
                                                     <option value="slate">회색</option>
-                                                    <option value="none">투명</option>
+                                                    <option value="none">없음 (텍스트만)</option>
+                                                </select>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">아이브로우 크기</label>
+                                                <select
+                                                    value={editingSection.content.eyebrowSize || 'sm'}
+                                                    onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, eyebrowSize: e.target.value } })}
+                                                    className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold focus:border-blue-500 outline-none"
+                                                >
+                                                    <option value="sm">작게 (기본)</option>
+                                                    <option value="md">보통</option>
+                                                    <option value="lg">크게</option>
+                                                    <option value="xl">매우 크게</option>
                                                 </select>
                                             </div>
                                             <div className="space-y-2">
