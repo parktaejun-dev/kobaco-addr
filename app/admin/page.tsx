@@ -21,9 +21,6 @@ interface DashboardStats {
     recentTerms: string[];
 }
 
-    recentTerms: string[];
-}
-
 // Helper: Image Library Modal
 const ImageLibraryModal = ({ isOpen, onClose, onSelect }: { isOpen: boolean, onClose: () => void, onSelect: (url: string) => void }) => {
     const [images, setImages] = useState<any[]>([]);
