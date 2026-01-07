@@ -161,8 +161,16 @@ function Reporting({ data }: { data: any }) {
     <section id="reporting" className="section-pad bg-slate-900 text-slate-100">
       <div className="section-wrap grid lg:grid-cols-2 gap-16 items-center">
         <div className="space-y-8">
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 leading-tight text-balance">{data.title}</h2>
-          <p className="text-xl text-slate-600 leading-relaxed text-balance">{data.description}</p>
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 leading-tight text-balance text-white">
+            {data.title.split('\n').map((line: string, i: number) => (
+              <span key={i}>{line}{i < data.title.split('\n').length - 1 && <br />}</span>
+            ))}
+          </h2>
+          <p className="text-xl text-slate-400 leading-relaxed text-balance">
+            {data.description.split('\n').map((line: string, i: number) => (
+              <span key={i}>{line}{i < data.description.split('\n').length - 1 && <br />}</span>
+            ))}
+          </p>
           <div className="pt-4 flex flex-col gap-4">
             <div className="flex items-center gap-3 text-slate-700 font-bold bg-white p-4 rounded-xl border border-slate-200 shadow-sm w-fit">
               <div className="bg-blue-100 text-blue-700 p-1 rounded-lg"><Check size={16} /></div>
@@ -175,27 +183,35 @@ function Reporting({ data }: { data: any }) {
           </div>
         </div>
 
-        {/* Metric Cards instead of Image Placeholder */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-slate-950 text-white shadow-2xl border-0 p-6 rounded-2xl">
-            <div className="text-sm font-bold text-slate-400 mb-2">Total Impressions</div>
-            <div className="text-3xl font-black text-white">1,240,500</div>
-            <div className="text-xs text-emerald-600 font-bold mt-2 flex items-center gap-1">▲ 12.5% vs last week</div>
-          </div>
-          <div className="bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700">
-            <div className="text-sm font-bold text-slate-400 mb-2">Avg. CPV</div>
-            <div className="text-3xl font-black text-white">12.5 KRW</div>
-            <div className="text-xs text-blue-600 font-bold mt-2">Optimized</div>
-          </div>
-          <div className="col-span-2 bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700 flex items-center justify-between">
-            <div>
-              <div className="text-sm font-bold text-slate-400 mb-1">Campaign Status</div>
-              <div className="text-lg font-black text-white">Active / On Track</div>
+        {/* Dynamic Image or Metric Cards Fallback */}
+        <div className="relative">
+          {data.image ? (
+            <div className="rounded-2xl overflow-hidden shadow-2xl border border-slate-700/50 bg-slate-800">
+              <img src={data.image} alt={data.title} className="w-full h-auto object-cover" />
             </div>
-            <div className="h-10 w-10 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center">
-              <BarChart3 size={20} />
+          ) : (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-slate-950 text-white shadow-2xl border-0 p-6 rounded-2xl">
+                <div className="text-sm font-bold text-slate-400 mb-2">Total Impressions</div>
+                <div className="text-3xl font-black text-white">1,240,500</div>
+                <div className="text-xs text-emerald-600 font-bold mt-2 flex items-center gap-1">▲ 12.5% vs last week</div>
+              </div>
+              <div className="bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700">
+                <div className="text-sm font-bold text-slate-400 mb-2">Avg. CPV</div>
+                <div className="text-3xl font-black text-white">12.5 KRW</div>
+                <div className="text-xs text-blue-600 font-bold mt-2">Optimized</div>
+              </div>
+              <div className="col-span-2 bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700 flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-bold text-slate-400 mb-1">Campaign Status</div>
+                  <div className="text-lg font-black text-white">Active / On Track</div>
+                </div>
+                <div className="h-10 w-10 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center">
+                  <BarChart3 size={20} />
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </section>
