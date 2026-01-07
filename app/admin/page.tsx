@@ -1303,13 +1303,113 @@ export default function AdminPortal() {
                                             <textarea value={editingSection.content.description || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, description: e.target.value } })} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-bold focus:border-blue-500 outline-none min-h-[100px]" />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Concept Image</label>
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Main Image (Left/Bg)</label>
                                             <ImageUploader
                                                 label="Upload Image"
                                                 value={editingSection.content.image || ''}
                                                 onChange={(url) => setEditingSection({ ...editingSection, content: { ...editingSection.content, image: url } })}
                                             />
                                         </div>
+
+                                        {/* Right Card Editor (Concept Only) */}
+                                        {editingSection.type === 'concept' && (
+                                            <div className="space-y-6 pt-6 border-t border-slate-200">
+                                                <div className="flex justify-between items-center">
+                                                    <h4 className="font-black text-slate-800">Right Side Card (Optional)</h4>
+                                                    <button 
+                                                        onClick={() => {
+                                                            if (editingSection.content.card) {
+                                                                // Remove card
+                                                                const { card, ...rest } = editingSection.content;
+                                                                setEditingSection({ ...editingSection, content: rest });
+                                                            } else {
+                                                                // Add card
+                                                                setEditingSection({ ...editingSection, content: { ...editingSection.content, card: { title: "Card Title", description: "Card Desc" } } });
+                                                            }
+                                                        }}
+                                                        className={`px-3 py-1.5 rounded-lg font-bold text-xs ${editingSection.content.card ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}
+                                                    >
+                                                        {editingSection.content.card ? '카드 삭제' : '카드 추가'}
+                                                    </button>
+                                                </div>
+
+                                                {editingSection.content.card && (
+                                                    <div className="space-y-4 bg-white p-6 rounded-2xl border border-slate-200">
+                                                        <div className="space-y-2">
+                                                            <label className="text-[10px] font-bold text-slate-400 uppercase">Card Title</label>
+                                                            <input type="text" value={editingSection.content.card.title || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, card: { ...editingSection.content.card, title: e.target.value } } })} className="w-full p-3 bg-slate-50 border-none rounded-xl font-bold text-sm outline-none" />
+                                                        </div>
+                                                        <div className="space-y-2">
+                                                            <label className="text-[10px] font-bold text-slate-400 uppercase">Card Image</label>
+                                                            <ImageUploader
+                                                                label="Card Image"
+                                                                value={editingSection.content.card.image || ''}
+                                                                onChange={(url) => setEditingSection({ ...editingSection, content: { ...editingSection.content, card: { ...editingSection.content.card, image: url } } })}
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-2">
+                                                            <label className="text-[10px] font-bold text-slate-400 uppercase">Card Description</label>
+                                                            <textarea value={editingSection.content.card.description || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, card: { ...editingSection.content.card, description: e.target.value } } })} className="w-full p-3 bg-slate-50 border-none rounded-xl font-medium text-slate-600 text-sm outline-none h-20 resize-none" />
+                                                        </div>
+                                                        
+                                                        {/* Stats in Card */}
+                                                        <div className="space-y-2">
+                                                            <label className="text-[10px] font-bold text-slate-400 uppercase">Stats Grid (Max 4)</label>
+                                                            <div className="grid gap-2">
+                                                                {(editingSection.content.card.stats || []).map((stat: any, i: number) => (
+                                                                    <div key={i} className="flex gap-2">
+                                                                        <input type="text" placeholder="Label" value={stat.label} onChange={e => {
+                                                                            const newStats = [...(editingSection.content.card.stats || [])];
+                                                                            newStats[i].label = e.target.value;
+                                                                            setEditingSection({ ...editingSection, content: { ...editingSection.content, card: { ...editingSection.content.card, stats: newStats } } });
+                                                                        }} className="flex-1 p-2 bg-slate-50 rounded-lg text-xs font-medium" />
+                                                                        <input type="text" placeholder="Value" value={stat.value} onChange={e => {
+                                                                            const newStats = [...(editingSection.content.card.stats || [])];
+                                                                            newStats[i].value = e.target.value;
+                                                                            setEditingSection({ ...editingSection, content: { ...editingSection.content, card: { ...editingSection.content.card, stats: newStats } } });
+                                                                        }} className="flex-1 p-2 bg-slate-50 rounded-lg text-xs font-bold" />
+                                                                        <button onClick={() => {
+                                                                            const newStats = editingSection.content.card.stats.filter((_: any, idx: number) => idx !== i);
+                                                                            setEditingSection({ ...editingSection, content: { ...editingSection.content, card: { ...editingSection.content.card, stats: newStats } } });
+                                                                        }} className="text-red-400"><Trash2 size={14} /></button>
+                                                                    </div>
+                                                                ))}
+                                                                <button onClick={() => {
+                                                                    const newStats = [...(editingSection.content.card.stats || []), { label: "Label", value: "Value" }];
+                                                                    setEditingSection({ ...editingSection, content: { ...editingSection.content, card: { ...editingSection.content.card, stats: newStats } } });
+                                                                }} className="p-2 bg-slate-100 rounded-lg text-xs font-bold text-slate-500">+ Add Stat</button>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* CTA in Card */}
+                                                        <div className="space-y-2 pt-2 border-t border-slate-100">
+                                                            <div className="flex justify-between items-center">
+                                                                <label className="text-[10px] font-bold text-slate-400 uppercase">Card CTA Button</label>
+                                                                <button 
+                                                                    onClick={() => {
+                                                                        if (editingSection.content.card.cta) {
+                                                                            const { cta, ...restCard } = editingSection.content.card;
+                                                                            setEditingSection({ ...editingSection, content: { ...editingSection.content, card: restCard } });
+                                                                        } else {
+                                                                            setEditingSection({ ...editingSection, content: { ...editingSection.content, card: { ...editingSection.content.card, cta: { label: "Learn More", target: "#" } } } });
+                                                                        }
+                                                                    }}
+                                                                    className="text-[10px] font-bold text-blue-500"
+                                                                >
+                                                                    {editingSection.content.card.cta ? 'Remove Btn' : 'Add Btn'}
+                                                                </button>
+                                                            </div>
+                                                            {editingSection.content.card.cta && (
+                                                                <div className="flex gap-2">
+                                                                    <input type="text" placeholder="Button Text" value={editingSection.content.card.cta.label} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, card: { ...editingSection.content.card, cta: { ...editingSection.content.card.cta, label: e.target.value } } } })} className="flex-1 p-2 bg-slate-50 rounded-lg text-xs font-bold" />
+                                                                    <input type="text" placeholder="Target URL" value={editingSection.content.card.cta.target} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, card: { ...editingSection.content.card, cta: { ...editingSection.content.card.cta, target: e.target.value } } } })} className="flex-1 p-2 bg-slate-50 rounded-lg text-xs font-medium" />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 

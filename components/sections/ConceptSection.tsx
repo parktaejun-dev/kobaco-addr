@@ -1,8 +1,9 @@
 "use client";
 
 import React from 'react';
+import Link from 'next/link';
 import { motion } from "framer-motion";
-import { Sparkles, CheckCircle2 } from "lucide-react";
+import { Sparkles, CheckCircle2, ArrowRight } from "lucide-react";
 
 type ConceptData = {
   eyebrow?: string;
@@ -10,6 +11,13 @@ type ConceptData = {
   description: string;
   bullets?: string[];
   image?: string;
+  card?: {
+    title?: string;
+    description?: string;
+    image?: string;
+    stats?: { label: string; value: string }[];
+    cta?: { label: string; target?: string; actionType?: string };
+  };
 };
 
 export default function ConceptSection({ data }: { data: ConceptData }) {
@@ -21,8 +29,9 @@ export default function ConceptSection({ data }: { data: ConceptData }) {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-80px" }}
           transition={{ duration: 0.45, ease: "easeOut" }}
-          className="grid gap-10 lg:grid-cols-2 lg:gap-12"
+          className="grid gap-10 lg:grid-cols-2 lg:gap-12 items-center"
         >
+          {/* Left Content */}
           <div>
             {data.eyebrow && (
               <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-sm text-slate-600">
@@ -58,22 +67,56 @@ export default function ConceptSection({ data }: { data: ConceptData }) {
             ) : null}
           </div>
 
-          <div className="relative overflow-hidden rounded-2xl bg-slate-50">
-             {data.image ? (
-               <img src={data.image} alt={data.title} className="h-full w-full object-cover" />
-             ) : (
-                <div className="card p-6 h-full">
-                  <div className="rounded-xl bg-gradient-to-br from-slate-50 to-blue-50 p-6 h-full flex flex-col justify-center">
-                    <div className="text-sm font-semibold text-slate-700">요약</div>
-                    <div className="mt-2 text-2xl font-extrabold tracking-tight text-slate-900">
-                      "같은 채널, 다른 광고"
-                    </div>
-                    <p className="mt-3 text-slate-600">
-                      셋톱박스 기반으로 오디언스를 분류하고, 가구 단위로 맞춤형 메시지를 전달합니다.
-                    </p>
+          {/* Right Content (Flexible Card or Image) */}
+          <div className="relative">
+             {data.card ? (
+                <div className="card p-6">
+                  <div className="rounded-xl bg-gradient-to-br from-slate-50 to-blue-50 p-8 h-full flex flex-col justify-center">
+                    {data.card.title && (
+                      <div className="text-2xl font-extrabold tracking-tight text-slate-900 mb-3">
+                        {data.card.title}
+                      </div>
+                    )}
+                    
+                    {data.card.image && (
+                      <div className="mb-6 rounded-lg overflow-hidden border border-slate-200/50 shadow-sm">
+                        <img src={data.card.image} alt={data.card.title || "Card image"} className="w-full h-auto object-cover" />
+                      </div>
+                    )}
+
+                    {data.card.description && (
+                      <p className="text-slate-600 leading-relaxed mb-6">
+                        {data.card.description}
+                      </p>
+                    )}
+
+                    {data.card.stats && data.card.stats.length > 0 && (
+                      <div className="grid grid-cols-2 gap-3 mb-6">
+                        {data.card.stats.map((stat, idx) => (
+                          <div key={idx} className="rounded-xl border border-slate-200 bg-white p-4">
+                            <div className="text-sm text-slate-500">{stat.label}</div>
+                            <div className="mt-1 font-semibold text-slate-900">{stat.value}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {data.card.cta && (
+                      <Link
+                        href={data.card.cta.target || '#'}
+                        className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-blue-700 w-full sm:w-auto"
+                      >
+                        {data.card.cta.label}
+                        <ArrowRight size={16} />
+                      </Link>
+                    )}
                   </div>
                 </div>
-             )}
+             ) : data.image ? (
+               <div className="rounded-2xl overflow-hidden shadow-2xl shadow-slate-200 border border-slate-100">
+                 <img src={data.image} alt={data.title} className="h-full w-full object-cover" />
+               </div>
+             ) : null}
           </div>
         </motion.div>
       </div>

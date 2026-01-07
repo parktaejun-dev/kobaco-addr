@@ -52,9 +52,16 @@ export const conceptSchema = z.object({
     titleColor: colorEnum,
     subtitle: z.string().optional(),
     description: z.string().optional(),
-    image: urlSchema,
+    image: urlSchema, // Main section image (left or bg)
     features: z.array(z.string()).optional(),
-    bullets: z.array(z.string()).optional()
+    bullets: z.array(z.string()).optional(),
+    card: z.object({
+        title: z.string().optional(),
+        description: z.string().optional(),
+        image: urlSchema,
+        stats: z.array(z.object({ label: z.string(), value: z.string() }).passthrough()).optional(),
+        cta: ctaSchema.optional()
+    }).passthrough().optional()
 }).passthrough();
 
 // 4. Comparison
