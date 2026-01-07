@@ -67,6 +67,7 @@ export const comparisonSchema = z.object({
         label: z.string().optional(),
         headline: z.string().optional(),
         description: z.string().optional(),
+        image: urlSchema,
         items: z.array(z.string()).optional(),
         points: z.array(z.string()).optional()
     }).passthrough(),
@@ -75,6 +76,7 @@ export const comparisonSchema = z.object({
         label: z.string().optional(),
         headline: z.string().optional(),
         description: z.string().optional(),
+        image: urlSchema,
         items: z.array(z.string()).optional(),
         points: z.array(z.string()).optional(),
         highlight: z.boolean().optional()

@@ -1266,6 +1266,14 @@ export default function AdminPortal() {
                                                     <input type="text" value={editingSection.content.left?.label || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, left: { ...editingSection.content.left, label: e.target.value } } })} className="w-full p-3 bg-slate-50 border-none rounded-xl font-bold text-sm outline-none" />
                                                 </div>
                                                 <div className="space-y-2">
+                                                    <label className="text-[10px] font-bold text-slate-400 uppercase">Image (Optional)</label>
+                                                    <ImageUploader
+                                                        label="Left Image"
+                                                        value={editingSection.content.left?.image || ''}
+                                                        onChange={(url) => setEditingSection({ ...editingSection, content: { ...editingSection.content, left: { ...editingSection.content.left, image: url } } })}
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
                                                     <label className="text-[10px] font-bold text-slate-400 uppercase">Headline</label>
                                                     <input type="text" value={editingSection.content.left?.headline || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, left: { ...editingSection.content.left, headline: e.target.value } } })} className="w-full p-3 bg-slate-50 border-none rounded-xl font-black text-lg outline-none" />
                                                 </div>
@@ -1296,6 +1304,14 @@ export default function AdminPortal() {
                                                 <div className="space-y-2">
                                                     <label className="text-[10px] font-bold text-blue-400 uppercase">Label (Small)</label>
                                                     <input type="text" value={editingSection.content.right?.label || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, right: { ...editingSection.content.right, label: e.target.value } } })} className="w-full p-3 bg-white border border-blue-100 rounded-xl font-bold text-sm outline-none text-blue-600" />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-bold text-blue-400 uppercase">Image (Optional)</label>
+                                                    <ImageUploader
+                                                        label="Right Image"
+                                                        value={editingSection.content.right?.image || ''}
+                                                        onChange={(url) => setEditingSection({ ...editingSection, content: { ...editingSection.content, right: { ...editingSection.content.right, image: url } } })}
+                                                    />
                                                 </div>
                                                 <div className="space-y-2">
                                                     <label className="text-[10px] font-bold text-blue-400 uppercase">Headline</label>

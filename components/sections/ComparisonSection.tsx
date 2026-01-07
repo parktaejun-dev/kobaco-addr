@@ -5,8 +5,8 @@ import { Tv2, Target } from "lucide-react";
 
 type ComparisonData = {
   title: string;
-  left: { label: string; headline: string; description: string; points: string[] };
-  right: { label: string; headline: string; description: string; points: string[] };
+  left: { label: string; headline: string; description: string; points: string[]; image?: string };
+  right: { label: string; headline: string; description: string; points: string[]; image?: string };
 };
 
 export default function ComparisonSection({ data }: { data: ComparisonData }) {
@@ -19,44 +19,58 @@ export default function ComparisonSection({ data }: { data: ComparisonData }) {
           viewport={{ once: true, margin: "-80px" }}
           transition={{ duration: 0.45, ease: "easeOut" }}
         >
-          <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+          <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl text-center mb-12">
             {data.title}
           </h2>
 
           <div className="mt-8 grid gap-6 lg:grid-cols-2">
-            <div className="card p-6">
-              <div className="flex items-center gap-2 text-sm font-semibold text-slate-600">
+            <div className="card p-6 overflow-hidden">
+              <div className="flex items-center gap-2 text-sm font-semibold text-slate-600 mb-4">
                 <Tv2 className="h-4 w-4" />
                 {data.left.label}
               </div>
-              <div className="mt-3 text-2xl font-extrabold tracking-tight text-slate-900">
+              
+              {data.left.image && (
+                <div className="mb-6 rounded-xl overflow-hidden border border-slate-100 aspect-video bg-slate-50">
+                   <img src={data.left.image} alt={data.left.headline} className="w-full h-full object-cover" />
+                </div>
+              )}
+
+              <div className="text-2xl font-extrabold tracking-tight text-slate-900">
                 {data.left.headline}
               </div>
               <p className="mt-3 text-slate-600">{data.left.description}</p>
-              <ul className="mt-5 space-y-2 text-slate-700">
+              <ul className="mt-6 space-y-2 text-slate-700">
                 {data.left.points.map((p, i) => (
-                  <li key={i} className="flex gap-2">
-                    <span className="mt-2 h-1.5 w-1.5 rounded-full bg-slate-400" />
-                    <span>{p}</span>
+                  <li key={i} className="flex gap-3">
+                    <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-slate-400" />
+                    <span className="leading-relaxed">{p}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
-            <div className="card border-blue-200 p-6">
-              <div className="flex items-center gap-2 text-sm font-semibold text-blue-700">
+            <div className="card border-blue-200 p-6 overflow-hidden shadow-lg shadow-blue-50">
+              <div className="flex items-center gap-2 text-sm font-semibold text-blue-700 mb-4">
                 <Target className="h-4 w-4" />
                 {data.right.label}
               </div>
-              <div className="mt-3 text-2xl font-extrabold tracking-tight text-slate-900">
+              
+              {data.right.image && (
+                <div className="mb-6 rounded-xl overflow-hidden border border-blue-100 aspect-video bg-blue-50">
+                   <img src={data.right.image} alt={data.right.headline} className="w-full h-full object-cover" />
+                </div>
+              )}
+
+              <div className="text-2xl font-extrabold tracking-tight text-slate-900">
                 {data.right.headline}
               </div>
               <p className="mt-3 text-slate-600">{data.right.description}</p>
-              <ul className="mt-5 space-y-2 text-slate-700">
+              <ul className="mt-6 space-y-2 text-slate-700">
                 {data.right.points.map((p, i) => (
-                  <li key={i} className="flex gap-2">
-                    <span className="mt-2 h-1.5 w-1.5 rounded-full bg-blue-500" />
-                    <span>{p}</span>
+                  <li key={i} className="flex gap-3">
+                    <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-500" />
+                    <span className="leading-relaxed">{p}</span>
                   </li>
                 ))}
               </ul>
