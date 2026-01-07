@@ -205,6 +205,39 @@ function Reporting({ data }: { data: any }) {
 function EstimateGuide({ data }: { data: any }) {
   if (!data) return null;
 
+  // Font size mappings
+  const titleSizeClasses: Record<string, string> = {
+    sm: 'text-2xl sm:text-3xl',
+    md: 'text-3xl sm:text-4xl',
+    lg: 'text-4xl sm:text-5xl',
+    xl: 'text-5xl sm:text-6xl',
+  };
+  const subtitleSizeClasses: Record<string, string> = {
+    sm: 'text-sm',
+    md: 'text-base',
+    lg: 'text-lg',
+    xl: 'text-xl',
+  };
+
+  // Font color mappings
+  const colorClasses: Record<string, string> = {
+    white: 'text-white',
+    slate: 'text-slate-900', // Title default
+    slateSub: 'text-slate-600', // Subtitle default
+    blue: 'text-blue-600',
+    green: 'text-green-600',
+    purple: 'text-purple-600',
+    orange: 'text-orange-600',
+    red: 'text-red-600',
+  };
+
+  const titleSizeClass = titleSizeClasses[data.titleSize || 'md'];
+  const titleColorClass = data.titleColor === 'slate' ? 'text-slate-900' : colorClasses[data.titleColor || 'slate'];
+  
+  const subtitleSizeClass = subtitleSizeClasses[data.subtitleSize || 'md'];
+  // For subtitle, default slate is lighter
+  const subtitleColorClass = data.subtitleColor === 'slate' ? 'text-slate-600' : (colorClasses[data.subtitleColor || 'slate'] || 'text-slate-600');
+
   return (
     <section
       id="estimateGuide"
@@ -213,13 +246,16 @@ function EstimateGuide({ data }: { data: any }) {
       <div className="section-wrap max-w-5xl mx-auto">
         {/* Header */}
         <div className="mb-12">
-          <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-slate-900">
+          <h2 className={`${titleSizeClass} ${titleColorClass} font-semibold tracking-tight`}>
             {data.title}
           </h2>
-          <p className="mt-3 text-base text-slate-600 max-w-2xl">
-            캠페인 조건을 입력하면 예상 노출과 비용을 즉시 계산합니다.
-            영업 문의 없이도 기준 수치를 확인할 수 있습니다.
-          </p>
+          {data.subtitle && (
+            <p className={`mt-3 ${subtitleSizeClass} ${subtitleColorClass} max-w-2xl text-balance`}>
+              {data.subtitle.split('\n').map((line: string, i: number) => (
+                <span key={i}>{line}{i < data.subtitle.split('\n').length - 1 && <br />}</span>
+              ))}
+            </p>
+          )}
         </div>
 
         {/* Steps */}

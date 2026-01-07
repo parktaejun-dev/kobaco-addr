@@ -140,6 +140,9 @@ export const estimateGuideSchema = z.object({
     title: z.string().min(1),
     titleSize: sizeEnum,
     titleColor: colorEnum,
+    subtitle: z.string().optional(),
+    subtitleSize: sizeEnum,
+    subtitleColor: colorEnum,
     steps: z.array(z.string()).optional()
 }).passthrough();
 

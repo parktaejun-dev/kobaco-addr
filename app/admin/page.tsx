@@ -1663,6 +1663,10 @@ export default function AdminPortal() {
                                             <input type="text" value={editingSection.content.title || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, title: e.target.value } })} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-bold focus:border-blue-500 outline-none" />
                                         </div>
                                         <div className="space-y-2">
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Subtitle (Description)</label>
+                                            <textarea value={editingSection.content.subtitle || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, subtitle: e.target.value } })} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-medium focus:border-blue-500 outline-none min-h-[80px]" placeholder="부제목을 입력하세요 (줄바꿈 가능)" />
+                                        </div>
+                                        <div className="space-y-2">
                                             <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Steps (단계별 설명)</label>
                                             <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
                                                 <div className="divide-y divide-slate-100">
@@ -1716,6 +1720,34 @@ export default function AdminPortal() {
                                                 >
                                                     <option value="white">흰색</option>
                                                     <option value="slate">검정 (기본)</option>
+                                                    <option value="blue">파란색</option>
+                                                    <option value="green">초록색</option>
+                                                    <option value="purple">보라색</option>
+                                                    <option value="orange">주황색</option>
+                                                    <option value="red">빨간색</option>
+                                                </select>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">부제목 크기</label>
+                                                <select
+                                                    value={editingSection.content.subtitleSize || 'md'}
+                                                    onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, subtitleSize: e.target.value } })}
+                                                    className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold focus:border-blue-500 outline-none"
+                                                >
+                                                    <option value="sm">작게</option>
+                                                    <option value="md">보통 (기본)</option>
+                                                    <option value="lg">크게</option>
+                                                    <option value="xl">매우 크게</option>
+                                                </select>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">부제목 색상</label>
+                                                <select
+                                                    value={editingSection.content.subtitleColor || 'slate'}
+                                                    onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, subtitleColor: e.target.value } })}
+                                                    className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold focus:border-blue-500 outline-none"
+                                                >
+                                                    <option value="slate">회색 (기본)</option>
                                                     <option value="blue">파란색</option>
                                                     <option value="green">초록색</option>
                                                     <option value="purple">보라색</option>
