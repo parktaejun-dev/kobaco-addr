@@ -234,9 +234,11 @@ function EstimateGuide({ data }: { data: any }) {
   const titleSizeClass = titleSizeClasses[data.titleSize || 'md'];
   const titleColorClass = data.titleColor === 'slate' ? 'text-slate-900' : colorClasses[data.titleColor || 'slate'];
   
+  // Use subtitle styles for description as well
   const subtitleSizeClass = subtitleSizeClasses[data.subtitleSize || 'md'];
-  // For subtitle, default slate is lighter
   const subtitleColorClass = data.subtitleColor === 'slate' ? 'text-slate-600' : (colorClasses[data.subtitleColor || 'slate'] || 'text-slate-600');
+
+  const description = data.description || data.subtitle;
 
   return (
     <section
@@ -245,14 +247,19 @@ function EstimateGuide({ data }: { data: any }) {
     >
       <div className="section-wrap max-w-5xl mx-auto">
         {/* Header */}
-        <div className="mb-12">
+        <div className="mb-12 text-center md:text-left">
+          {data.eyebrow && (
+            <span className="block text-blue-600 font-bold tracking-wide text-sm mb-3">
+              {data.eyebrow}
+            </span>
+          )}
           <h2 className={`${titleSizeClass} ${titleColorClass} font-semibold tracking-tight`}>
             {data.title}
           </h2>
-          {data.subtitle && (
-            <p className={`mt-3 ${subtitleSizeClass} ${subtitleColorClass} max-w-2xl text-balance`}>
-              {data.subtitle.split('\n').map((line: string, i: number) => (
-                <span key={i}>{line}{i < data.subtitle.split('\n').length - 1 && <br />}</span>
+          {description && (
+            <p className={`mt-4 ${subtitleSizeClass} ${subtitleColorClass} max-w-2xl text-balance`}>
+              {description.split('\n').map((line: string, i: number) => (
+                <span key={i}>{line}{i < description.split('\n').length - 1 && <br />}</span>
               ))}
             </p>
           )}

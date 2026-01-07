@@ -137,10 +137,12 @@ export const whySchema = z.object({
 
 // 8. Estimate Guide
 export const estimateGuideSchema = z.object({
+    eyebrow: z.string().optional(),
     title: z.string().min(1),
     titleSize: sizeEnum,
     titleColor: colorEnum,
-    subtitle: z.string().optional(),
+    subtitle: z.string().optional(), // Keeping for backward compatibility
+    description: z.string().optional(),
     subtitleSize: sizeEnum,
     subtitleColor: colorEnum,
     steps: z.array(z.string()).optional()

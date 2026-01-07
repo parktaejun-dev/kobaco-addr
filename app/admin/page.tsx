@@ -1659,12 +1659,16 @@ export default function AdminPortal() {
                                 {editingSection.type === 'estimateGuide' && (
                                     <div className="space-y-8">
                                         <div className="space-y-2">
-                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Guide Title</label>
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Eyebrow (Small Top Label)</label>
+                                            <input type="text" value={editingSection.content.eyebrow || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, eyebrow: e.target.value } })} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-bold focus:border-blue-500 outline-none text-blue-600" placeholder="예: 견적 가이드" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Main Title</label>
                                             <input type="text" value={editingSection.content.title || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, title: e.target.value } })} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-bold focus:border-blue-500 outline-none" />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Subtitle (Description)</label>
-                                            <textarea value={editingSection.content.subtitle || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, subtitle: e.target.value } })} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-medium focus:border-blue-500 outline-none min-h-[80px]" placeholder="부제목을 입력하세요 (줄바꿈 가능)" />
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Description</label>
+                                            <textarea value={editingSection.content.description || editingSection.content.subtitle || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, description: e.target.value, subtitle: e.target.value } })} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-medium focus:border-blue-500 outline-none min-h-[80px]" placeholder="설명을 입력하세요 (줄바꿈 가능)" />
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Steps (단계별 설명)</label>
