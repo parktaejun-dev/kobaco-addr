@@ -121,7 +121,8 @@ export default function EstimatePage() {
         result,
         aiResult
       }));
-      router.push('/estimate/print');
+      // Open in new window
+      window.open('/estimate/print', '_blank');
     } catch (e) {
       console.error("Failed to save estimate data:", e);
       alert("데이터 저장에 실패했습니다. 브라우저 저장 공간을 확인해주세요.");
