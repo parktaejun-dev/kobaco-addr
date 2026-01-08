@@ -46,6 +46,24 @@ export default function EstimatePage() {
   } | null>(null);
   const [numRecommendations, setNumRecommendations] = useState(5);
 
+  // Load saved data if exists (for back navigation from print)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const savedData = localStorage.getItem('kobaco_estimate_data');
+      if (savedData) {
+        const parsed = JSON.parse(savedData);
+        // Only restore if data looks valid
+        if (parsed.form) setFormData(parsed.form);
+        if (parsed.info) setClientInfo(parsed.info);
+        if (parsed.result) setResult(parsed.result);
+        if (parsed.aiResult) setAiResult(parsed.aiResult);
+      }
+    } catch (e) {
+      console.error("Failed to load saved data:", e);
+    }
+  }, []);
+
   // Calculate estimate whenever form changes
   useEffect(() => {
     const res = calculateEstimate(formData);
