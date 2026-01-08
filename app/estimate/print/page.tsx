@@ -299,11 +299,3 @@ export default function EstimatePrint() {
     </div>
   );
 }
-
-      {/* Printing Guide Footer (Hidden when printing) */}
-      <div className="max-w-[210mm] mx-auto mt-8 text-center text-gray-400 text-sm pb-20 print:hidden">
-        <p>인쇄 설정에서 <b>'배경 그래픽'</b>을 체크하시면 디자인이 더 깔끔하게 보입니다.</p>
-      </div>
-    </div>
-  );
-}
