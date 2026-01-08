@@ -259,8 +259,8 @@ export default function EstimatePrint() {
           <>
             <h2 className="text-slate-900 font-black text-[10px] border-l-4 border-slate-900 pl-2 mb-1.5 mt-2">AI 타겟 분석 상세</h2>
             <div className="bg-gray-50 border border-gray-200 p-2 rounded flex-1">
-              {aiResult.segments.slice(0, 4).map((segment, idx) => (
-                <div key={idx} className={`${idx < Math.min(aiResult.segments.length, 4) - 1 ? 'border-b border-dashed border-gray-300 pb-1.5 mb-1.5' : ''}`}>
+              {aiResult.segments.slice(0, 5).map((segment, idx) => (
+                <div key={idx} className={`${idx < Math.min(aiResult.segments.length, 5) - 1 ? 'border-b border-dashed border-gray-300 pb-1.5 mb-1.5' : ''}`}>
                   <p className="text-[10px]">
                     <strong className="text-gray-900">{idx + 1}. {segment.full_path || segment.name}</strong>
                     {segment.confidence_score && (
