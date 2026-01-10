@@ -16,6 +16,7 @@ interface ConsultationSectionProps {
         successMessage?: string;
         contactPhone?: string;
         contactEmail?: string;
+        contactLabel?: string;
         showContactPhone?: boolean;
         showContactEmail?: boolean;
         fields?: {
@@ -113,20 +114,19 @@ export default function ConsultationSection({ data }: ConsultationSectionProps) 
                         </div>
                     )}
 
-                    <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                        {(data.showContactPhone !== false) && (
-                            <div className="flex-1 p-4 bg-blue-50 rounded-xl border border-blue-100">
-                                <div className="font-bold text-blue-900 mb-1">고객센터</div>
-                                <div className="text-sm text-blue-700">{data.contactPhone || '02-731-XXXX'}</div>
+                    {(data.showContactPhone !== false || data.showContactEmail !== false) && (
+                        <div className="p-5 bg-blue-50 rounded-xl border border-blue-100">
+                            <div className="font-bold text-blue-900 mb-2">{data.contactLabel || '연락처'}</div>
+                            <div className="space-y-1 text-sm text-blue-700">
+                                {(data.showContactPhone !== false) && (
+                                    <div>📞 {data.contactPhone || '02-731-XXXX'}</div>
+                                )}
+                                {(data.showContactEmail !== false) && (
+                                    <div>✉️ {data.contactEmail || 'help@kobaco.co.kr'}</div>
+                                )}
                             </div>
-                        )}
-                        {(data.showContactEmail !== false) && (
-                            <div className="flex-1 p-4 bg-slate-50 rounded-xl border border-slate-100">
-                                <div className="font-bold text-slate-900 mb-1">이메일</div>
-                                <div className="text-sm text-slate-600">{data.contactEmail || 'help@kobaco.co.kr'}</div>
-                            </div>
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Right Form */}

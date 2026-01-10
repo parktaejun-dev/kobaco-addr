@@ -1835,6 +1835,12 @@ export default function AdminPortal() {
                                                 </div>
                                                 <input type="text" value={editingSection.content.contactEmail || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, contactEmail: e.target.value } })} className="w-full p-3 bg-white border border-slate-200 rounded-xl font-medium focus:border-blue-500 outline-none" placeholder="help@kobaco.co.kr" />
                                             </div>
+
+                                            {/* Contact Label */}
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Contact Label (연락처 제목)</label>
+                                                <input type="text" value={editingSection.content.contactLabel || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, contactLabel: e.target.value } })} className="w-full p-3 bg-white border border-slate-200 rounded-xl font-medium focus:border-blue-500 outline-none" placeholder="연락처" />
+                                            </div>
                                         </div>
 
                                         <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 space-y-4">

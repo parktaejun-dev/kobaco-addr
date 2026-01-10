@@ -203,6 +203,7 @@ export const consultationSchema = z.object({
     successMessage: z.string().default("상담 요청이 접수되었습니다. 담당자가 곧 연락드리겠습니다.").optional(),
     contactPhone: z.string().default("02-731-XXXX").optional(),
     contactEmail: z.string().default("help@kobaco.co.kr").optional(),
+    contactLabel: z.string().default("연락처").optional(),
     showContactPhone: z.boolean().default(true).optional(),
     showContactEmail: z.boolean().default(true).optional(),
     fields: z.object({
