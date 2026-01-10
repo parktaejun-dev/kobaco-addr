@@ -72,6 +72,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 export default function SalesDashboardPage() {
   const [currentStatus, setCurrentStatus] = useState('ALL');
+  const [sortBy, setSortBy] = useState('latest');
   const [leads, setLeads] = useState<Lead[]>([]);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [notes, setNotes] = useState<LeadNote[]>([]);
@@ -122,8 +123,8 @@ export default function SalesDashboardPage() {
   const [minScore, setMinScore] = useState(60);
 
   useEffect(() => {
-    loadLeads(currentStatus);
-  }, [currentStatus]);
+    loadLeads(currentStatus, sortBy);
+  }, [currentStatus, sortBy]);
 
   useEffect(() => {
     if (selectedLead) {
@@ -138,10 +139,10 @@ export default function SalesDashboardPage() {
     }
   }, [cooldown]);
 
-  async function loadLeads(status: string) {
+  async function loadLeads(status: string, sort: string = 'latest') {
     setLoading(true);
     try {
-      const res = await fetch(`/api/sales/leads?status=${status}&limit=50`);
+      const res = await fetch(`/api/sales/leads?status=${status}&sortBy=${sort}&limit=50`);
       if (res.ok) {
         const data = await res.json();
         setLeads(data.leads || []);
@@ -511,19 +512,42 @@ export default function SalesDashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full min-h-0">
           {/* Leads List */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-full min-h-0">
-            <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-gray-50/50">
-              <h2 className="font-semibold text-gray-900">
-                리드 목록 ({leads.length})
-              </h2>
-              <div className="flex items-center gap-2 bg-white px-2 py-1 rounded-md border border-gray-200 shadow-sm">
-                <input
-                  type="checkbox"
-                  id="selectAllLeads"
-                  checked={leads.length > 0 && selectedLeads.size === leads.length}
-                  onChange={toggleSelectAll}
-                  className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
-                />
-                <label htmlFor="selectAllLeads" className="text-xs font-bold text-gray-700 cursor-pointer select-none">전체 선택</label>
+            <div className="p-4 border-b border-gray-200 flex flex-col gap-3 bg-gray-50/50">
+              <div className="flex items-center justify-between">
+                <h2 className="font-semibold text-gray-900">
+                  리드 목록 ({leads.length})
+                </h2>
+                <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-gray-200 shadow-sm">
+                  <button
+                    onClick={() => setSortBy('latest')}
+                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${sortBy === 'latest' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-50'}`}
+                  >
+                    최신순
+                  </button>
+                  <button
+                    onClick={() => setSortBy('score')}
+                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${sortBy === 'score' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-50'}`}
+                  >
+                    점수순
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 bg-white px-2 py-1 rounded-md border border-gray-200 shadow-sm">
+                  <input
+                    type="checkbox"
+                    id="selectAllLeads"
+                    checked={leads.length > 0 && selectedLeads.size === leads.length}
+                    onChange={toggleSelectAll}
+                    className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                  />
+                  <label htmlFor="selectAllLeads" className="text-xs font-bold text-gray-700 cursor-pointer select-none">전체 선택</label>
+                </div>
+
+                <div className="text-[10px] text-gray-400 font-medium">
+                  {sortBy === 'score' ? '* 점수 상위 200개 중 정렬' : '* 최신 50개 표시'}
+                </div>
               </div>
             </div>
 

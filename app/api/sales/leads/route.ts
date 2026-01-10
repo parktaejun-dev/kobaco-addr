@@ -33,26 +33,26 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const statusParam = searchParams.get('status') || 'ALL';
-    const limit = Math.min(
-      parseInt(searchParams.get('limit') || '50'),
-      200
-    );
+    const sortBy = searchParams.get('sortBy') || 'latest';
+    const requestedLimit = parseInt(searchParams.get('limit') || '50');
+    const limit = Math.min(requestedLimit, 200);
+
+    // If sorting by score, we fetch more to find high-score samples
+    const fetchLimit = sortBy === 'score' ? Math.max(limit, 100) : limit;
 
     // Get lead IDs from index
     let leadIds: string[] = [];
 
     if (statusParam === 'ALL') {
-      // Get from all index (reverse order = newest first)
-      const members = await redis.zrange(RedisKeys.idxAll(), 0, limit - 1, {
+      const members = await redis.zrange(RedisKeys.idxAll(), 0, fetchLimit - 1, {
         rev: true,
       });
       leadIds = members as string[];
     } else if (isValidStatus(statusParam)) {
-      // Get from status-specific index (reverse order = newest first)
       const members = await redis.zrange(
         RedisKeys.idxStatus(statusParam as LeadStatusType),
         0,
-        limit - 1,
+        fetchLimit - 1,
         { rev: true }
       );
       leadIds = members as string[];
@@ -82,12 +82,24 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Sorting
+    if (sortBy === 'score') {
+      leads.sort((a, b) => (b.final_score || 0) - (a.final_score || 0));
+    } else {
+      // Default latest (already mostly correct from Redis, but ensure by created_at)
+      leads.sort((a, b) => b.created_at - a.created_at);
+    }
+
+    // Final limit after sorting
+    const finalLeads = leads.slice(0, limit);
+
     return NextResponse.json({
       success: true,
-      leads,
+      leads: finalLeads,
       status: statusParam,
-      total: leads.length,
+      total: finalLeads.length,
       limit,
+      sortBy
     } as LeadsResponse);
   } catch (error) {
     console.error('Error fetching leads:', error);
