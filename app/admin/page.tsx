@@ -264,8 +264,6 @@ export default function AdminPortal() {
                 setSegments(segmentData);
             } else if (activeTab === 'usage') {
                 const res = await axios.get('/api/log/usage');
-            } else if (activeTab === 'usage') {
-                const res = await axios.get('/api/log/usage');
                 setUsageLogs(res.data);
             } else if (activeTab === 'settings') {
                 const res = await axios.get('/api/admin/config');
