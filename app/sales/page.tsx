@@ -398,27 +398,36 @@ export default function SalesDashboardPage() {
     }
   }
 
-  function copySalesScript() {
-    if (!selectedLead) return;
+  const generatePrompt = (lead: Lead) => {
+    return `
+[역할]
+당신은 B2B 전문 세일즈 카피라이터입니다. 정중하고 설득력 있는 톤앤매너를 유지하세요.
 
-    const script = `
-[KOBACO 영업 스크립트]
+[상황]
+저는 한국방송광고진흥공사(KOBACO)의 미디어 컨설턴트입니다.
+현재 '${lead.ai_analysis.company_name}'의 마케팅 담당자에게 '어드레서블 TV(Addressable TV)' 광고 상품을 제안하려 합니다.
 
-회사명: ${selectedLead.ai_analysis.company_name}
-이벤트: ${selectedLead.ai_analysis.event_summary}
+[타겟 기업 정보]
+- 기업명: ${lead.ai_analysis.company_name}
+- 최근 이슈: ${lead.ai_analysis.event_summary}
+- 예상 타겟: ${lead.ai_analysis.target_audience}
 
-타겟 고객층: ${selectedLead.ai_analysis.target_audience}
-적합 이유: ${selectedLead.ai_analysis.atv_fit_reason}
+[제안 핵심 논리 (Sales Angle)]
+"${lead.ai_analysis.sales_angle}"
+- KOBACO의 어드레서블 TV는 지상파 수준의 신뢰도를 갖추면서도, 원하는 타겟(지역/성별/관심사)에게만 송출하여 예산을 절감할 수 있습니다.
 
-영업 접근법:
-${selectedLead.ai_analysis.sales_angle}
+[요청사항]
+위 정보를 바탕으로, 담당자가 이 메일을 읽고 "한번 만나서 들어보고 싶다"는 생각이 들도록 매력적인 **콜드메일 초안**을 작성해주세요.
+1. 클릭을 유도하는 매력적인 메일 제목 후보 3가지를 먼저 제시해주세요.
+2. 본문은 문제 제기 -> 공감 -> 솔루션 제시(KOBACO ATV) -> 미팅 제안(Call to Action) 구조로 작성해주세요.
+`.trim();
+  };
 
-출처: ${selectedLead.link}
-    `.trim();
-
-    navigator.clipboard.writeText(script);
-    alert('스크립트가 클립보드에 복사되었습니다.');
-  }
+  const handleCopyPrompt = (lead: Lead) => {
+    const prompt = generatePrompt(lead);
+    navigator.clipboard.writeText(prompt);
+    alert("ChatGPT용 프롬프트가 복사되었습니다! AI 채팅창에 붙여넣으세요.");
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -691,15 +700,8 @@ ${selectedLead.ai_analysis.sales_angle}
                       className="px-3 py-1 border border-gray-300 rounded-lg text-sm w-24"
                     />
 
-                    <button
-                      onClick={copySalesScript}
-                      className="px-3 py-1 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700"
-                      title="클립보드에 복사 → 이메일, 문자, CRM에 붙여넣기"
-                    >
-                      📋 스크립트 복사
-                    </button>
-                    <span className="text-[10px] text-gray-400 hidden lg:inline">
-                      → 이메일/문자에 붙여넣기
+                    <span className="text-[10px] text-gray-400 hidden lg:inline pt-1.5">
+                      → 담당자 지정 및 리드 분류
                     </span>
                   </div>
 
@@ -744,10 +746,26 @@ ${selectedLead.ai_analysis.sales_angle}
                       </div>
                     </div>
 
-                    <div>
-                      <div className="font-semibold text-gray-700">영업 접근법</div>
-                      <div className="text-gray-900 whitespace-pre-wrap">
+                    <div className="border-t border-slate-100 pt-4 mt-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-xs font-bold text-slate-400 uppercase flex items-center gap-1">
+                          🤖 AI Agent Prompt
+                          <span className="bg-slate-100 text-slate-500 text-[10px] px-1.5 py-0.5 rounded-full font-normal italic">ChatGPT용</span>
+                        </div>
+                        <button
+                          onClick={() => handleCopyPrompt(selectedLead)}
+                          className="text-xs px-3 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors flex items-center gap-1.5 shadow-sm"
+                        >
+                          <span>📋 프롬프트 복사</span>
+                        </button>
+                      </div>
+
+                      <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 text-sm text-slate-600 leading-relaxed">
+                        <p className="font-semibold text-slate-800 mb-1">💡 Sales Angle:</p>
                         {selectedLead.ai_analysis.sales_angle}
+                        <p className="text-xs text-slate-400 mt-2 border-t border-slate-200 pt-2">
+                          * '프롬프트 복사' 버튼을 누르면, 이 내용을 바탕으로 메일을 써주는 전체 명령어가 복사됩니다.
+                        </p>
                       </div>
                     </div>
                   </div>
