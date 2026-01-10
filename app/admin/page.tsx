@@ -1901,7 +1901,7 @@ export default function AdminPortal() {
                 {/* Modal: Add Section */}
                 {showAddModal && (
                     <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in zoom-in-95 duration-200">
-                        <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md p-10 space-y-8">
+                        <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md p-10 space-y-8 max-h-[85vh] overflow-y-auto">
                             <div className="text-center">
                                 <h3 className="text-2xl font-black text-slate-900 tracking-tight">새 섹션 추가</h3>
                                 <p className="text-slate-500 mt-2 font-medium">추가할 섹션 유형을 선택하세요.</p>
