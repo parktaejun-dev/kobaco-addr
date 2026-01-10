@@ -90,9 +90,9 @@ export default function ConsultationSection({ data }: ConsultationSectionProps) 
             {/* Decorational Background */}
             <div className="absolute top-0 right-0 w-1/3 h-full bg-slate-50 -skew-x-12 translate-x-1/4 z-0 pointer-events-none" />
 
-            <div className="section-wrap relative z-10 max-w-6xl mx-auto flex flex-col lg:flex-row gap-16 items-start">
+            <div className="section-wrap relative z-10 max-w-6xl mx-auto flex flex-col lg:flex-row gap-16 items-center">
                 {/* Left Content */}
-                <div className="flex-1 space-y-6 pt-10">
+                <div className="flex-1 space-y-6">
                     <div>
                         <span className="text-blue-600 font-black tracking-widest text-sm uppercase mb-3 block">Contact Us</span>
                         <h2 className={`${titleSizeClass} ${titleColorClass} font-black tracking-tight leading-tight mb-6`}>
