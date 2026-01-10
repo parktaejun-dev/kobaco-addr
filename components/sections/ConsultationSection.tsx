@@ -23,8 +23,6 @@ interface ConsultationSectionProps {
 }
 
 export default function ConsultationSection({ data }: ConsultationSectionProps) {
-    if (!data) return null;
-
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
     const [formData, setFormData] = useState({
@@ -35,6 +33,8 @@ export default function ConsultationSection({ data }: ConsultationSectionProps) 
         email: '',
         message: ''
     });
+
+    if (!data) return null;
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });

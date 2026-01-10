@@ -7,7 +7,7 @@ import {
     Lock, Layout, ShieldCheck, Database, BarChart3,
     Edit, Trash2, Plus, ChevronDown, Check, X,
     Eye, Save, Settings, Move, GripVertical, Image as ImageIcon, Upload, Loader2, MousePointerClick, Search, Menu,
-    Sparkles, Target, CheckCircle2
+    Sparkles, Target, CheckCircle2, Users
 } from 'lucide-react';
 
 type Tab = 'home' | 'content' | 'policies' | 'segments' | 'usage' | 'dashboard' | 'settings';
