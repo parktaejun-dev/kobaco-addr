@@ -7,23 +7,39 @@ import { createClient } from 'redis';
 
 const REDIS_URL = process.env.REDIS_URL || process.env.KV_URL || '';
 
-// Create Redis client
-const redisClient = createClient({
+// Create Redis client (Use singleton pattern for Next.js hot-reloading)
+const globalForRedis = global as unknown as { redisClient: any; isConnected: boolean };
+
+const redisClient = globalForRedis.redisClient || createClient({
   url: REDIS_URL,
 });
 
-redisClient.on('error', (err) => console.error('Redis Client Error', err));
+if (process.env.NODE_ENV !== 'production') {
+  globalForRedis.redisClient = redisClient;
+}
+
+redisClient.on('error', (err: any) => console.error('Redis Client Error', err));
 
 // Connection state
-let isConnected = false;
+let isConnected = globalForRedis.isConnected || false;
 
 /**
  * Ensure Redis is connected before operations
  */
 async function ensureConnected() {
   if (!isConnected && REDIS_URL) {
-    await redisClient.connect();
-    isConnected = true;
+    try {
+      if (redisClient.isOpen) {
+        isConnected = true;
+        globalForRedis.isConnected = true;
+        return;
+      }
+      await redisClient.connect();
+      isConnected = true;
+      globalForRedis.isConnected = true;
+    } catch (err) {
+      console.error('Failed to connect to Redis', err);
+    }
   }
 }
 

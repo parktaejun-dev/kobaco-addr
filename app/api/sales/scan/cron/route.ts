@@ -43,6 +43,8 @@ interface SalesConfig {
     keywords?: string[];
     rssFeeds?: RSSFeedConfig[];
     minScore?: number;
+    leadNotificationsEnabled?: boolean;
+    minLeadScoreForNotify?: number;
 }
 
 /**
@@ -197,7 +199,7 @@ export async function GET(req: NextRequest) {
         const newLeadIds = await upsertLeads(leads);
 
         // 4. Send Notifications for NEW high-score leads
-        if (newLeadIds.length > 0) {
+        if (newLeadIds.length > 0 && config?.leadNotificationsEnabled !== false) {
             const systemConfig = await getSystemConfig().catch(() => ({}));
             const notificationConfig = {
                 slackUrl: systemConfig.slackWebhookUrl || process.env.SLACK_WEBHOOK_URL,
@@ -205,8 +207,8 @@ export async function GET(req: NextRequest) {
                 telegramChatId: systemConfig.telegramChatId || process.env.TELEGRAM_CHAT_ID,
             };
 
-            // Only notify for leads with score >= 70 (or minScore if higher)
-            const notifyThreshold = Math.max(70, minScore);
+            // Use user-defined threshold or default to 70
+            const notifyThreshold = config?.minLeadScoreForNotify ?? 70;
             const leadsToNotify = leads.filter(l =>
                 newLeadIds.includes(l.lead_id) && l.final_score >= notifyThreshold
             );
@@ -226,6 +228,16 @@ export async function GET(req: NextRequest) {
 
         // Update cron state - move to next source
         const nextIndex = (state.feedIndex + 1) % totalSources;
+
+        // Determine next source name for UX
+        let nextSourceName = '';
+        if (hasNaver && nextIndex === 0) {
+            nextSourceName = '네이버 뉴스';
+        } else {
+            const nextRssIndex = hasNaver ? nextIndex - 1 : nextIndex;
+            nextSourceName = feeds[nextRssIndex]?.category || `RSS ${nextRssIndex + 1}`;
+        }
+
         await redis.set(CRON_STATE_KEY, {
             feedIndex: nextIndex,
             lastRun: new Date().toISOString(),
@@ -237,6 +249,7 @@ export async function GET(req: NextRequest) {
             source: sourceName,
             sourceIndex: state.feedIndex,
             nextSourceIndex: nextIndex,
+            nextSourceName,
             totalSources,
             articlesFound: allArticles.length,
             newLeads: leads.length,

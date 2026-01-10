@@ -193,7 +193,7 @@ export default function SalesDashboardPage() {
 
         if (!isAuto) {
           alert(
-            `증분 스캔 완료!\n소스: ${data.source || data.feed || '-'}\n새 리드: ${data.newLeads || 0}개\n다음: ${(data.nextSourceIndex || 0) + 1}번째`
+            `증분 스캔 완료!\n소스: ${data.source || data.feed || '-'}\n새 리드: ${data.newLeads || 0}개\n다음: ${data.nextSourceName || (data.nextSourceIndex + 1 + '번째')}`
           );
         }
         loadLeads(currentStatus);
@@ -250,7 +250,7 @@ export default function SalesDashboardPage() {
         // Wait 15 seconds with countdown
         for (let i = 15; i > 0; i--) {
           if (!autoScanRef.current) break;
-          setScanStatus(`대기 중 (${i}초)... 다음 소스: ${currentIdx + 1}번째`);
+          setScanStatus(`대기 중 (${i}초)... 다음: ${result.nextSourceName || (result.nextSourceIndex + 1 + '번째')}`);
           await new Promise(r => setTimeout(r, 1000));
         }
       }
