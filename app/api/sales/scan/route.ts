@@ -95,10 +95,14 @@ export async function POST(request: NextRequest) {
 
     // Merge and deduplicate by canonical link
     const allArticles = [...rssArticles, ...naverArticles];
-    const deduped = deduplicateArticles(allArticles);
+    const dedupedAll = deduplicateArticles(allArticles);
+
+    // Limit articles for AI analysis (Vercel 60s timeout)
+    const MAX_ANALYZE = 15;
+    const deduped = dedupedAll.slice(0, MAX_ANALYZE);
 
     console.log(
-      `Scan: ${allArticles.length} total, ${deduped.length} after dedup`
+      `Scan: ${allArticles.length} total, ${dedupedAll.length} dedup, ${deduped.length} for AI`
     );
 
     // Analyze with AI (with concurrency control)
