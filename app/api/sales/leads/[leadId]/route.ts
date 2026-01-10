@@ -9,10 +9,10 @@ import { RedisKeys, LeadStatus, type LeadState } from '@/lib/crm-types';
 
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { leadId: string } }
+    { params }: { params: Promise<{ leadId: string }> }
 ) {
     try {
-        const { leadId } = params;
+        const { leadId } = await params;
 
         if (!leadId) {
             return NextResponse.json({ error: 'Lead ID is required' }, { status: 400 });
