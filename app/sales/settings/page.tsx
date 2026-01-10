@@ -14,6 +14,7 @@ interface ConfigData {
   naverClientSecret: string;
   keywords: string[];
   rssFeeds: RSSFeed[];
+  minScore: number;
 }
 
 export default function SalesSettingsPage() {
@@ -22,6 +23,7 @@ export default function SalesSettingsPage() {
     naverClientSecret: '',
     keywords: [],
     rssFeeds: [],
+    minScore: 50,
   });
 
   const [keywordsInput, setKeywordsInput] = useState('');
@@ -72,6 +74,7 @@ export default function SalesSettingsPage() {
           naverClientSecret: config.naverClientSecret,
           keywords,
           rssFeeds: config.rssFeeds,
+          minScore: config.minScore,
         }),
       });
 
@@ -218,6 +221,25 @@ export default function SalesSettingsPage() {
                 placeholder="쉼표로 구분 (예: 광고, 미디어, 마케팅)"
               />
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                최소 점수 (0-100)
+              </label>
+              <input
+                type="number"
+                min={0}
+                max={100}
+                value={config.minScore}
+                onChange={(e) =>
+                  setConfig({ ...config, minScore: Number(e.target.value) })
+                }
+                className="w-24 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                이 점수 미만의 리드는 저장되지 않습니다. 권장: 50-60
+              </p>
+            </div>
           </div>
         </div>
 
@@ -315,8 +337,8 @@ export default function SalesSettingsPage() {
           {message && (
             <span
               className={`text-sm ${message.includes('성공') || message.includes('저장')
-                  ? 'text-green-600'
-                  : 'text-red-600'
+                ? 'text-green-600'
+                : 'text-red-600'
                 }`}
             >
               {message}

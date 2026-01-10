@@ -40,6 +40,7 @@ interface SalesConfig {
     naverClientSecret?: string;
     keywords?: string[];
     rssFeeds?: RSSFeedConfig[];
+    minScore?: number;
 }
 
 /**
@@ -129,7 +130,7 @@ export async function GET() {
 
         // Build and save leads
         const leads: LeadCore[] = [];
-        const minScore = 50; // Lower threshold for cron
+        const minScore = config?.minScore ?? 50; // Use config or default to 50
 
         for (let i = 0; i < articlesToAnalyze.length; i++) {
             const article = articlesToAnalyze[i];

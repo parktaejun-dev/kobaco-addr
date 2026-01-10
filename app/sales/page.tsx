@@ -437,9 +437,13 @@ ${selectedLead.ai_analysis.sales_angle}
                     <button
                       onClick={copySalesScript}
                       className="px-3 py-1 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700"
+                      title="클립보드에 복사 → 이메일, 문자, CRM에 붙여넣기"
                     >
                       📋 스크립트 복사
                     </button>
+                    <span className="text-[10px] text-gray-400 hidden lg:inline">
+                      → 이메일/문자에 붙여넣기
+                    </span>
                   </div>
 
                   <a
