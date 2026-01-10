@@ -86,7 +86,7 @@ export default function SalesDashboardPage() {
     if (!dateStr) return '-';
     try {
       const date = new Date(dateStr);
-      return new Intl.DateTimeFormat('ko-KR', {
+      const parts = new Intl.DateTimeFormat('ko-KR', {
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
@@ -94,7 +94,11 @@ export default function SalesDashboardPage() {
         minute: '2-digit',
         hour12: false,
         timeZone: 'Asia/Seoul',
-      }).format(date).replace(/\. /g, '-').replace('.', '');
+      }).formatToParts(date);
+
+      const p: Record<string, string> = {};
+      parts.forEach(part => p[part.type] = part.value);
+      return `${p.year}-${p.month}-${p.day} ${p.hour}:${p.minute}`;
     } catch {
       return '-';
     }
