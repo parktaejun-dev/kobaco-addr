@@ -34,40 +34,9 @@ const SEED_KEYWORDS = [
     '대규모 캠페인',
 ];
 
-// 초기 RSS 피드 세트
+// 초기 RSS 피드 세트 (축소 - 404 피드 제거)
 const SEED_RSS_FEEDS = [
-    // 뉴스와이어 (기본 - 보도자료)
-    {
-        category: '신상품/신기술',
-        originalUrl: 'https://www.newswire.co.kr/rss/industry/200',
-        url: 'https://www.newswire.co.kr/rss/industry/200',
-        title: '뉴스와이어 - 신상품/신기술',
-    },
-    {
-        category: '소비재/쇼핑',
-        originalUrl: 'https://www.newswire.co.kr/rss/industry/500',
-        url: 'https://www.newswire.co.kr/rss/industry/500',
-        title: '뉴스와이어 - 소비재/쇼핑',
-    },
-    {
-        category: '생활/식음료',
-        originalUrl: 'https://www.newswire.co.kr/rss/industry/504',
-        url: 'https://www.newswire.co.kr/rss/industry/504',
-        title: '뉴스와이어 - 생활/식음료',
-    },
-    {
-        category: '헬스케어',
-        originalUrl: 'https://www.newswire.co.kr/rss/industry/900',
-        url: 'https://www.newswire.co.kr/rss/industry/900',
-        title: '뉴스와이어 - 헬스케어',
-    },
-    {
-        category: 'IT/플랫폼',
-        originalUrl: 'https://www.newswire.co.kr/rss/industry/300',
-        url: 'https://www.newswire.co.kr/rss/industry/300',
-        title: '뉴스와이어 - IT/인터넷',
-    },
-    // 스타트업 특화
+    // 스타트업 특화 (확인된 피드만)
     {
         category: '스타트업',
         originalUrl: 'https://platum.kr',
@@ -80,7 +49,6 @@ const SEED_RSS_FEEDS = [
         url: 'https://www.venturesquare.net/feed',
         title: '벤처스퀘어',
     },
-    // IT/테크 (보조)
     {
         category: 'IT/테크',
         originalUrl: 'https://www.bloter.net',
