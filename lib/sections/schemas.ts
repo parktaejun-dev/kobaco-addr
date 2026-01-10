@@ -204,7 +204,7 @@ export const consultationSchema = z.object({
     fields: z.object({
         company: z.boolean().default(true),
         position: z.boolean().default(true),
-        phone: z.boolean().default(true),
+        // phone removed
     }).optional()
 }).passthrough();
 

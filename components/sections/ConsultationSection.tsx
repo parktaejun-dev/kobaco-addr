@@ -138,83 +138,86 @@ export default function ConsultationSection({ data }: ConsultationSectionProps) 
                             </button>
                         </div>
                     ) : (
-                        <form onSubmit={handleSubmit} className="space-y-5">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <label className="text-xs font-black text-slate-500 uppercase">담당자명 *</label>
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1">
+                                    <label className="text-[11px] font-black text-slate-500 uppercase tracking-wider">담당자명 *</label>
                                     <input
                                         type="text"
                                         name="name"
                                         required
                                         value={formData.name}
                                         onChange={handleChange}
-                                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-medium focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all"
+                                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-medium text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all"
                                         placeholder="홍길동"
                                     />
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-black text-slate-500 uppercase">연락처 *</label>
+                                <div className="space-y-1">
+                                    <label className="text-[11px] font-black text-slate-500 uppercase tracking-wider">이메일 *</label>
                                     <input
-                                        type="tel"
-                                        name="phone"
+                                        type="email"
+                                        name="email"
                                         required
-                                        value={formData.phone}
+                                        value={formData.email}
                                         onChange={handleChange}
-                                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-medium focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all"
-                                        placeholder="010-0000-0000"
+                                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-medium text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all"
+                                        placeholder="user@example.com"
                                     />
                                 </div>
                             </div>
 
-                            <div className="space-y-2">
-                                <label className="text-xs font-black text-slate-500 uppercase">이메일 *</label>
-                                <input
-                                    type="email"
-                                    name="email"
-                                    required
-                                    value={formData.email}
-                                    onChange={handleChange}
-                                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-medium focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all"
-                                    placeholder="example@company.com"
-                                />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {(data.fields?.company !== false) && (
+                                    <div className="space-y-1">
+                                        <label className="text-[11px] font-black text-slate-500 uppercase tracking-wider">회사명 *</label>
+                                        <input
+                                            type="text"
+                                            name="company"
+                                            required
+                                            value={formData.company}
+                                            onChange={handleChange}
+                                            className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-medium text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all"
+                                            placeholder="코바코"
+                                        />
+                                    </div>
+                                )}
+                                {(data.fields?.position !== false) && (
+                                    <div className="space-y-1">
+                                        <label className="text-[11px] font-black text-slate-500 uppercase tracking-wider">직책</label>
+                                        <input
+                                            type="text"
+                                            name="position"
+                                            value={formData.position}
+                                            onChange={handleChange}
+                                            className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-medium text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all"
+                                            placeholder="마케팅 팀장"
+                                        />
+                                    </div>
+                                )}
                             </div>
 
-                            {(data.fields?.company !== false) && (
-                                <div className="space-y-2">
-                                    <label className="text-xs font-black text-slate-500 uppercase">회사/소속</label>
-                                    <input
-                                        type="text"
-                                        name="company"
-                                        value={formData.company}
-                                        onChange={handleChange}
-                                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-medium focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all"
-                                        placeholder="회사명 입력"
-                                    />
-                                </div>
-                            )}
-
-                            <div className="space-y-2">
-                                <label className="text-xs font-black text-slate-500 uppercase">문의 내용</label>
+                            <div className="space-y-1">
+                                <label className="text-[11px] font-black text-slate-500 uppercase tracking-wider">문의 내용 (선택)</label>
                                 <textarea
                                     name="message"
-                                    rows={4}
+                                    rows={2}
                                     value={formData.message}
                                     onChange={handleChange}
-                                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-medium focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all resize-none"
-                                    placeholder="궁금한 점이나 상담 받고 싶은 내용을 자유롭게 적어주세요."
+                                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-medium text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all resize-none"
+                                    placeholder="궁금한 점이 있으시면 남겨주세요."
                                 ></textarea>
                             </div>
 
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="w-full py-4 bg-blue-600 text-white rounded-xl font-black text-lg shadow-lg shadow-blue-200 hover:bg-blue-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                                className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-black text-base shadow-lg shadow-blue-200 hover:bg-blue-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed mt-2"
                             >
-                                {loading ? <Loader2 className="animate-spin" /> : <Send size={20} />}
+                                {loading ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}
                                 상담 신청하기
                             </button>
-                            <p className="text-xs text-slate-400 text-center leading-relaxed">
-                                개인정보는 상담 목적으로만 활용되며, 안전하게 처리됩니다.
+                            <p className="text-[10px] text-slate-400 text-center leading-relaxed">
+                                개인정보는 상담 목적으로만 활용됩니다.
                             </p>
                         </form>
                     )}

@@ -1749,7 +1749,95 @@ export default function AdminPortal() {
                                     </div>
                                 )}
 
-                                {/* ESTIMATE GUIDE EDITOR */}
+                                {/* CONSULTATION EDITOR */}
+                                {editingSection.type === 'consultation' && (
+                                    <div className="space-y-8">
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Main Title (줄바꿈: Enter)</label>
+                                            <textarea value={editingSection.content.title || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, title: e.target.value } })} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-bold focus:border-blue-500 outline-none min-h-[80px]" />
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">제목 크기</label>
+                                                <select
+                                                    value={editingSection.content.titleSize || 'lg'}
+                                                    onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, titleSize: e.target.value } })}
+                                                    className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold focus:border-blue-500 outline-none"
+                                                >
+                                                    <option value="sm">작게</option>
+                                                    <option value="md">보통</option>
+                                                    <option value="lg">크게 (기본)</option>
+                                                    <option value="xl">매우 크게</option>
+                                                </select>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">제목 색상</label>
+                                                <select
+                                                    value={editingSection.content.titleColor || 'slate'}
+                                                    onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, titleColor: e.target.value } })}
+                                                    className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold focus:border-blue-500 outline-none"
+                                                >
+                                                    <option value="slate">기본 (Slate)</option>
+                                                    <option value="blue">Blue</option>
+                                                    <option value="green">Green</option>
+                                                    <option value="purple">Purple</option>
+                                                    <option value="orange">Orange</option>
+                                                    <option value="red">Red</option>
+                                                    <option value="white">White</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Subtitle (Optional)</label>
+                                            <input type="text" value={editingSection.content.subtitle || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, subtitle: e.target.value } })} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-medium focus:border-blue-500 outline-none" />
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Description (Optional)</label>
+                                            <textarea value={editingSection.content.description || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, description: e.target.value } })} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-medium focus:border-blue-500 outline-none min-h-[100px]" />
+                                        </div>
+
+                                        <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 space-y-4">
+                                            <h4 className="text-sm font-bold text-slate-900">Form Fields Configuration</h4>
+                                            <div className="flex gap-6">
+                                                <label className="flex items-center gap-2 cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={editingSection.content.fields?.company !== false}
+                                                        onChange={e => setEditingSection({
+                                                            ...editingSection,
+                                                            content: {
+                                                                ...editingSection.content,
+                                                                fields: { ...editingSection.content.fields, company: e.target.checked }
+                                                            }
+                                                        })}
+                                                        className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                                                    />
+                                                    <span className="text-sm text-slate-600 font-medium">Company Field</span>
+                                                </label>
+                                                <label className="flex items-center gap-2 cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={editingSection.content.fields?.position !== false}
+                                                        onChange={e => setEditingSection({
+                                                            ...editingSection,
+                                                            content: {
+                                                                ...editingSection.content,
+                                                                fields: { ...editingSection.content.fields, position: e.target.checked }
+                                                            }
+                                                        })}
+                                                        className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                                                    />
+                                                    <span className="text-sm text-slate-600 font-medium">Position Field</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+
                                 {editingSection.type === 'estimateGuide' && (
                                     <div className="space-y-8">
                                         <div className="space-y-2">

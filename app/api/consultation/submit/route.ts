@@ -38,10 +38,6 @@ async function sendSlackNotification(data: any, webhookUrl?: string) {
                     },
                     {
                         type: "mrkdwn",
-                        text: `*연락처:*\n${data.phone}`
-                    },
-                    {
-                        type: "mrkdwn",
                         text: `*이메일:*\n${data.email}`
                     }
                 ]
@@ -77,8 +73,8 @@ export async function POST(request: Request) {
         const body = await request.json();
 
         // Simple Validation
-        if (!body.name || !body.phone || !body.email) {
-            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        if (!body.name || !body.company || !body.email) {
+            return NextResponse.json({ error: 'Missing required fields (name, company, email)' }, { status: 400 });
         }
 
         const consultationData = {
