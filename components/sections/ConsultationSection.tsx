@@ -14,10 +14,16 @@ interface ConsultationSectionProps {
         description?: string;
         webhookUrl?: string;
         successMessage?: string;
+        contactPhone?: string;
+        contactEmail?: string;
+        showContactPhone?: boolean;
+        showContactEmail?: boolean;
         fields?: {
+            name?: boolean;
+            email?: boolean;
             company?: boolean;
             position?: boolean;
-            phone?: boolean;
+            message?: boolean;
         };
     };
 }
@@ -107,15 +113,19 @@ export default function ConsultationSection({ data }: ConsultationSectionProps) 
                         </div>
                     )}
 
-                    <div className="flex gap-4 pt-4">
-                        <div className="flex-1 p-4 bg-blue-50 rounded-xl border border-blue-100">
-                            <div className="font-bold text-blue-900 mb-1">고객센터</div>
-                            <div className="text-sm text-blue-700">02-731-XXXX</div>
-                        </div>
-                        <div className="flex-1 p-4 bg-slate-50 rounded-xl border border-slate-100">
-                            <div className="font-bold text-slate-900 mb-1">이메일</div>
-                            <div className="text-sm text-slate-600">help@kobaco.co.kr</div>
-                        </div>
+                    <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                        {(data.showContactPhone !== false) && (
+                            <div className="flex-1 p-4 bg-blue-50 rounded-xl border border-blue-100">
+                                <div className="font-bold text-blue-900 mb-1">고객센터</div>
+                                <div className="text-sm text-blue-700">{data.contactPhone || '02-731-XXXX'}</div>
+                            </div>
+                        )}
+                        {(data.showContactEmail !== false) && (
+                            <div className="flex-1 p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                <div className="font-bold text-slate-900 mb-1">이메일</div>
+                                <div className="text-sm text-slate-600">{data.contactEmail || 'help@kobaco.co.kr'}</div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -140,30 +150,34 @@ export default function ConsultationSection({ data }: ConsultationSectionProps) 
                     ) : (
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-1">
-                                    <label className="text-[11px] font-black text-slate-500 uppercase tracking-wider">담당자명 *</label>
-                                    <input
-                                        type="text"
-                                        name="name"
-                                        required
-                                        value={formData.name}
-                                        onChange={handleChange}
-                                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-medium text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all"
-                                        placeholder="홍길동"
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-[11px] font-black text-slate-500 uppercase tracking-wider">이메일 *</label>
-                                    <input
-                                        type="email"
-                                        name="email"
-                                        required
-                                        value={formData.email}
-                                        onChange={handleChange}
-                                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-medium text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all"
-                                        placeholder="user@example.com"
-                                    />
-                                </div>
+                                {(data.fields?.name !== false) && (
+                                    <div className="space-y-1">
+                                        <label className="text-[11px] font-black text-slate-500 uppercase tracking-wider">담당자명 *</label>
+                                        <input
+                                            type="text"
+                                            name="name"
+                                            required
+                                            value={formData.name}
+                                            onChange={handleChange}
+                                            className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-medium text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all"
+                                            placeholder="홍길동"
+                                        />
+                                    </div>
+                                )}
+                                {(data.fields?.email !== false) && (
+                                    <div className="space-y-1">
+                                        <label className="text-[11px] font-black text-slate-500 uppercase tracking-wider">이메일 *</label>
+                                        <input
+                                            type="email"
+                                            name="email"
+                                            required
+                                            value={formData.email}
+                                            onChange={handleChange}
+                                            className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-medium text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all"
+                                            placeholder="user@example.com"
+                                        />
+                                    </div>
+                                )}
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -196,17 +210,19 @@ export default function ConsultationSection({ data }: ConsultationSectionProps) 
                                 )}
                             </div>
 
-                            <div className="space-y-1">
-                                <label className="text-[11px] font-black text-slate-500 uppercase tracking-wider">문의 내용 (선택)</label>
-                                <textarea
-                                    name="message"
-                                    rows={2}
-                                    value={formData.message}
-                                    onChange={handleChange}
-                                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-medium text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all resize-none"
-                                    placeholder="궁금한 점이 있으시면 남겨주세요."
-                                ></textarea>
-                            </div>
+                            {(data.fields?.message !== false) && (
+                                <div className="space-y-1">
+                                    <label className="text-[11px] font-black text-slate-500 uppercase tracking-wider">문의 내용 (선택)</label>
+                                    <textarea
+                                        name="message"
+                                        rows={2}
+                                        value={formData.message}
+                                        onChange={handleChange}
+                                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-medium text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all resize-none"
+                                        placeholder="궁금한 점이 있으시면 남겨주세요."
+                                    ></textarea>
+                                </div>
+                            )}
 
                             <button
                                 type="submit"

@@ -201,10 +201,16 @@ export const consultationSchema = z.object({
     description: z.string().optional(),
     webhookUrl: z.string().url().optional().or(z.literal('')), // Optional override, usually env
     successMessage: z.string().default("상담 요청이 접수되었습니다. 담당자가 곧 연락드리겠습니다.").optional(),
+    contactPhone: z.string().default("02-731-XXXX").optional(),
+    contactEmail: z.string().default("help@kobaco.co.kr").optional(),
+    showContactPhone: z.boolean().default(true).optional(),
+    showContactEmail: z.boolean().default(true).optional(),
     fields: z.object({
-        company: z.boolean().default(true),
-        position: z.boolean().default(true),
-        // phone removed
+        name: z.boolean().default(true).optional(),
+        email: z.boolean().default(true).optional(),
+        company: z.boolean().default(true).optional(),
+        position: z.boolean().default(true).optional(),
+        message: z.boolean().default(true).optional(),
     }).optional()
 }).passthrough();
 

@@ -72,9 +72,11 @@ export async function POST(request: Request) {
     try {
         const body = await request.json();
 
-        // Simple Validation
-        if (!body.name || !body.company || !body.email) {
-            return NextResponse.json({ error: 'Missing required fields (name, company, email)' }, { status: 400 });
+        // Simple Validation: Ensure at least one contact method or name is provided if keys exist in body
+        // Since fields are dynamic, we just check if body is not empty and has basic integrity
+        const hasAnyData = body.name || body.email || body.phone || body.message;
+        if (!hasAnyData) {
+            return NextResponse.json({ error: 'No data provided' }, { status: 400 });
         }
 
         const consultationData = {

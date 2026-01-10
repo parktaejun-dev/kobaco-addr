@@ -1799,38 +1799,66 @@ export default function AdminPortal() {
                                             <textarea value={editingSection.content.description || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, description: e.target.value } })} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-medium focus:border-blue-500 outline-none min-h-[100px]" />
                                         </div>
 
+                                        <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 space-y-6">
+                                            <h4 className="text-sm font-bold text-slate-900">Contact Information Configuration</h4>
+
+                                            {/* Contact Phone */}
+                                            <div className="space-y-2">
+                                                <div className="flex items-center justify-between">
+                                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Contact Phone</label>
+                                                    <label className="flex items-center gap-2 cursor-pointer">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={editingSection.content.showContactPhone !== false}
+                                                            onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, showContactPhone: e.target.checked } })}
+                                                            className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                                                        />
+                                                        <span className="text-xs text-slate-500 font-bold">Show</span>
+                                                    </label>
+                                                </div>
+                                                <input type="text" value={editingSection.content.contactPhone || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, contactPhone: e.target.value } })} className="w-full p-3 bg-white border border-slate-200 rounded-xl font-medium focus:border-blue-500 outline-none" placeholder="02-731-XXXX" />
+                                            </div>
+
+                                            {/* Contact Email */}
+                                            <div className="space-y-2">
+                                                <div className="flex items-center justify-between">
+                                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Contact Email</label>
+                                                    <label className="flex items-center gap-2 cursor-pointer">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={editingSection.content.showContactEmail !== false}
+                                                            onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, showContactEmail: e.target.checked } })}
+                                                            className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                                                        />
+                                                        <span className="text-xs text-slate-500 font-bold">Show</span>
+                                                    </label>
+                                                </div>
+                                                <input type="text" value={editingSection.content.contactEmail || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, contactEmail: e.target.value } })} className="w-full p-3 bg-white border border-slate-200 rounded-xl font-medium focus:border-blue-500 outline-none" placeholder="help@kobaco.co.kr" />
+                                            </div>
+                                        </div>
+
                                         <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 space-y-4">
-                                            <h4 className="text-sm font-bold text-slate-900">Form Fields Configuration</h4>
-                                            <div className="flex gap-6">
+                                            <h4 className="text-sm font-bold text-slate-900">Form Fields Configuration (Show/Hide)</h4>
+                                            <div className="flex flex-wrap gap-6">
                                                 <label className="flex items-center gap-2 cursor-pointer">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={editingSection.content.fields?.company !== false}
-                                                        onChange={e => setEditingSection({
-                                                            ...editingSection,
-                                                            content: {
-                                                                ...editingSection.content,
-                                                                fields: { ...editingSection.content.fields, company: e.target.checked }
-                                                            }
-                                                        })}
-                                                        className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                                                    />
-                                                    <span className="text-sm text-slate-600 font-medium">Company Field</span>
+                                                    <input type="checkbox" checked={editingSection.content.fields?.name !== false} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, fields: { ...editingSection.content.fields, name: e.target.checked } } })} className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" />
+                                                    <span className="text-sm text-slate-600 font-medium">이름</span>
                                                 </label>
                                                 <label className="flex items-center gap-2 cursor-pointer">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={editingSection.content.fields?.position !== false}
-                                                        onChange={e => setEditingSection({
-                                                            ...editingSection,
-                                                            content: {
-                                                                ...editingSection.content,
-                                                                fields: { ...editingSection.content.fields, position: e.target.checked }
-                                                            }
-                                                        })}
-                                                        className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                                                    />
-                                                    <span className="text-sm text-slate-600 font-medium">Position Field</span>
+                                                    <input type="checkbox" checked={editingSection.content.fields?.email !== false} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, fields: { ...editingSection.content.fields, email: e.target.checked } } })} className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" />
+                                                    <span className="text-sm text-slate-600 font-medium">이메일</span>
+                                                </label>
+                                                <label className="flex items-center gap-2 cursor-pointer">
+                                                    <input type="checkbox" checked={editingSection.content.fields?.company !== false} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, fields: { ...editingSection.content.fields, company: e.target.checked } } })} className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" />
+                                                    <span className="text-sm text-slate-600 font-medium">회사명</span>
+                                                </label>
+                                                <label className="flex items-center gap-2 cursor-pointer">
+                                                    <input type="checkbox" checked={editingSection.content.fields?.position !== false} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, fields: { ...editingSection.content.fields, position: e.target.checked } } })} className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" />
+                                                    <span className="text-sm text-slate-600 font-medium">직책</span>
+                                                </label>
+                                                <label className="flex items-center gap-2 cursor-pointer">
+                                                    <input type="checkbox" checked={editingSection.content.fields?.message !== false} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, fields: { ...editingSection.content.fields, message: e.target.checked } } })} className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" />
+                                                    <span className="text-sm text-slate-600 font-medium">문의내용</span>
                                                 </label>
                                             </div>
                                         </div>
