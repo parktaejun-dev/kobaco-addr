@@ -252,7 +252,7 @@ export async function getStatsDashboard() {
         redis.get(KEYS.STATS.SEARCH_COUNT_DAY(date)),
         redis.zrange(KEYS.STATS.SEARCH_TERMS_DAY(date), 0, 9, 'REV', 'WITHSCORES'),
         redis.zrange(KEYS.STATS.SEARCH_TERMS_MONTH(month), 0, 9, 'REV', 'WITHSCORES'),
-        redis.lrange(KEYS.STATS.SEARCH_RECENT, 0, 19), // Latest 20
+        redis.lRange(KEYS.STATS.SEARCH_RECENT, 0, 19), // Latest 20
         redis.get(KEYS.STATS.ADMIN_SAVE_DAY(date)),
         redis.get(KEYS.STATS.ADMIN_UPLOAD_DAY(date)),
         redis.get(`stats:cta:global:count:day:${date}`)

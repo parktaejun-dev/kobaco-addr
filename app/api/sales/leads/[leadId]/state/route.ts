@@ -77,35 +77,32 @@ export async function PATCH(
           : existingState.last_contacted_at,
     };
 
-    // Pipeline: update state + move between indices
-    const pipeline = redis.pipeline();
+    // Update operations
     const timestamp = Date.now();
 
     // Save updated state
-    pipeline.set(stateKey, updatedState);
+    await redis.set(stateKey, updatedState);
 
     // Update idxAll
-    pipeline.zadd(RedisKeys.idxAll(), { score: timestamp, member: leadId });
+    await redis.zadd(RedisKeys.idxAll(), { score: timestamp, member: leadId });
 
     // If status changed, move between status indices
     if (newStatus !== oldStatus) {
       // Remove from old status index
-      pipeline.zrem(RedisKeys.idxStatus(oldStatus), leadId);
+      await redis.zRem(RedisKeys.idxStatus(oldStatus), leadId);
 
       // Add to new status index
-      pipeline.zadd(RedisKeys.idxStatus(newStatus), {
+      await redis.zadd(RedisKeys.idxStatus(newStatus), {
         score: timestamp,
         member: leadId,
       });
     } else {
       // Just refresh timestamp in current status index
-      pipeline.zadd(RedisKeys.idxStatus(newStatus), {
+      await redis.zadd(RedisKeys.idxStatus(newStatus), {
         score: timestamp,
         member: leadId,
       });
     }
-
-    await pipeline.exec();
 
     return NextResponse.json({
       success: true,
