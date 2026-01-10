@@ -192,6 +192,22 @@ export const reportingSchema = z.object({
     features: z.array(z.string()).optional()
 }).passthrough();
 
+// 13. Consultation Request
+export const consultationSchema = z.object({
+    title: z.string().min(1),
+    titleSize: sizeEnum,
+    titleColor: colorEnum,
+    subtitle: z.string().optional(),
+    description: z.string().optional(),
+    webhookUrl: z.string().url().optional().or(z.literal('')), // Optional override, usually env
+    successMessage: z.string().default("상담 요청이 접수되었습니다. 담당자가 곧 연락드리겠습니다.").optional(),
+    fields: z.object({
+        company: z.boolean().default(true),
+        position: z.boolean().default(true),
+        phone: z.boolean().default(true),
+    }).optional()
+}).passthrough();
+
 // 12. Image Cards (New)
 export const imageCardsSchema = z.object({
     title: z.string().optional(),
@@ -219,7 +235,8 @@ export const SECTION_SCHEMAS: Record<string, z.ZodObject<any>> = {
     cta: globalCtaSchema,
     faq: faqSchema,
     reporting: reportingSchema,
-    imageCards: imageCardsSchema
+    imageCards: imageCardsSchema,
+    consultation: consultationSchema
 };
 
 export type SectionType = keyof typeof SECTION_SCHEMAS;

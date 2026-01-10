@@ -16,7 +16,6 @@ export default function UsagePage() {
       <div className="max-w-6xl mx-auto">
         <header className="flex justify-between items-center mb-8">
             <h1 className="text-2xl font-bold text-gray-900">📊 견적 사용 히스토리</h1>
-            <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">Vercel KV 연동 대기중 (Mock Data)</span>
         </header>
         
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">

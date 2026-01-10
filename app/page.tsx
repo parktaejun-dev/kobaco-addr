@@ -8,6 +8,7 @@ import WhySection from '@/components/sections/WhySection';
 import UseCasesSection from '@/components/sections/UseCasesSection';
 import FAQSection from '@/components/sections/FAQSection';
 import ImageCardsSection from '@/components/sections/ImageCardsSection';
+import ConsultationSection from '@/components/sections/ConsultationSection';
 import Footer from '@/components/Footer';
 
 // --- Section Components ---
@@ -250,7 +251,7 @@ function EstimateGuide({ data }: { data: any }) {
 
   const titleSizeClass = titleSizeClasses[data.titleSize || 'md'];
   const titleColorClass = data.titleColor === 'slate' ? 'text-slate-900' : colorClasses[data.titleColor || 'slate'];
-  
+
   // Use subtitle styles for description as well
   const subtitleSizeClass = subtitleSizeClasses[data.subtitleSize || 'md'];
   const subtitleColorClass = data.subtitleColor === 'slate' ? 'text-slate-600' : (colorClasses[data.subtitleColor || 'slate'] || 'text-slate-600');
@@ -287,7 +288,7 @@ function EstimateGuide({ data }: { data: any }) {
           {data.steps?.map((step: any, i: number) => {
             const title = typeof step === 'string' ? step : step.title;
             const description = typeof step === 'string' ? '설명을 입력해주세요.' : step.description;
-            
+
             return (
               <div
                 key={i}
@@ -376,6 +377,7 @@ export default async function Home() {
           case 'estimateGuide': return <EstimateGuide key={id} data={data} />;
           case 'faq': return <FAQSection key={id} data={data} />;
           case 'imageCards': return <ImageCardsSection key={id} data={data} />;
+          case 'consultation': return <ConsultationSection key={id} data={data} />;
           default: return null;
         }
       })}

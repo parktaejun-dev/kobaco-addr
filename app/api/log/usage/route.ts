@@ -1,23 +1,26 @@
-
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-
-const LOG_FILE = path.join(process.cwd(), 'policy', 'usage_logs.json');
+import { getJSON, setJSON } from '@/lib/kv-store';
 
 export async function GET() {
   try {
-    if (!fs.existsSync(LOG_FILE)) {
-      return NextResponse.json([]);
+    let logs = await getJSON('policy', 'usage_logs');
+    
+    if (!logs) {
+      logs = [];
     }
-    const data = fs.readFileSync(LOG_FILE, 'utf-8');
-    const logs = JSON.parse(data);
+    
+    // Safety check to ensure logs is an array
+    if (!Array.isArray(logs)) {
+      console.warn('Logs data is not an array, resetting to empty array');
+      logs = [];
+    }
 
     // Sort by date descending
     logs.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     return NextResponse.json(logs);
   } catch (error) {
+    console.error('Failed to fetch logs:', error);
     return NextResponse.json({ error: 'Failed to fetch logs' }, { status: 500 });
   }
 }
@@ -37,14 +40,16 @@ export async function POST(req: Request) {
       type: type || 'analysis' // 'analysis' or 'print'
     };
 
-    let logs = [];
-    if (fs.existsSync(LOG_FILE)) {
-      const data = fs.readFileSync(LOG_FILE, 'utf-8');
-      logs = JSON.parse(data);
+    let logs = await getJSON('policy', 'usage_logs');
+    
+    if (!logs || !Array.isArray(logs)) {
+      logs = [];
     }
 
     logs.push(newLog);
-    fs.writeFileSync(LOG_FILE, JSON.stringify(logs, null, 2));
+    
+    // Save to KV Store (Redis) or Filesystem (if local)
+    await setJSON('policy', 'usage_logs', logs);
 
     return NextResponse.json({ success: true, log: newLog });
   } catch (error) {
