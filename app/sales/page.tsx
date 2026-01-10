@@ -134,29 +134,30 @@ export default function SalesDashboardPage() {
     }
   }
 
-  async function handleIncrementalScan() {
+  async function handleIncrementalScan(isAuto = false) {
     setScanning(true);
     setScanStatus('스캔 중...');
     try {
       const res = await fetch(`/api/sales/scan/cron?minScore=${minScore}`);
       if (res.ok) {
         const data = await res.json();
-        const msg = `스캔 완료: ${data.source || data.feed || '-'}`;
+        const msg = `반영 완료: ${data.source || data.feed || '-'}`;
         setScanStatus(msg);
-        if (!autoScanning) {
+
+        if (!isAuto) {
           alert(
             `증분 스캔 완료!\n소스: ${data.source || data.feed || '-'}\n새 리드: ${data.newLeads || 0}개\n다음: ${(data.nextSourceIndex || 0) + 1}번째`
           );
         }
         loadLeads(currentStatus);
-        return data; // Return data for auto-scan loop
+        return data;
       } else {
-        if (!autoScanning) alert('증분 스캔 실패');
+        if (!isAuto) alert('증분 스캔 실패');
         return null;
       }
     } catch (error) {
       console.error('Incremental scan error:', error);
-      if (!autoScanning) alert('증분 스캔 중 오류 발생');
+      if (!isAuto) alert('증분 스캔 중 오류 발생');
       return null;
     } finally {
       setScanning(false);
@@ -182,7 +183,7 @@ export default function SalesDashboardPage() {
 
       while (count < total && autoScanRef.current) {
         setScanStatus(`스캔 중... (${count + 1}번째 소스)`);
-        const result = await handleIncrementalScan();
+        const result = await handleIncrementalScan(true);
 
         if (!result || !autoScanRef.current) {
           if (!autoScanRef.current) setScanStatus('스캔 중단됨');
