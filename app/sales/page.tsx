@@ -577,6 +577,9 @@ export default function SalesDashboardPage() {
                             {lead.title}
                           </p>
                           <div className="flex flex-wrap items-center gap-2 mt-2">
+                            <span className="px-2 py-0.5 rounded-full bg-blue-600 text-white text-[10px] font-black shadow-sm">
+                              {lead.final_score}점
+                            </span>
                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${lead.state.status === LeadStatus.EXCLUDED
                               ? 'bg-gray-100 text-gray-600 border-gray-200'
                               : 'bg-blue-100 text-blue-700 border-blue-200'
@@ -697,7 +700,10 @@ export default function SalesDashboardPage() {
             {selectedLead ? (
               <div className="h-full flex flex-col">
                 <div className="p-4 border-b border-gray-200">
-                  <h2 className="font-semibold text-gray-900 mb-2">
+                  <h2 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                    <span className="bg-blue-600 text-white text-xs font-black px-2 py-1 rounded-lg shadow-sm">
+                      {selectedLead.final_score}점
+                    </span>
                     {selectedLead.title}
                   </h2>
                   <div className="flex flex-wrap gap-2 mb-3">
