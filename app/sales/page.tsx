@@ -131,6 +131,27 @@ export default function SalesDashboardPage() {
     }
   }
 
+  async function handleIncrementalScan() {
+    setScanning(true);
+    try {
+      const res = await fetch('/api/sales/scan/cron');
+      if (res.ok) {
+        const data = await res.json();
+        alert(
+          `증분 스캔 완료!\n피드: ${data.feed || '-'}\n새 리드: ${data.newLeads || 0}개\n다음 피드: ${(data.nextFeedIndex || 0) + 1}번째`
+        );
+        loadLeads(currentStatus);
+      } else {
+        alert('증분 스캔 실패');
+      }
+    } catch (error) {
+      console.error('Incremental scan error:', error);
+      alert('증분 스캔 중 오류 발생');
+    } finally {
+      setScanning(false);
+    }
+  }
+
   async function loadNotes(leadId: string) {
     try {
       const res = await fetch(`/api/sales/leads/${leadId}/notes`);
@@ -182,6 +203,22 @@ export default function SalesDashboardPage() {
       }
     } catch (error) {
       console.error('Failed to update status:', error);
+    }
+  }
+
+  async function handleExcludeLead(leadId: string) {
+    try {
+      const res = await fetch(`/api/sales/leads/${leadId}/state`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'EXCLUDED' }),
+      });
+
+      if (res.ok) {
+        loadLeads(currentStatus);
+      }
+    } catch (error) {
+      console.error('Failed to exclude lead:', error);
     }
   }
 
@@ -278,6 +315,21 @@ ${selectedLead.ai_analysis.sales_angle}
               className="w-16 px-2 py-2 border border-gray-300 rounded-lg text-sm"
             />
           </div>
+
+          <div className="border-l border-gray-300 h-6 mx-2" />
+
+          <button
+            onClick={handleIncrementalScan}
+            disabled={scanning}
+            className="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-sm"
+            title="피드별로 순차 스캔 (60초 타임아웃 방지)"
+          >
+            {scanning ? '스캔 중...' : '📥 증분 스캔'}
+          </button>
+
+          <span className="text-[10px] text-gray-400 hidden sm:block max-w-[150px]">
+            피드별로 10개씩 순차 스캔. 여러 번 클릭!
+          </span>
         </div>
       </div>
 
@@ -346,8 +398,22 @@ ${selectedLead.ai_analysis.sales_angle}
                       </div>
                     </div>
 
-                    <div className="text-xs text-gray-600 mb-1">
-                      {lead.ai_analysis.company_name}
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="text-xs text-gray-600">
+                        {lead.ai_analysis.company_name}
+                      </div>
+                      {lead.state.status !== 'EXCLUDED' && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleExcludeLead(lead.lead_id);
+                          }}
+                          className="text-[10px] px-1.5 py-0.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                          title="제외 (부적합)"
+                        >
+                          ✕ 제외
+                        </button>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-2 text-[10px] text-gray-500">
@@ -462,7 +528,7 @@ ${selectedLead.ai_analysis.sales_angle}
                   {/* Notes */}
                   <div className="border-t border-gray-200 pt-4">
                     <h3 className="font-semibold text-gray-900 mb-3">
-                      통화 기록 ({notes.length})
+                      메모 ({notes.length})
                     </h3>
 
                     <div className="space-y-2 mb-3">
@@ -488,7 +554,7 @@ ${selectedLead.ai_analysis.sales_angle}
                           e.key === 'Enter' && handleAddNote()
                         }
                         className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                        placeholder="통화 기록 추가..."
+                        placeholder="메모 추가..."
                       />
                       <button
                         onClick={handleAddNote}
