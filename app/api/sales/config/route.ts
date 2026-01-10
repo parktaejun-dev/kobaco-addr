@@ -25,6 +25,7 @@ interface ConfigData {
   naverClientSecret: string;
   keywords: string[];
   rssFeeds: RSSFeed[];
+  minScore?: number;
   updated_at?: string;
 }
 
@@ -51,6 +52,7 @@ export async function GET() {
       naverClientSecret: data.naverClientSecret ? MASKED_SECRET : '',
       keywords: data.keywords || [],
       rssFeeds: data.rssFeeds || [],
+      minScore: data.minScore ?? 50,
     });
   } catch (error) {
     console.error('Error fetching config:', error);
@@ -69,7 +71,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const { naverClientId, naverClientSecret, keywords, rssFeeds } = body;
+    const { naverClientId, naverClientSecret, keywords, rssFeeds, minScore } = body;
 
     // Get existing config
     const existing = await redis.get<ConfigData>(REDIS_KEY);
@@ -80,6 +82,9 @@ export async function POST(request: NextRequest) {
       naverClientSecret: '',
       keywords: [],
       rssFeeds: [],
+      keywords: [],
+      rssFeeds: [],
+      minScore: typeof minScore === 'number' ? minScore : 50,
       updated_at: new Date().toISOString(),
     };
 
