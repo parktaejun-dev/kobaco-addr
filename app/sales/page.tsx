@@ -134,7 +134,7 @@ export default function SalesDashboardPage() {
   async function handleIncrementalScan() {
     setScanning(true);
     try {
-      const res = await fetch('/api/sales/scan/cron');
+      const res = await fetch(`/api/sales/scan/cron?minScore=${minScore}`);
       if (res.ok) {
         const data = await res.json();
         alert(
@@ -293,8 +293,20 @@ ${selectedLead.ai_analysis.sales_angle}
             {scanning ? '스캔 중...' : '📥 리드 스캔'}
           </button>
 
-          <span className="text-xs text-gray-500">
-            네이버 + RSS 피드를 순차적으로 10개씩 스캔합니다. 전체 스캔하려면 여러 번 클릭하세요.
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-medium text-gray-500">최소 점수</label>
+            <input
+              type="number"
+              min={0}
+              max={100}
+              value={minScore}
+              onChange={(e) => setMinScore(Number(e.target.value))}
+              className="w-16 px-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
+
+          <span className="text-xs text-gray-500 ml-auto">
+            네이버 + RSS 피드를 순차적으로 스캔합니다. (전체 스캔은 여러 번 클릭)
           </span>
         </div>
       </div>

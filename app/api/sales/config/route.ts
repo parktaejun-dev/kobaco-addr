@@ -33,8 +33,11 @@ interface ConfigData {
  * GET /api/sales/config
  * Returns config with masked secret
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const { searchParams } = new URL(req.url);
+    const queryMinScore = searchParams.get('minScore');
+
     const data = await redis.get<ConfigData>(REDIS_KEY);
 
     if (!data) {
@@ -43,6 +46,7 @@ export async function GET() {
         naverClientSecret: '',
         keywords: [],
         rssFeeds: [],
+        minScore: 50,
       });
     }
 
@@ -52,7 +56,7 @@ export async function GET() {
       naverClientSecret: data.naverClientSecret ? MASKED_SECRET : '',
       keywords: data.keywords || [],
       rssFeeds: data.rssFeeds || [],
-      minScore: data.minScore ?? 50,
+      minScore: queryMinScore ? Number(queryMinScore) : (data.minScore ?? 50),
     });
   } catch (error) {
     console.error('Error fetching config:', error);

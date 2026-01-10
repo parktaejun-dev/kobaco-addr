@@ -4,7 +4,7 @@
  * Designed to be called by Vercel Cron every hour
  */
 
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import pLimit from 'p-limit';
 import { redis } from '@/lib/redis';
 import {
@@ -48,8 +48,11 @@ interface SalesConfig {
  * Called by Vercel Cron - processes one source at a time
  * Index 0 = Naver News, Index 1+ = RSS Feeds
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
     try {
+        const { searchParams } = new URL(req.url);
+        const queryMinScore = searchParams.get('minScore');
+
         // Load config
         const config = await redis.get<SalesConfig>(RedisKeys.config());
         const feeds = config?.rssFeeds || [];
@@ -130,7 +133,7 @@ export async function GET() {
 
         // Build and save leads
         const leads: LeadCore[] = [];
-        const minScore = config?.minScore ?? 50; // Use config or default to 50
+        const minScore = queryMinScore ? Number(queryMinScore) : (config?.minScore ?? 50);
 
         for (let i = 0; i < articlesToAnalyze.length; i++) {
             const article = articlesToAnalyze[i];
