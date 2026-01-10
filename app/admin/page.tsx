@@ -1949,6 +1949,80 @@ export default function AdminPortal() {
                     </div>
                 )}
 
+                {/* Tab: Settings */}
+                {activeTab === 'settings' && (
+                    <div className="max-w-3xl space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm">
+                            <h3 className="text-2xl font-black text-slate-800 mb-6 flex items-center gap-2">
+                                <Sparkles className="text-yellow-500" size={24} />
+                                알림 설정 (Notification)
+                            </h3>
+                            <div className="space-y-6">
+                                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 text-sm text-slate-600 leading-relaxed mb-6">
+                                    상담 요청이 들어왔을 때 실시간 알림을 받을 채널을 설정합니다.<br />
+                                    값이 설정되어 있지 않으면 <code>.env</code> 파일의 환경변수를 기본값으로 사용합니다.
+                                </div>
+
+                                {/* Slack */}
+                                <div className="space-y-3">
+                                    <label className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                                        <img src="https://cdn.worldvectorlogo.com/logos/slack-new-logo.svg" className="w-5 h-5" alt="Slack" />
+                                        Slack Webhook URL
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={systemConfig.slackWebhookUrl || ''}
+                                        onChange={e => setSystemConfig({ ...systemConfig, slackWebhookUrl: e.target.value })}
+                                        className="w-full p-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono text-xs"
+                                        placeholder="https://hooks.slack.com/services/..."
+                                    />
+                                    <p className="text-xs text-slate-400">Slack Incoming Webhook URL을 입력하세요.</p>
+                                </div>
+
+                                <div className="h-px bg-slate-100 my-6" />
+
+                                {/* Telegram */}
+                                <div className="space-y-4">
+                                    <div className="space-y-3">
+                                        <label className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                                            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Telegram_logo.svg/2048px-Telegram_logo.svg.png" className="w-5 h-5" alt="Telegram" />
+                                            Telegram Bot Token
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={systemConfig.telegramBotToken || ''}
+                                            onChange={e => setSystemConfig({ ...systemConfig, telegramBotToken: e.target.value })}
+                                            className="w-full p-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono text-xs"
+                                            placeholder="123456789:ABCdef..."
+                                        />
+                                    </div>
+                                    <div className="space-y-3">
+                                        <label className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                                            Telegram Chat ID
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={systemConfig.telegramChatId || ''}
+                                            onChange={e => setSystemConfig({ ...systemConfig, telegramChatId: e.target.value })}
+                                            className="w-full p-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono text-xs"
+                                            placeholder="123456789"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="pt-6 flex justify-end">
+                                    <button
+                                        onClick={saveSystemConfig}
+                                        className="px-8 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all flex items-center gap-2"
+                                    >
+                                        <Save size={18} /> 설정 저장하기
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 <footer className="mt-auto border-t py-10 px-8 flex justify-end items-center text-slate-400 font-medium">
                     <div className="flex gap-6 text-[10px] font-black uppercase tracking-[0.2em]">
                         <span className="text-blue-500">System v3.0</span>
@@ -1959,82 +2033,3 @@ export default function AdminPortal() {
         </div>
     );
 }// Forced update to trigger rebuild
-                        </div >
-                    </div >
-                )}
-
-{/* Tab: Settings */ }
-{
-    activeTab === 'settings' && (
-        <div className="max-w-3xl space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm">
-                <h3 className="text-2xl font-black text-slate-800 mb-6 flex items-center gap-2">
-                    <Sparkles className="text-yellow-500" size={24} />
-                    알림 설정 (Notification)
-                </h3>
-                <div className="space-y-6">
-                    <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 text-sm text-slate-600 leading-relaxed mb-6">
-                        상담 요청이 들어왔을 때 실시간 알림을 받을 채널을 설정합니다.<br />
-                        값이 설정되어 있지 않으면 <code>.env</code> 파일의 환경변수를 기본값으로 사용합니다.
-                    </div>
-
-                    {/* Slack */}
-                    <div className="space-y-3">
-                        <label className="flex items-center gap-2 text-sm font-bold text-slate-700">
-                            <img src="https://cdn.worldvectorlogo.com/logos/slack-new-logo.svg" className="w-5 h-5" alt="Slack" />
-                            Slack Webhook URL
-                        </label>
-                        <input
-                            type="text"
-                            value={systemConfig.slackWebhookUrl || ''}
-                            onChange={e => setSystemConfig({ ...systemConfig, slackWebhookUrl: e.target.value })}
-                            className="w-full p-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono text-xs"
-                            placeholder="https://hooks.slack.com/services/..."
-                        />
-                        <p className="text-xs text-slate-400">Slack Incoming Webhook URL을 입력하세요.</p>
-                    </div>
-
-                    <div className="h-px bg-slate-100 my-6" />
-
-                    {/* Telegram */}
-                    <div className="space-y-4">
-                        <div className="space-y-3">
-                            <label className="flex items-center gap-2 text-sm font-bold text-slate-700">
-                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Telegram_logo.svg/2048px-Telegram_logo.svg.png" className="w-5 h-5" alt="Telegram" />
-                                Telegram Bot Token
-                            </label>
-                            <input
-                                type="text"
-                                value={systemConfig.telegramBotToken || ''}
-                                onChange={e => setSystemConfig({ ...systemConfig, telegramBotToken: e.target.value })}
-                                className="w-full p-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono text-xs"
-                                placeholder="123456789:ABCdef..."
-                            />
-                        </div>
-                        <div className="space-y-3">
-                            <label className="flex items-center gap-2 text-sm font-bold text-slate-700">
-                                Telegram Chat ID
-                            </label>
-                            <input
-                                type="text"
-                                value={systemConfig.telegramChatId || ''}
-                                onChange={e => setSystemConfig({ ...systemConfig, telegramChatId: e.target.value })}
-                                className="w-full p-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono text-xs"
-                                placeholder="123456789"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="pt-6 flex justify-end">
-                        <button
-                            onClick={saveSystemConfig}
-                            className="px-8 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all flex items-center gap-2"
-                        >
-                            <Save size={18} /> 설정 저장하기
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    )
-}
