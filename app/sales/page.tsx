@@ -11,6 +11,7 @@ interface AIAnalysis {
   sales_angle: string;
   ai_score: number;
   contact_email?: string | null;
+  contact_phone?: string | null;
   pr_agency?: string | null;
   homepage_url?: string | null;
 }
@@ -110,6 +111,11 @@ export default function SalesDashboardPage() {
   function handleCopyEmail(email: string) {
     navigator.clipboard.writeText(email);
     alert('이메일 주소가 복사되었습니다.');
+  }
+
+  function handleCopyPhone(phone: string) {
+    navigator.clipboard.writeText(phone);
+    alert('연락처가 복사되었습니다.');
   }
 
   const [scanLimit, setScanLimit] = useState(30);
@@ -612,6 +618,19 @@ export default function SalesDashboardPage() {
                                 title="이메일 복사"
                               >
                                 ✉️ {lead.ai_analysis.contact_email}
+                              </button>
+                            ) : null}
+
+                            {lead.ai_analysis.contact_phone ? (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleCopyPhone(lead.ai_analysis.contact_phone!);
+                                }}
+                                className="flex items-center gap-1 px-1.5 py-0.5 bg-green-50 text-green-700 text-[10px] font-bold rounded border border-green-100 hover:bg-green-100 transition-colors"
+                                title="연락처 복사"
+                              >
+                                📞 {lead.ai_analysis.contact_phone}
                               </button>
                             ) : null}
 

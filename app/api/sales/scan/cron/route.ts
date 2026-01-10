@@ -18,9 +18,11 @@ import {
     type LeadCore,
     type LeadState,
 } from '@/lib/crm-types';
-import { fetchCustomFeeds, fetchDefaultFeeds, type NormalizedArticle, type RSSFeedConfig } from '@/lib/rss-parser';
+import { fetchCustomFeeds, fetchDefaultFeeds, fetchFullContent, type NormalizedArticle, type RSSFeedConfig } from '@/lib/rss-parser';
 import { fetchNaverNews, type NaverConfig } from '@/lib/naver';
 import { analyzeArticle } from '@/lib/ai-provider';
+import { getSystemConfig } from '@/lib/content/kv';
+import { sendLeadNotification } from '@/lib/notifications';
 
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
@@ -127,7 +129,19 @@ export async function GET(req: NextRequest) {
         // Analyze with AI
         const limiter = pLimit(AI_CONCURRENCY);
         const analyzePromises = articlesToAnalyze.map((article) =>
-            limiter(() => analyzeArticle(article.title, article.contentSnippet, article._source))
+            limiter(async () => {
+                let contentToAnalyze = article.contentSnippet;
+
+                // For Newswire, fetch full content to get contact info
+                if (article.link.includes('newswire.co.kr')) {
+                    const fullContent = await fetchFullContent(article.link);
+                    if (fullContent) {
+                        contentToAnalyze = fullContent;
+                    }
+                }
+
+                return analyzeArticle(article.title, contentToAnalyze, article._source);
+            })
         );
         const analyses = await Promise.all(analyzePromises);
 
@@ -164,6 +178,13 @@ export async function GET(req: NextRequest) {
                 source: article._source,
                 keyword: article._keyword,
                 ai_analysis: analysis,
+                contact: {
+                    email: analysis.contact_email || undefined,
+                    phone: analysis.contact_phone || undefined,
+                    pr_agency: analysis.pr_agency || undefined,
+                    homepage: analysis.homepage_url || undefined,
+                    source: article._source === 'NAVER' ? 'NEWS' : 'NEWS',
+                },
                 final_score: finalScore,
                 created_at: Date.now(),
                 updated_at: Date.now(),
@@ -173,7 +194,35 @@ export async function GET(req: NextRequest) {
         }
 
         // Upsert leads
-        await upsertLeads(leads);
+        const newLeadIds = await upsertLeads(leads);
+
+        // 4. Send Notifications for NEW high-score leads
+        if (newLeadIds.length > 0) {
+            const systemConfig = await getSystemConfig().catch(() => ({}));
+            const notificationConfig = {
+                slackUrl: systemConfig.slackWebhookUrl || process.env.SLACK_WEBHOOK_URL,
+                telegramToken: systemConfig.telegramBotToken || process.env.TELEGRAM_BOT_TOKEN,
+                telegramChatId: systemConfig.telegramChatId || process.env.TELEGRAM_CHAT_ID,
+            };
+
+            // Only notify for leads with score >= 70 (or minScore if higher)
+            const notifyThreshold = Math.max(70, minScore);
+            const leadsToNotify = leads.filter(l =>
+                newLeadIds.includes(l.lead_id) && l.final_score >= notifyThreshold
+            );
+
+            for (const lead of leadsToNotify) {
+                await sendLeadNotification({
+                    title: lead.title,
+                    company: lead.ai_analysis.company_name,
+                    score: lead.final_score,
+                    angle: lead.ai_analysis.sales_angle,
+                    link: lead.link,
+                    email: lead.contact?.email,
+                    phone: lead.contact?.phone,
+                }, notificationConfig);
+            }
+        }
 
         // Update cron state - move to next source
         const nextIndex = (state.feedIndex + 1) % totalSources;
@@ -211,17 +260,23 @@ function deduplicateArticles(articles: NormalizedArticle[]): NormalizedArticle[]
     });
 }
 
-async function upsertLeads(leads: LeadCore[]): Promise<void> {
+/**
+ * Upsert leads to CRM (Redis)
+ * Returns array of IDs of NEWLY created leads
+ */
+async function upsertLeads(leads: LeadCore[]): Promise<string[]> {
     const timestamp = Date.now();
+    const newLeadIds: string[] = [];
 
     for (const lead of leads) {
         const { lead_id } = lead;
 
-        await redis.set(RedisKeys.leadCore(lead_id), lead);
-
         const existingState = await redis.get<LeadState>(RedisKeys.leadState(lead_id));
 
+        await redis.set(RedisKeys.leadCore(lead_id), lead);
+
         if (!existingState) {
+            newLeadIds.push(lead_id);
             const initialState = createInitialState(lead_id);
             await redis.set(RedisKeys.leadState(lead_id), initialState);
             await redis.zadd(RedisKeys.idxAll(), { score: timestamp, member: lead_id });
@@ -231,4 +286,5 @@ async function upsertLeads(leads: LeadCore[]): Promise<void> {
             await redis.zadd(RedisKeys.idxStatus(existingState.status), { score: timestamp, member: lead_id });
         }
     }
+    return newLeadIds;
 }

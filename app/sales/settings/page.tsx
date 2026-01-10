@@ -7,11 +7,13 @@ interface RSSFeed {
   originalUrl: string;
   url: string;
   title: string;
+  enabled?: boolean;
 }
 
 interface ConfigData {
   naverClientId: string;
   naverClientSecret: string;
+  naverEnabled?: boolean;
   keywords: string[];
   rssFeeds: RSSFeed[];
   minScore: number;
@@ -21,6 +23,7 @@ export default function SalesSettingsPage() {
   const [config, setConfig] = useState<ConfigData>({
     naverClientId: '',
     naverClientSecret: '',
+    naverEnabled: true,
     keywords: [],
     rssFeeds: [],
     minScore: 50,
@@ -72,6 +75,7 @@ export default function SalesSettingsPage() {
         body: JSON.stringify({
           naverClientId: config.naverClientId,
           naverClientSecret: config.naverClientSecret,
+          naverEnabled: config.naverEnabled,
           keywords,
           rssFeeds: config.rssFeeds,
           minScore: config.minScore,
@@ -124,6 +128,7 @@ export default function SalesSettingsPage() {
           originalUrl: newUrl.trim(),
           url: data.feedUrl,
           title: data.title || '(untitled)',
+          enabled: true,
         };
 
         setConfig({
@@ -152,6 +157,12 @@ export default function SalesSettingsPage() {
     setConfig({ ...config, rssFeeds: updated });
   }
 
+  function toggleFeed(index: number) {
+    const updated = [...config.rssFeeds];
+    updated[index] = { ...updated[index], enabled: !(updated[index].enabled ?? true) };
+    setConfig({ ...config, rssFeeds: updated });
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -172,9 +183,24 @@ export default function SalesSettingsPage() {
       <div className="space-y-6">
         {/* Naver API Section */}
         <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            Naver News API
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">
+              Naver News API
+            </h2>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-500">{config.naverEnabled ? '활성' : '비활성'}</span>
+              <button
+                onClick={() => setConfig({ ...config, naverEnabled: !config.naverEnabled })}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${config.naverEnabled ? 'bg-blue-600' : 'bg-gray-200'
+                  }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${config.naverEnabled ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                />
+              </button>
+            </div>
+          </div>
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -309,15 +335,27 @@ export default function SalesSettingsPage() {
                       </div>
                     )}
                   </div>
-                  <button
-                    onClick={() => removeFeed(index)}
-                    className="flex-shrink-0 p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    title="삭제"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
+                  <div className="flex-shrink-0 flex items-center gap-2">
+                    <button
+                      onClick={() => toggleFeed(index)}
+                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${(feed.enabled ?? true) ? 'bg-blue-600' : 'bg-gray-200'
+                        }`}
+                    >
+                      <span
+                        className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${(feed.enabled ?? true) ? 'translate-x-5' : 'translate-x-1'
+                          }`}
+                      />
+                    </button>
+                    <button
+                      onClick={() => removeFeed(index)}
+                      className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      title="삭제"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               ))
             )}

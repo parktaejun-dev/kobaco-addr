@@ -18,11 +18,13 @@ interface RSSFeed {
   originalUrl: string;
   url: string;
   title: string;
+  enabled?: boolean;
 }
 
 interface ConfigData {
   naverClientId: string;
   naverClientSecret: string;
+  naverEnabled?: boolean;
   keywords: string[];
   rssFeeds: RSSFeed[];
   minScore?: number;
@@ -44,6 +46,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({
         naverClientId: '',
         naverClientSecret: '',
+        naverEnabled: true,
         keywords: [],
         rssFeeds: [],
         minScore: 50,
@@ -54,8 +57,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       naverClientId: data.naverClientId || '',
       naverClientSecret: data.naverClientSecret ? MASKED_SECRET : '',
+      naverEnabled: data.naverEnabled ?? true,
       keywords: data.keywords || [],
-      rssFeeds: data.rssFeeds || [],
+      rssFeeds: (data.rssFeeds || []).map(f => ({ ...f, enabled: f.enabled ?? true })),
       minScore: queryMinScore ? Number(queryMinScore) : (data.minScore ?? 50),
     });
   } catch (error) {
@@ -75,7 +79,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const { naverClientId, naverClientSecret, keywords, rssFeeds, minScore } = body;
+    const { naverClientId, naverClientSecret, naverEnabled, keywords, rssFeeds, minScore } = body;
 
     // Get existing config
     const existing = await redis.get<ConfigData>(REDIS_KEY);
@@ -84,6 +88,7 @@ export async function POST(request: NextRequest) {
     const updatedConfig: ConfigData = {
       naverClientId: (naverClientId?.trim() as string) || '',
       naverClientSecret: '',
+      naverEnabled: naverEnabled ?? true,
       keywords: [],
       rssFeeds: [],
       minScore: typeof minScore === 'number' ? minScore : 50,
@@ -147,7 +152,13 @@ export async function POST(request: NextRequest) {
         if (seen.has(urlLower)) continue;
         seen.add(urlLower);
 
-        validFeeds.push({ category, originalUrl, url, title });
+        validFeeds.push({
+          category,
+          originalUrl,
+          url,
+          title,
+          enabled: feed.enabled ?? true
+        });
 
         if (validFeeds.length >= MAX_RSS_FEEDS) break;
       }

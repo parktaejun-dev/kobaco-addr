@@ -36,6 +36,7 @@ export const AIAnalysisSchema = z.object({
   sales_angle: z.string(),
   ai_score: z.number().min(0).max(100),
   contact_email: z.string().optional().nullable(),
+  contact_phone: z.string().optional().nullable(),
   pr_agency: z.string().optional().nullable(),
   homepage_url: z.string().optional().nullable(),
 });

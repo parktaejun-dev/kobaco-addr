@@ -60,6 +60,7 @@ For each article, evaluate:
    - Contact opportunity (can we reach decision makers?)
 7. **Contact Information** - Extract public contact info:
    - Representative Email (e.g., press@..., contact@...)
+   - Representative Phone (e.g., 02-123-4567, 010-1234-5678)
    - PR Agency name (if mentioned as handling the press release)
    - Company Homepage URL
 
@@ -68,7 +69,7 @@ CRITICAL REQUIREMENTS:
 - NO markdown formatting
 - NO code blocks
 - NO extra text
-- All field values MUST be in Korean (except email/urls)
+- All field values MUST be in Korean (except email/phone/urls)
 - Follow this EXACT schema:
 
 {
@@ -79,6 +80,7 @@ CRITICAL REQUIREMENTS:
   "sales_angle": "영업 접근 방식",
   "ai_score": 75,
   "contact_email": "null 또는 이메일",
+  "contact_phone": "null 또는 연락처",
   "pr_agency": "null 또는 대행사명",
   "homepage_url": "null 또는 URL"
 }
@@ -152,6 +154,7 @@ function parseAndValidate(rawText: string): AIAnalysis {
 
   // Handle nulls returned as strings
   if (parsed.contact_email === 'null') parsed.contact_email = null;
+  if (parsed.contact_phone === 'null') parsed.contact_phone = null;
   if (parsed.pr_agency === 'null') parsed.pr_agency = null;
   if (parsed.homepage_url === 'null') parsed.homepage_url = null;
 
@@ -258,6 +261,29 @@ function detectEmail(text: string): string | null {
 }
 
 /**
+ * Detect Korean phone numbers using regex
+ */
+function detectPhone(text: string): string | null {
+  // Matches: 02-123-4567, 010-1234-5678, 070-1234-5678, etc.
+  const phoneRegex = /(0\d{1,2}-\d{3,4}-\d{4})/g;
+  const matches = text.match(phoneRegex);
+  return matches ? matches[0] : null;
+}
+
+/**
+ * Detect URLs using regex
+ */
+function detectUrl(text: string): string | null {
+  const urlRegex = /(https?:\/\/[^\s]+)/gi;
+  const matches = text.match(urlRegex);
+  if (!matches) return null;
+
+  // Exclude newswire links if searching for company homepage
+  const filtered = matches.filter(url => !url.includes('newswire.co.kr'));
+  return filtered.length > 0 ? filtered[0] : null;
+}
+
+/**
  * Analyze article with configured AI provider
  * Retries once with stronger reminder if parsing fails
  */
@@ -273,9 +299,15 @@ export async function analyzeArticle(
   try {
     const analysis = await analyzeFn(title, content, source);
 
-    // Regex Fallback for Email
+    // Regex Fallback
     if (!analysis.contact_email) {
       analysis.contact_email = detectEmail(content) || detectEmail(title);
+    }
+    if (!analysis.contact_phone) {
+      analysis.contact_phone = detectPhone(content) || detectPhone(title);
+    }
+    if (!analysis.homepage_url) {
+      analysis.homepage_url = detectUrl(content) || detectUrl(title);
     }
 
     return analysis;
@@ -306,8 +338,9 @@ export async function analyzeArticle(
         sales_angle: '수동 검토 필요',
         ai_score: 0,
         contact_email: detectEmail(content),
+        contact_phone: detectPhone(content),
         pr_agency: null,
-        homepage_url: null,
+        homepage_url: detectUrl(content),
       };
     }
   }

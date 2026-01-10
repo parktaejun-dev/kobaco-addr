@@ -17,9 +17,11 @@ import {
   type LeadCore,
   type LeadState,
 } from '@/lib/crm-types';
-import { fetchCustomFeeds, type NormalizedArticle, type RSSFeedConfig } from '@/lib/rss-parser';
+import { fetchCustomFeeds, fetchFullContent, type NormalizedArticle, type RSSFeedConfig } from '@/lib/rss-parser';
 import { fetchNaverNews, type NaverConfig } from '@/lib/naver';
 import { analyzeArticle } from '@/lib/ai-provider';
+import { getSystemConfig } from '@/lib/content/kv';
+import { sendLeadNotification } from '@/lib/notifications';
 
 // Vercel serverless config
 export const maxDuration = 60;
@@ -32,6 +34,7 @@ const AI_CONCURRENCY = 3; // Max concurrent AI calls
 interface SalesConfig {
   naverClientId?: string;
   naverClientSecret?: string;
+  naverEnabled?: boolean;
   keywords?: string[];
   rssFeeds?: RSSFeedConfig[];
 }
@@ -80,11 +83,12 @@ export async function POST(request: NextRequest) {
     const config = await redis.get<SalesConfig>(RedisKeys.config());
 
     // Fetch articles from RSS (custom or default)
-    const rssArticles = await fetchCustomFeeds(config?.rssFeeds || [], 6);
+    const activeFeeds = (config?.rssFeeds || []).filter(f => f.enabled !== false);
+    const rssArticles = await fetchCustomFeeds(activeFeeds, 6);
 
-    // Fetch articles from Naver if configured
+    // Fetch articles from Naver if configured and enabled
     let naverArticles: NormalizedArticle[] = [];
-    if (config?.naverClientId && config?.naverClientSecret) {
+    if (config?.naverEnabled !== false && config?.naverClientId && config?.naverClientSecret) {
       const naverConfig: NaverConfig = {
         naverClientId: config.naverClientId,
         naverClientSecret: config.naverClientSecret,
@@ -124,9 +128,19 @@ export async function POST(request: NextRequest) {
     // Analyze with AI (with concurrency control)
     const limiter = pLimit(AI_CONCURRENCY);
     const analyzePromises = articlesToAnalyze.map((article) =>
-      limiter(() =>
-        analyzeArticle(article.title, article.contentSnippet, article._source)
-      )
+      limiter(async () => {
+        let contentToAnalyze = article.contentSnippet;
+
+        // For Newswire, fetch full content to get contact info
+        if (article.link.includes('newswire.co.kr')) {
+          const fullContent = await fetchFullContent(article.link);
+          if (fullContent) {
+            contentToAnalyze = fullContent;
+          }
+        }
+
+        return analyzeArticle(article.title, contentToAnalyze, article._source);
+      })
     );
 
     const analyses = await Promise.all(analyzePromises);
@@ -169,6 +183,7 @@ export async function POST(request: NextRequest) {
         ai_analysis: analysis,
         contact: {
           email: analysis.contact_email || undefined,
+          phone: analysis.contact_phone || undefined,
           pr_agency: analysis.pr_agency || undefined,
           homepage: analysis.homepage_url || undefined,
           source: article._source === 'NAVER' ? 'NEWS' : 'NEWS',
@@ -186,7 +201,35 @@ export async function POST(request: NextRequest) {
 
     // Upsert to CRM (top N leads only to save Redis space)
     const leadsToUpsert = leads.slice(0, limit);
-    await upsertLeads(leadsToUpsert);
+    const newLeadIds = await upsertLeads(leadsToUpsert);
+
+    // 4. Send Notifications for NEW high-score leads
+    if (newLeadIds.length > 0) {
+      const systemConfig = await getSystemConfig().catch(() => ({}));
+      const notificationConfig = {
+        slackUrl: systemConfig.slackWebhookUrl || process.env.SLACK_WEBHOOK_URL,
+        telegramToken: systemConfig.telegramBotToken || process.env.TELEGRAM_BOT_TOKEN,
+        telegramChatId: systemConfig.telegramChatId || process.env.TELEGRAM_CHAT_ID,
+      };
+
+      // Only notify for leads with score >= 70 (or minScore if higher)
+      const notifyThreshold = Math.max(70, minScore);
+      const leadsToNotify = leadsToUpsert.filter(l =>
+        newLeadIds.includes(l.lead_id) && l.final_score >= notifyThreshold
+      );
+
+      for (const lead of leadsToNotify) {
+        await sendLeadNotification({
+          title: lead.title,
+          company: lead.ai_analysis.company_name,
+          score: lead.final_score,
+          angle: lead.ai_analysis.sales_angle,
+          link: lead.link,
+          email: lead.contact?.email,
+          phone: lead.contact?.phone,
+        }, notificationConfig);
+      }
+    }
 
     // Cache results
     await redis.set(cacheKey, leads, { ex: CACHE_TTL });
@@ -236,25 +279,27 @@ function deduplicateArticles(articles: NormalizedArticle[]): NormalizedArticle[]
 
 /**
  * Upsert leads to CRM (Redis)
+ * Returns array of IDs of NEWLY created leads
  */
-async function upsertLeads(leads: LeadCore[]): Promise<void> {
+async function upsertLeads(leads: LeadCore[]): Promise<string[]> {
   const pipeline = redis.pipeline();
-
   const timestamp = Date.now();
+  const newLeadIds: string[] = [];
 
   for (const lead of leads) {
     const { lead_id } = lead;
 
-    // Save LeadCore
-    pipeline.set(RedisKeys.leadCore(lead_id), lead);
-
-    // Check if LeadState exists
+    // Check if LeadState exists to identify if it's new
     const existingState = await redis.get<LeadState>(
       RedisKeys.leadState(lead_id)
     );
 
+    // Save LeadCore
+    pipeline.set(RedisKeys.leadCore(lead_id), lead);
+
     // Init LeadState if missing
     if (!existingState) {
+      newLeadIds.push(lead_id);
       const initialState = createInitialState(lead_id);
       pipeline.set(RedisKeys.leadState(lead_id), initialState);
 
@@ -275,4 +320,5 @@ async function upsertLeads(leads: LeadCore[]): Promise<void> {
   }
 
   await pipeline.exec();
+  return newLeadIds;
 }

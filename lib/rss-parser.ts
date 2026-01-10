@@ -4,6 +4,8 @@
  */
 
 import Parser from 'rss-parser';
+import * as cheerio from 'cheerio';
+import axios from 'axios';
 import { stripHtml } from './crm-types';
 
 // ============================================================================
@@ -25,6 +27,7 @@ export interface RSSFeedConfig {
   url: string;
   title?: string;
   originalUrl?: string;
+  enabled?: boolean;
 }
 
 // ============================================================================
@@ -136,4 +139,47 @@ export async function fetchAllRSSFeeds(
  */
 export function getDefaultRSSFeeds(): RSSFeedConfig[] {
   return [...DEFAULT_RSS];
+}
+
+/**
+ * Fetch full content of an article
+ */
+export async function fetchFullContent(url: string): Promise<string> {
+  try {
+    const { data } = await axios.get(url, {
+      timeout: 5000,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+      },
+    });
+
+    const $ = cheerio.load(data);
+
+    // Remove scripts, styles, and common navigation/footer elements
+    $('script, style, nav, footer, iframe, header').remove();
+
+    // Domain-specific selectors
+    if (url.includes('newswire.co.kr')) {
+      // Newswire specific: main article body + contact info
+      const body = $('#news-body').text().trim();
+      const contact = $('.contact-area').text().trim() || $('#news-contact').text().trim();
+
+      // If specific selectors fail, fallback to a broader one
+      if (body) return `${body}\n\n${contact}`.trim();
+    }
+
+    // Fallback: try common article body selectors
+    const bodyText = $('article, .article-body, .post-content, main, .content').text().trim();
+
+    // If all else fails, use the body but it might be noisy
+    if (bodyText && bodyText.length > 200) {
+      return bodyText;
+    }
+
+    // Hard fallback: just take the body text but cleaned up
+    return $('body').text().replace(/\s\s+/g, ' ').trim().slice(0, 5000);
+  } catch (error) {
+    console.error(`Failed to fetch full content from ${url}:`, error);
+    return '';
+  }
 }
