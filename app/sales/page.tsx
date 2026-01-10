@@ -438,10 +438,10 @@ export default function SalesDashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="h-screen flex flex-col bg-slate-50 overflow-hidden">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-3">
-        <div className="flex items-center justify-between max-w-7xl mx-auto">
+      <div className="bg-white border-b border-gray-200 px-6 py-4 flex-shrink-0">
+        <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold text-gray-900">KOBACO Lead Sniper</h1>
           <button
             onClick={() => (window.location.href = '/sales/settings')}
@@ -453,8 +453,8 @@ export default function SalesDashboardPage() {
       </div>
 
       {/* Scan Controls */}
-      <div className="bg-white border-b border-gray-200 px-4 py-3">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center gap-3">
+      <div className="bg-white border-b border-gray-200 px-6 py-3 flex-shrink-0">
+        <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={() => handleIncrementalScan(false)}
             disabled={scanning}
@@ -497,8 +497,8 @@ export default function SalesDashboardPage() {
         </div>
       </div>
 
-      {/* Status Tabs with Select All */}
-      <div className="bg-white border-b border-gray-200 px-4 flex items-center justify-between">
+      {/* Status Tabs */}
+      <div className="bg-white border-b border-gray-200 px-6 flex-shrink-0 flex items-center justify-between">
         <div className="flex overflow-x-auto">
           {STATUSES.map((status) => (
             <button
@@ -519,10 +519,10 @@ export default function SalesDashboardPage() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto p-4">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="flex-1 overflow-hidden p-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
           {/* Leads List */}
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
             <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-gray-50/50">
               <h2 className="font-semibold text-gray-900">
                 리드 목록 ({leads.length})
@@ -539,7 +539,7 @@ export default function SalesDashboardPage() {
               </div>
             </div>
 
-            <div className="divide-y divide-gray-200 max-h-[calc(100vh-300px)] overflow-y-auto">
+            <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
               {loading ? (
                 <div className="p-8 text-center text-gray-500">로딩 중...</div>
               ) : leads.length === 0 ? (
@@ -693,7 +693,7 @@ export default function SalesDashboardPage() {
           </div>
 
           {/* Lead Detail */}
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
             {selectedLead ? (
               <div className="h-full flex flex-col">
                 <div className="p-4 border-b border-gray-200">
@@ -838,8 +838,8 @@ export default function SalesDashboardPage() {
               </div>
             )}
           </div>
-        </div >
-      </div >
+        </div>
+      </div>
       {/* Floating Bulk Action Bar */}
       {
         selectedLeads.size > 0 && (
