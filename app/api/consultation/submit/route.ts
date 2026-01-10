@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from 'redis';
 import { getSystemConfig } from '@/lib/content/kv'; // 관리자 설정 불러오기
-import { sendSlackNotification, sendTelegramNotification, escapeMarkdownV2 } from '@/lib/notifications';
+import { sendSlackNotification, sendTelegramNotification, escapeMarkdownV2, TEL_SEP } from '@/lib/notifications';
 
 // Redis Init (데이터 저장용)
 const redis = createClient({
@@ -81,12 +81,12 @@ export async function POST(request: Request) {
 
         const telegramMessage = `
 📞 *새로운 상담 문의*
-\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-
+${TEL_SEP}
 👤 *담당자:* ${safeName}
 🏢 *회사:* ${safeCompany}
 📧 *이메일:* ${safeEmail}
 📱 *연락처:* ${safePhone}
-\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-
+${TEL_SEP}
 📝 *문의 내용:*
 ${safeMessage}
         `.trim();

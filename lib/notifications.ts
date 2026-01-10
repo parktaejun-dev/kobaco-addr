@@ -5,14 +5,17 @@ import axios from 'axios';
  */
 export function escapeMarkdownV2(text: string): string {
     if (!text) return '';
-    return text.replace(/[_*[\]()~`>#+\-=|{}.!]/g, '\\$&');
+    // MarkdownV2 requires escaping: _ * [ ] ( ) ~ ` > # + - = | { } . !
+    return text.toString().replace(/[_*[\]()~`>#+\-=|{}.!]/g, '\\$&');
 }
+
+export const TEL_SEP = '\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-';
 
 /**
  * Send Slack Notification
  */
 export async function sendSlackNotification(payload: any, webhookUrl?: string) {
-    if (!webhookUrl || webhookUrl.trim() === '') {
+    if (!webhookUrl || webhookUrl.trim() === '' || webhookUrl === '********') {
         console.warn('Slack Webhook URL not configured');
         return false;
     }
@@ -32,13 +35,7 @@ export async function sendSlackNotification(payload: any, webhookUrl?: string) {
  * Send Telegram Notification
  */
 export async function sendTelegramNotification(message: string, botToken?: string, chatId?: string) {
-    console.log('Telegram config check:', {
-        hasToken: !!botToken,
-        tokenPreview: botToken ? `${botToken.slice(0, 5)}...` : 'none',
-        hasChatId: !!chatId
-    });
-
-    if (!botToken || !chatId || botToken.trim() === '' || chatId.trim() === '') {
+    if (!botToken || !chatId || botToken.trim() === '' || chatId.trim() === '' || botToken === '********' || chatId === '********') {
         console.warn('Telegram Bot Token or Chat ID not configured');
         return false;
     }
@@ -49,7 +46,7 @@ export async function sendTelegramNotification(message: string, botToken?: strin
             chat_id: chatId,
             text: message,
             parse_mode: 'MarkdownV2',
-        }, { timeout: 5000 });
+        }, { timeout: 10000 });
 
         console.log('Telegram notification sent successfully:', response.status);
         return true;
@@ -122,17 +119,17 @@ export async function sendLeadNotification(
     const safeAngle = escapeMarkdownV2(lead.angle);
     const safeEmail = escapeMarkdownV2(lead.email || '-');
     const safePhone = escapeMarkdownV2(lead.phone || '-');
-    const safeLink = lead.link;
+    const safeLink = lead.link; // Link itself shouldn't be escaped if used in [text](link)
 
     const telegramMessage = `
 🎯 *새로운 고점수 리드 발견\\!*
-\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-
+${TEL_SEP}
 🏢 *기업:* ${safeCompany}
 ⭐ *점수:* ${lead.score}점
-\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-
+${TEL_SEP}
 📰 *기사:* [${safeTitle}](${safeLink})
 💡 *전략:* ${safeAngle}
-\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-\\\\-
+${TEL_SEP}
 📧 *이메일:* ${safeEmail}
 📞 *연락처:* ${safePhone}
   `.trim();
