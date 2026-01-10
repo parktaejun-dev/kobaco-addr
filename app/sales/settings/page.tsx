@@ -17,6 +17,8 @@ interface ConfigData {
   keywords: string[];
   rssFeeds: RSSFeed[];
   minScore: number;
+  leadNotificationsEnabled: boolean;
+  minLeadScoreForNotify: number;
 }
 
 export default function SalesSettingsPage() {
@@ -27,6 +29,8 @@ export default function SalesSettingsPage() {
     keywords: [],
     rssFeeds: [],
     minScore: 50,
+    leadNotificationsEnabled: true,
+    minLeadScoreForNotify: 70,
   });
 
   const [keywordsInput, setKeywordsInput] = useState('');
@@ -79,6 +83,8 @@ export default function SalesSettingsPage() {
           keywords,
           rssFeeds: config.rssFeeds,
           minScore: config.minScore,
+          leadNotificationsEnabled: config.leadNotificationsEnabled,
+          minLeadScoreForNotify: config.minLeadScoreForNotify,
         }),
       });
 
@@ -177,11 +183,52 @@ export default function SalesSettingsPage() {
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">설정</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Naver News API 및 RSS 피드 설정
+            Naver News API 및 RSS 피드, 알림 설정
           </p>
         </div>
 
         <div className="space-y-6">
+          {/* Notifications Section */}
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">
+                알림 설정
+              </h2>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-500">{config.leadNotificationsEnabled ? '활성' : '비활성'}</span>
+                <button
+                  onClick={() => setConfig({ ...config, leadNotificationsEnabled: !config.leadNotificationsEnabled })}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${config.leadNotificationsEnabled ? 'bg-blue-600' : 'bg-gray-200'
+                    }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${config.leadNotificationsEnabled ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                  />
+                </button>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  알림 발송 기준 점수 (0-100)
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={config.minLeadScoreForNotify}
+                  onChange={(e) =>
+                    setConfig({ ...config, minLeadScoreForNotify: Number(e.target.value) })
+                  }
+                  className="w-24 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  이 점수 이상의 리드가 발견되면 텔레그램/슬랙 알림을 보냅니다. 권장: 70-80
+                </p>
+              </div>
+            </div>
+          </div>
           {/* Naver API Section */}
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
             <div className="flex items-center justify-between mb-4">

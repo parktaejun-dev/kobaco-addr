@@ -28,6 +28,8 @@ interface ConfigData {
   keywords: string[];
   rssFeeds: RSSFeed[];
   minScore?: number;
+  leadNotificationsEnabled?: boolean;
+  minLeadScoreForNotify?: number;
   updated_at?: string;
 }
 
@@ -50,6 +52,8 @@ export async function GET(req: NextRequest) {
         keywords: [],
         rssFeeds: [],
         minScore: 50,
+        leadNotificationsEnabled: true,
+        minLeadScoreForNotify: 70,
       });
     }
 
@@ -61,6 +65,8 @@ export async function GET(req: NextRequest) {
       keywords: data.keywords || [],
       rssFeeds: (data.rssFeeds || []).map(f => ({ ...f, enabled: f.enabled ?? true })),
       minScore: queryMinScore ? Number(queryMinScore) : (data.minScore ?? 50),
+      leadNotificationsEnabled: data.leadNotificationsEnabled ?? true,
+      minLeadScoreForNotify: data.minLeadScoreForNotify ?? 70,
     });
   } catch (error) {
     console.error('Error fetching config:', error);
@@ -79,7 +85,16 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const { naverClientId, naverClientSecret, naverEnabled, keywords, rssFeeds, minScore } = body;
+    const {
+      naverClientId,
+      naverClientSecret,
+      naverEnabled,
+      keywords,
+      rssFeeds,
+      minScore,
+      leadNotificationsEnabled,
+      minLeadScoreForNotify
+    } = body;
 
     // Get existing config
     const existing = await redis.get<ConfigData>(REDIS_KEY);
@@ -92,6 +107,8 @@ export async function POST(request: NextRequest) {
       keywords: [],
       rssFeeds: [],
       minScore: typeof minScore === 'number' ? minScore : 50,
+      leadNotificationsEnabled: typeof leadNotificationsEnabled === 'boolean' ? leadNotificationsEnabled : true,
+      minLeadScoreForNotify: typeof minLeadScoreForNotify === 'number' ? minLeadScoreForNotify : 70,
       updated_at: new Date().toISOString(),
     };
 

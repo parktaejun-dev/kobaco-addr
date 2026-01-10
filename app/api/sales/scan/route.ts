@@ -37,6 +37,8 @@ interface SalesConfig {
   naverEnabled?: boolean;
   keywords?: string[];
   rssFeeds?: RSSFeedConfig[];
+  leadNotificationsEnabled?: boolean;
+  minLeadScoreForNotify?: number;
 }
 
 interface ScanResponse {
@@ -204,7 +206,7 @@ export async function POST(request: NextRequest) {
     const newLeadIds = await upsertLeads(leadsToUpsert);
 
     // 4. Send Notifications for NEW high-score leads
-    if (newLeadIds.length > 0) {
+    if (newLeadIds.length > 0 && config?.leadNotificationsEnabled !== false) {
       const systemConfig = await getSystemConfig().catch(() => ({}));
       const notificationConfig = {
         slackUrl: systemConfig.slackWebhookUrl || process.env.SLACK_WEBHOOK_URL,
@@ -212,8 +214,8 @@ export async function POST(request: NextRequest) {
         telegramChatId: systemConfig.telegramChatId || process.env.TELEGRAM_CHAT_ID,
       };
 
-      // Only notify for leads with score >= 70 (or minScore if higher)
-      const notifyThreshold = Math.max(70, minScore);
+      // Use user-defined threshold or default to 70
+      const notifyThreshold = config?.minLeadScoreForNotify ?? 70;
       const leadsToNotify = leadsToUpsert.filter(l =>
         newLeadIds.includes(l.lead_id) && l.final_score >= notifyThreshold
       );
