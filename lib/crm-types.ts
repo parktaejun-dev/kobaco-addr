@@ -35,6 +35,9 @@ export const AIAnalysisSchema = z.object({
   atv_fit_reason: z.string(),
   sales_angle: z.string(),
   ai_score: z.number().min(0).max(100),
+  contact_email: z.string().optional().nullable(),
+  pr_agency: z.string().optional().nullable(),
+  homepage_url: z.string().optional().nullable(),
 });
 
 export type AIAnalysis = z.infer<typeof AIAnalysisSchema>;
@@ -54,6 +57,15 @@ export interface LeadCore {
 
   // AI Analysis
   ai_analysis: AIAnalysis;
+
+  // Contact Info (Extracted)
+  contact?: {
+    email?: string;
+    phone?: string;
+    pr_agency?: string;
+    homepage?: string;
+    source?: 'NEWS' | 'HOMEPAGE' | 'MANUAL';
+  };
 
   // Scoring
   final_score: number;

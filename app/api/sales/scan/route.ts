@@ -167,6 +167,12 @@ export async function POST(request: NextRequest) {
         source: article._source,
         keyword: article._keyword,
         ai_analysis: analysis,
+        contact: {
+          email: analysis.contact_email || undefined,
+          pr_agency: analysis.pr_agency || undefined,
+          homepage: analysis.homepage_url || undefined,
+          source: article._source === 'NAVER' ? 'NEWS' : 'NEWS',
+        },
         final_score: finalScore,
         created_at: Date.now(),
         updated_at: Date.now(),

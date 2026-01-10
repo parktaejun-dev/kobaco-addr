@@ -10,6 +10,9 @@ interface AIAnalysis {
   atv_fit_reason: string;
   sales_angle: string;
   ai_score: number;
+  contact_email?: string | null;
+  pr_agency?: string | null;
+  homepage_url?: string | null;
 }
 
 interface LeadState {
@@ -102,6 +105,11 @@ export default function SalesDashboardPage() {
     } catch {
       return '-';
     }
+  }
+
+  function handleCopyEmail(email: string) {
+    navigator.clipboard.writeText(email);
+    alert('이메일 주소가 복사되었습니다.');
   }
 
   const [scanLimit, setScanLimit] = useState(30);
@@ -572,6 +580,46 @@ ${selectedLead.ai_analysis.sales_angle}
                                 <span className="text-[10px] text-gray-400">•</span>
                                 <span className="text-[10px] text-gray-500">💬 {lead.notes_count}</span>
                               </>
+                            )}
+                          </div>
+
+                          {/* Contact Bar */}
+                          <div className="flex flex-wrap items-center gap-1.5 mt-3 pt-2 border-t border-gray-50">
+                            {lead.ai_analysis.pr_agency ? (
+                              <span className="flex items-center gap-1 px-1.5 py-0.5 bg-yellow-50 text-yellow-700 text-[10px] font-bold rounded border border-yellow-100">
+                                📣 PR: {lead.ai_analysis.pr_agency}
+                              </span>
+                            ) : null}
+
+                            {lead.ai_analysis.contact_email ? (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleCopyEmail(lead.ai_analysis.contact_email!);
+                                }}
+                                className="flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-bold rounded border border-blue-100 hover:bg-blue-100 transition-colors"
+                                title="이메일 복사"
+                              >
+                                ✉️ {lead.ai_analysis.contact_email}
+                              </button>
+                            ) : null}
+
+                            {lead.ai_analysis.homepage_url ? (
+                              <a
+                                href={lead.ai_analysis.homepage_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="flex items-center gap-1 px-1.5 py-0.5 bg-slate-50 text-slate-700 text-[10px] font-bold rounded border border-slate-100 hover:bg-slate-100 transition-colors"
+                              >
+                                🌐 홈페이지
+                              </a>
+                            ) : null}
+
+                            {!lead.ai_analysis.contact_email && !lead.ai_analysis.homepage_url && (
+                              <span className="text-[10px] text-orange-400 font-medium italic">
+                                ⚠️ 홈페이지 확인 필요
+                              </span>
                             )}
                           </div>
                         </div>

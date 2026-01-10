@@ -58,13 +58,17 @@ For each article, evaluate:
    - Decision timeline (is action imminent?)
    - Service fit (do they need advertising/media?)
    - Contact opportunity (can we reach decision makers?)
+7. **Contact Information** - Extract public contact info:
+   - Representative Email (e.g., press@..., contact@...)
+   - PR Agency name (if mentioned as handling the press release)
+   - Company Homepage URL
 
 CRITICAL REQUIREMENTS:
 - Output ONLY valid JSON
 - NO markdown formatting
 - NO code blocks
 - NO extra text
-- All field values MUST be in Korean
+- All field values MUST be in Korean (except email/urls)
 - Follow this EXACT schema:
 
 {
@@ -73,7 +77,10 @@ CRITICAL REQUIREMENTS:
   "target_audience": "타겟 고객층",
   "atv_fit_reason": "KOBACO 서비스 적합 이유",
   "sales_angle": "영업 접근 방식",
-  "ai_score": 75
+  "ai_score": 75,
+  "contact_email": "null 또는 이메일",
+  "pr_agency": "null 또는 대행사명",
+  "homepage_url": "null 또는 URL"
 }
 
 If the article is not relevant to advertising/media/marketing, set ai_score to 0 but still provide analysis.`;
@@ -136,12 +143,17 @@ function extractJSON(text: string): string {
 function parseAndValidate(rawText: string): AIAnalysis {
   const jsonText = extractJSON(rawText);
 
-  let parsed: unknown;
+  let parsed: any;
   try {
     parsed = JSON.parse(jsonText);
   } catch (e) {
     throw new Error(`JSON parse failed: ${e instanceof Error ? e.message : 'Unknown error'}`);
   }
+
+  // Handle nulls returned as strings
+  if (parsed.contact_email === 'null') parsed.contact_email = null;
+  if (parsed.pr_agency === 'null') parsed.pr_agency = null;
+  if (parsed.homepage_url === 'null') parsed.homepage_url = null;
 
   // Validate with Zod
   const result = AIAnalysisSchema.safeParse(parsed);
@@ -174,7 +186,7 @@ async function analyzeWithGemini(
     },
   });
 
-  const userPrompt = `Analyze this article for sales lead potential:
+  const userPrompt = `Analyze this article for sales lead potential and contact info:
 
 Title: ${title}
 Content: ${content}
@@ -205,7 +217,7 @@ async function analyzeWithDeepSeek(
 ): Promise<AIAnalysis> {
   const client = getDeepSeekClient();
 
-  const userPrompt = `Analyze this article for sales lead potential:
+  const userPrompt = `Analyze this article for sales lead potential and contact info:
 
 Title: ${title}
 Content: ${content}
@@ -237,6 +249,15 @@ Provide analysis in the exact JSON format specified.`;
 // ============================================================================
 
 /**
+ * Detect email using regex for fallback
+ */
+function detectEmail(text: string): string | null {
+  const emailRegex = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/gi;
+  const matches = text.match(emailRegex);
+  return matches ? matches[0] : null;
+}
+
+/**
  * Analyze article with configured AI provider
  * Retries once with stronger reminder if parsing fails
  */
@@ -250,7 +271,14 @@ export async function analyzeArticle(
   const analyzeFn = AI_PROVIDER === 'gemini' ? analyzeWithGemini : analyzeWithDeepSeek;
 
   try {
-    return await analyzeFn(title, content, source);
+    const analysis = await analyzeFn(title, content, source);
+
+    // Regex Fallback for Email
+    if (!analysis.contact_email) {
+      analysis.contact_email = detectEmail(content) || detectEmail(title);
+    }
+
+    return analysis;
   } catch (error) {
     // Retry once with stronger reminder
     console.warn('AI analysis failed, retrying with stronger prompt:', error);
@@ -258,7 +286,14 @@ export async function analyzeArticle(
     try {
       // Add stronger reminder to content
       const enhancedContent = `${content}\n\nREMINDER: Respond with ONLY valid JSON matching the schema. No markdown, no code blocks, no extra text.`;
-      return await analyzeFn(title, enhancedContent, source);
+      const analysis = await analyzeFn(title, enhancedContent, source);
+
+      // Regex Fallback for Email
+      if (!analysis.contact_email) {
+        analysis.contact_email = detectEmail(content);
+      }
+
+      return analysis;
     } catch (retryError) {
       console.error('AI analysis failed after retry:', retryError);
 
@@ -270,6 +305,9 @@ export async function analyzeArticle(
         atv_fit_reason: 'AI 분석 실패',
         sales_angle: '수동 검토 필요',
         ai_score: 0,
+        contact_email: detectEmail(content),
+        pr_agency: null,
+        homepage_url: null,
       };
     }
   }
