@@ -1916,6 +1916,7 @@ export default function AdminPortal() {
                                     { id: 'reporting', label: 'Reporting (리포트 강조)', icon: BarChart3 },
                                     { id: 'faq', label: 'FAQ (질의응답)', icon: Database },
                                     { id: 'estimateGuide', label: 'Estimate Guide (견적안내)', icon: ShieldCheck },
+                                    { id: 'consultation', label: 'Consultation (상담 요청)', icon: Users },
                                 ].map(type => (
                                     <button key={type.id} onClick={() => addSection(type.id)} className="flex items-center gap-4 p-5 border-2 border-slate-100 rounded-2xl hover:border-blue-500 hover:bg-blue-50 transition-all text-left group">
                                         <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-400 group-hover:bg-blue-100 group-hover:text-blue-600 transition-all">
