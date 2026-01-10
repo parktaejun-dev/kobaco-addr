@@ -95,14 +95,10 @@ export async function POST(request: NextRequest) {
 
     // Merge and deduplicate by canonical link
     const allArticles = [...rssArticles, ...naverArticles];
-    const dedupedRaw = deduplicateArticles(allArticles);
-
-    // Limit articles for AI analysis to prevent timeout (analyze 2x limit max)
-    const maxAnalyze = Math.min(dedupedRaw.length, limit * 2);
-    const deduped = dedupedRaw.slice(0, maxAnalyze);
+    const deduped = deduplicateArticles(allArticles);
 
     console.log(
-      `Scan: ${allArticles.length} total, ${dedupedRaw.length} after dedup, ${deduped.length} for analysis`
+      `Scan: ${allArticles.length} total, ${deduped.length} after dedup`
     );
 
     // Analyze with AI (with concurrency control)

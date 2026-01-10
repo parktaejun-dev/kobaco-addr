@@ -17,6 +17,7 @@ export const LeadStatus = {
   ON_HOLD: 'ON_HOLD',
   WON: 'WON',
   LOST: 'LOST',
+  EXCLUDED: 'EXCLUDED',
 } as const;
 
 export type LeadStatusType = typeof LeadStatus[keyof typeof LeadStatus];

@@ -46,7 +46,7 @@ interface LeadNote {
   created_at: number;
 }
 
-const STATUSES = ['ALL', 'NEW', 'CONTACTED', 'IN_PROGRESS', 'ON_HOLD', 'WON', 'LOST'];
+const STATUSES = ['ALL', 'NEW', 'CONTACTED', 'IN_PROGRESS', 'ON_HOLD', 'WON', 'LOST', 'EXCLUDED'];
 const STATUS_LABELS: Record<string, string> = {
   ALL: '전체',
   NEW: '신규',
@@ -55,6 +55,7 @@ const STATUS_LABELS: Record<string, string> = {
   ON_HOLD: '보류',
   WON: '성공',
   LOST: '실패',
+  EXCLUDED: '제외',
 };
 
 export default function SalesDashboardPage() {
@@ -184,6 +185,28 @@ export default function SalesDashboardPage() {
     }
   }
 
+  async function handleUpdateAssignedTo(assignedTo: string) {
+    if (!selectedLead) return;
+
+    try {
+      const res = await fetch(
+        `/api/sales/leads/${selectedLead.lead_id}/state`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ assigned_to: assignedTo }),
+        }
+      );
+
+      if (res.ok) {
+        loadLeads(currentStatus);
+        setSelectedLead({ ...selectedLead, state: { ...selectedLead.state, assigned_to: assignedTo } });
+      }
+    } catch (error) {
+      console.error('Failed to update assigned_to:', error);
+    }
+  }
+
   function copySalesScript() {
     if (!selectedLead) return;
 
@@ -266,8 +289,8 @@ ${selectedLead.ai_analysis.sales_angle}
               key={status}
               onClick={() => setCurrentStatus(status)}
               className={`px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${currentStatus === status
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-600 hover:text-gray-900'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-600 hover:text-gray-900'
                 }`}
             >
               {STATUS_LABELS[status]}
@@ -302,23 +325,41 @@ ${selectedLead.ai_analysis.sales_angle}
                     className={`w-full p-4 text-left hover:bg-gray-50 transition-colors ${selectedLead?.lead_id === lead.lead_id ? 'bg-blue-50' : ''
                       }`}
                   >
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <h3 className="font-medium text-gray-900 text-sm line-clamp-2">
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <h3 className="font-medium text-gray-900 text-sm line-clamp-1">
                         {lead.title}
                       </h3>
-                      <span className="flex-shrink-0 px-2 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded">
-                        {lead.final_score}
-                      </span>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <span className={`px-1.5 py-0.5 text-[10px] font-semibold rounded ${lead.state.status === 'NEW' ? 'bg-green-100 text-green-700' :
+                          lead.state.status === 'CONTACTED' ? 'bg-blue-100 text-blue-700' :
+                            lead.state.status === 'IN_PROGRESS' ? 'bg-yellow-100 text-yellow-700' :
+                              lead.state.status === 'WON' ? 'bg-emerald-100 text-emerald-700' :
+                                lead.state.status === 'LOST' ? 'bg-red-100 text-red-700' :
+                                  lead.state.status === 'EXCLUDED' ? 'bg-gray-100 text-gray-500' :
+                                    'bg-gray-100 text-gray-600'
+                          }`}>
+                          {STATUS_LABELS[lead.state.status] || lead.state.status}
+                        </span>
+                        <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-semibold rounded">
+                          {lead.final_score}
+                        </span>
+                      </div>
                     </div>
 
-                    <div className="text-xs text-gray-600 mb-2">
+                    <div className="text-xs text-gray-600 mb-1">
                       {lead.ai_analysis.company_name}
                     </div>
 
-                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <div className="flex items-center gap-2 text-[10px] text-gray-500">
                       <span>{lead.source}</span>
                       <span>•</span>
                       <span>{new Date(lead.pubDate).toLocaleDateString()}</span>
+                      {lead.state.assigned_to && (
+                        <>
+                          <span>•</span>
+                          <span>👤 {lead.state.assigned_to}</span>
+                        </>
+                      )}
                       {lead.notes_count > 0 && (
                         <>
                           <span>•</span>
@@ -352,6 +393,14 @@ ${selectedLead.ai_analysis.sales_angle}
                         </option>
                       ))}
                     </select>
+
+                    <input
+                      type="text"
+                      placeholder="담당자"
+                      defaultValue={selectedLead.state.assigned_to || ''}
+                      onBlur={(e) => handleUpdateAssignedTo(e.target.value)}
+                      className="px-3 py-1 border border-gray-300 rounded-lg text-sm w-24"
+                    />
 
                     <button
                       onClick={copySalesScript}
