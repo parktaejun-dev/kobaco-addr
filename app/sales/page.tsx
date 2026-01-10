@@ -114,8 +114,7 @@ export default function SalesDashboardPage() {
       if (res.ok) {
         const data = await res.json();
         alert(
-          `스캔 완료!\n분석: ${data.stats?.analyzed || 0}개\n필터 통과: ${
-            data.stats?.passed_filter || 0
+          `스캔 완료!\n분석: ${data.stats?.analyzed || 0}개\n필터 통과: ${data.stats?.passed_filter || 0
           }개`
         );
         loadLeads(currentStatus);
@@ -233,25 +232,29 @@ ${selectedLead.ai_analysis.sales_angle}
             {scanning
               ? '스캔 중...'
               : cooldown > 0
-              ? `대기 (${cooldown}s)`
-              : '🎯 리드 스캔'}
+                ? `대기 (${cooldown}s)`
+                : '🎯 리드 스캔'}
           </button>
 
-          <input
-            type="number"
-            value={scanLimit}
-            onChange={(e) => setScanLimit(Number(e.target.value))}
-            className="w-20 px-2 py-2 border border-gray-300 rounded-lg text-sm"
-            placeholder="Limit"
-          />
+          <div className="flex items-center gap-1">
+            <label className="text-xs text-gray-500">최대 개수</label>
+            <input
+              type="number"
+              value={scanLimit}
+              onChange={(e) => setScanLimit(Number(e.target.value))}
+              className="w-16 px-2 py-2 border border-gray-300 rounded-lg text-sm"
+            />
+          </div>
 
-          <input
-            type="number"
-            value={minScore}
-            onChange={(e) => setMinScore(Number(e.target.value))}
-            className="w-20 px-2 py-2 border border-gray-300 rounded-lg text-sm"
-            placeholder="Score"
-          />
+          <div className="flex items-center gap-1">
+            <label className="text-xs text-gray-500">최소 점수</label>
+            <input
+              type="number"
+              value={minScore}
+              onChange={(e) => setMinScore(Number(e.target.value))}
+              className="w-16 px-2 py-2 border border-gray-300 rounded-lg text-sm"
+            />
+          </div>
         </div>
       </div>
 
@@ -262,11 +265,10 @@ ${selectedLead.ai_analysis.sales_angle}
             <button
               key={status}
               onClick={() => setCurrentStatus(status)}
-              className={`px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
-                currentStatus === status
+              className={`px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${currentStatus === status
                   ? 'border-blue-600 text-blue-600'
                   : 'border-transparent text-gray-600 hover:text-gray-900'
-              }`}
+                }`}
             >
               {STATUS_LABELS[status]}
             </button>
@@ -297,9 +299,8 @@ ${selectedLead.ai_analysis.sales_angle}
                   <button
                     key={lead.lead_id}
                     onClick={() => setSelectedLead(lead)}
-                    className={`w-full p-4 text-left hover:bg-gray-50 transition-colors ${
-                      selectedLead?.lead_id === lead.lead_id ? 'bg-blue-50' : ''
-                    }`}
+                    className={`w-full p-4 text-left hover:bg-gray-50 transition-colors ${selectedLead?.lead_id === lead.lead_id ? 'bg-blue-50' : ''
+                      }`}
                   >
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <h3 className="font-medium text-gray-900 text-sm line-clamp-2">
