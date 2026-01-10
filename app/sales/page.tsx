@@ -507,10 +507,10 @@ export default function SalesDashboardPage() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-hidden p-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
+      <div className="flex-1 overflow-hidden p-6 min-h-0">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full min-h-0">
           {/* Leads List */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-full min-h-0">
             <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-gray-50/50">
               <h2 className="font-semibold text-gray-900">
                 리드 목록 ({leads.length})
@@ -527,7 +527,7 @@ export default function SalesDashboardPage() {
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
+            <div className="flex-1 overflow-y-auto divide-y divide-gray-100 min-h-0">
               {loading ? (
                 <div className="p-8 text-center text-gray-500">로딩 중...</div>
               ) : leads.length === 0 ? (
@@ -684,7 +684,7 @@ export default function SalesDashboardPage() {
           </div>
 
           {/* Lead Detail */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-full min-h-0">
             {selectedLead ? (
               <div className="h-full flex flex-col">
                 <div className="p-4 border-b border-gray-200">
@@ -730,7 +730,7 @@ export default function SalesDashboardPage() {
                   </a>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
                   {/* AI Analysis */}
                   <div className="space-y-3 text-sm">
                     <div>

@@ -23,9 +23,9 @@ export default function SalesLayout({ children }: SalesLayoutProps) {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col">
+        <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
             {/* Top Bar */}
-            <div className="fixed top-0 left-0 right-0 h-14 bg-white border-b border-gray-200 flex items-center px-4 z-[60]">
+            <header className="h-14 bg-white border-b border-gray-200 flex items-center px-4 z-[60] flex-shrink-0">
                 <button
                     onClick={() => setSidebarOpen(!sidebarOpen)}
                     className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
@@ -39,10 +39,10 @@ export default function SalesLayout({ children }: SalesLayoutProps) {
                     <span className="text-xl">🎯</span>
                     <span>KOBACO Sniper</span>
                 </Link>
-            </div>
+            </header>
 
             {/* Content Wrapper */}
-            <div className="flex-1 flex pt-14 h-screen overflow-hidden">
+            <div className="flex-1 flex overflow-hidden relative">
                 {/* Mobile Overlay */}
                 {sidebarOpen && (
                     <div
@@ -54,13 +54,13 @@ export default function SalesLayout({ children }: SalesLayoutProps) {
                 {/* Sidebar */}
                 <aside
                     className={`
-            fixed top-14 left-0 bottom-0 w-64 bg-slate-50 border-r border-gray-200 flex flex-col z-50
-            transform transition-transform duration-300 ease-in-out shadow-xl
-            ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+            fixed lg:static top-0 left-0 bottom-0 w-64 bg-slate-50 border-r border-gray-200 flex flex-col z-50
+            transform transition-transform duration-300 ease-in-out shadow-xl lg:shadow-none
+            ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:-translate-x-full lg:hidden'}
           `}
                 >
                     {/* Navigation */}
-                    <nav className="flex-1 p-3 space-y-1">
+                    <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
                         {navItems.map((item) => {
                             const active = isActive(item.href);
                             return (
@@ -83,7 +83,7 @@ export default function SalesLayout({ children }: SalesLayoutProps) {
                     </nav>
 
                     {/* Footer */}
-                    <div className="p-4 border-t border-gray-200 bg-white/50">
+                    <div className="p-4 border-t border-gray-200 bg-white/50 flex-shrink-0">
                         <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-bold shadow-sm">
                                 S
@@ -97,7 +97,7 @@ export default function SalesLayout({ children }: SalesLayoutProps) {
                 </aside>
 
                 {/* Main Content */}
-                <main className="flex-1 min-h-0 bg-gray-50 relative overflow-hidden">
+                <main className="flex-1 min-w-0 bg-gray-50 relative overflow-hidden h-full">
                     {children}
                 </main>
             </div>
