@@ -492,296 +492,299 @@ ${selectedLead.ai_analysis.sales_angle}
           ))}
         </div>
 
-        <div className="flex items-center gap-2 pl-4 border-l border-gray-100 h-8 my-auto">
-          <input
-            type="checkbox"
-            checked={leads.length > 0 && selectedLeads.size === leads.length}
-            onChange={toggleSelectAll}
-            className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
-          />
-          <span className="text-xs font-medium text-gray-500">전체 선택</span>
-        </div>
       </div>
+    </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto p-4">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Leads List */}
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-            <div className="p-4 border-b border-gray-200">
-              <h2 className="font-semibold text-gray-900">
-                리드 목록 ({leads.length})
-              </h2>
-            </div>
-
-            <div className="divide-y divide-gray-200 max-h-[calc(100vh-300px)] overflow-y-auto">
-              {loading ? (
-                <div className="p-8 text-center text-gray-500">로딩 중...</div>
-              ) : leads.length === 0 ? (
-                <div className="p-8 text-center text-gray-500">
-                  리드가 없습니다. 스캔을 실행하세요.
-                </div>
-              ) : (
-                leads.map((lead) => (
-                  <div
-                    key={lead.lead_id}
-                    className={`border-b border-gray-100 hover:bg-slate-50 transition-colors group relative flex items-center ${selectedLeads.has(lead.lead_id) ? 'bg-blue-50/50' : ''}`}
-                  >
-                    <div className="pl-4 pr-2 py-4 flex items-center h-full">
-                      <input
-                        type="checkbox"
-                        checked={selectedLeads.has(lead.lead_id)}
-                        onChange={() => toggleSelectLead(lead.lead_id)}
-                        className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
-                      />
-                    </div>
-
-                    <div
-                      className="flex-1 px-4 py-4 cursor-pointer"
-                      onClick={() => {
-                        setSelectedLead(lead);
-                        loadNotes(lead.lead_id);
-                      }}
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors truncate">
-                            {lead.ai_analysis.company_name}
-                          </h3>
-                          <p className="text-xs text-gray-500 mt-1 line-clamp-1">
-                            {lead.title}
-                          </p>
-                          <div className="flex flex-wrap items-center gap-2 mt-2">
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${lead.state.status === LeadStatus.EXCLUDED
-                              ? 'bg-gray-100 text-gray-600 border-gray-200'
-                              : 'bg-blue-100 text-blue-700 border-blue-200'
-                              }`}>
-                              {STATUS_LABELS[lead.state.status]}
-                            </span>
-                            {lead.state.assigned_to && (
-                              <span className="flex items-center gap-1 text-[10px] text-gray-500 bg-gray-50 px-2 py-0.5 rounded border border-gray-100">
-                                <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-                                {lead.state.assigned_to}
-                              </span>
-                            )}
-                            <span className="text-[10px] text-gray-400">
-                              {formatKST(lead.state.analyzed_at || lead.created_at)}
-                            </span>
-                            {lead.notes_count > 0 && (
-                              <>
-                                <span className="text-[10px] text-gray-400">•</span>
-                                <span className="text-[10px] text-gray-500">💬 {lead.notes_count}</span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleExcludeLead(lead.lead_id);
-                            }}
-                            className={`p-1.5 rounded-lg border transition-all ${lead.state.status === LeadStatus.EXCLUDED
-                              ? 'bg-orange-50 text-orange-600 border-orange-200'
-                              : 'bg-white text-gray-400 border-gray-200 hover:border-orange-300 hover:text-orange-600'
-                              }`}
-                            title="제외"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636" />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteLead(lead.lead_id);
-                            }}
-                            className="p-1.5 bg-white text-gray-400 border border-gray-200 rounded-lg hover:border-red-300 hover:text-red-600 transition-all"
-                            title="삭제"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0 1 16.138 21H7.862a2 2 0 0 1-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+      {/* Main Content */ }
+  <div className="max-w-7xl mx-auto p-4">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {/* Leads List */}
+      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-gray-50/50">
+          <h2 className="font-semibold text-gray-900">
+            리드 목록 ({leads.length})
+          </h2>
+          <div className="flex items-center gap-2 bg-white px-2 py-1 rounded-md border border-gray-200 shadow-sm">
+            <input
+              type="checkbox"
+              id="selectAllLeads"
+              checked={leads.length > 0 && selectedLeads.size === leads.length}
+              onChange={toggleSelectAll}
+              className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+            />
+            <label htmlFor="selectAllLeads" className="text-xs font-bold text-gray-700 cursor-pointer select-none">전체 선택</label>
           </div>
+        </div>
 
-          {/* Lead Detail */}
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-            {selectedLead ? (
-              <div className="h-full flex flex-col">
-                <div className="p-4 border-b border-gray-200">
-                  <h2 className="font-semibold text-gray-900 mb-2">
-                    {selectedLead.title}
-                  </h2>
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    <select
-                      value={selectedLead.state.status}
-                      onChange={(e) => handleUpdateStatus(e.target.value)}
-                      className="px-3 py-1 border border-gray-300 rounded-lg text-sm"
-                    >
-                      {STATUSES.filter((s) => s !== 'ALL').map((status) => (
-                        <option key={status} value={status}>
-                          {STATUS_LABELS[status]}
-                        </option>
-                      ))}
-                    </select>
-
-                    <input
-                      type="text"
-                      placeholder="담당자"
-                      defaultValue={selectedLead.state.assigned_to || ''}
-                      onBlur={(e) => handleUpdateAssignedTo(e.target.value)}
-                      className="px-3 py-1 border border-gray-300 rounded-lg text-sm w-24"
-                    />
-
-                    <button
-                      onClick={copySalesScript}
-                      className="px-3 py-1 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700"
-                      title="클립보드에 복사 → 이메일, 문자, CRM에 붙여넣기"
-                    >
-                      📋 스크립트 복사
-                    </button>
-                    <span className="text-[10px] text-gray-400 hidden lg:inline">
-                      → 이메일/문자에 붙여넣기
-                    </span>
-                  </div>
-
-                  <a
-                    href={selectedLead.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-blue-600 hover:underline"
-                  >
-                    원문 보기 →
-                  </a>
+        <div className="divide-y divide-gray-200 max-h-[calc(100vh-300px)] overflow-y-auto">
+          {loading ? (
+            <div className="p-8 text-center text-gray-500">로딩 중...</div>
+          ) : leads.length === 0 ? (
+            <div className="p-8 text-center text-gray-500">
+              리드가 없습니다. 스캔을 실행하세요.
+            </div>
+          ) : (
+            leads.map((lead) => (
+              <div
+                key={lead.lead_id}
+                className={`border-b border-gray-100 hover:bg-slate-50 transition-colors group relative flex items-center ${selectedLeads.has(lead.lead_id) ? 'bg-blue-50/50' : ''}`}
+              >
+                <div className="pl-4 pr-2 py-4 flex items-center h-full">
+                  <input
+                    type="checkbox"
+                    checked={selectedLeads.has(lead.lead_id)}
+                    onChange={() => toggleSelectLead(lead.lead_id)}
+                    className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                  />
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                  {/* AI Analysis */}
-                  <div className="space-y-3 text-sm">
-                    <div>
-                      <div className="font-semibold text-gray-700">회사명</div>
-                      <div className="text-gray-900">
-                        {selectedLead.ai_analysis.company_name}
+                <div
+                  className="flex-1 px-4 py-4 cursor-pointer"
+                  onClick={() => {
+                    setSelectedLead(lead);
+                    loadNotes(lead.lead_id);
+                  }}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors truncate">
+                        {lead.ai_analysis.company_name}
+                      </h3>
+                      <p className="text-xs text-gray-500 mt-1 line-clamp-1">
+                        {lead.title}
+                      </p>
+                      <div className="flex flex-wrap items-center gap-2 mt-2">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${lead.state.status === LeadStatus.EXCLUDED
+                          ? 'bg-gray-100 text-gray-600 border-gray-200'
+                          : 'bg-blue-100 text-blue-700 border-blue-200'
+                          }`}>
+                          {STATUS_LABELS[lead.state.status]}
+                        </span>
+                        {lead.state.assigned_to && (
+                          <span className="flex items-center gap-1 text-[10px] text-gray-500 bg-gray-50 px-2 py-0.5 rounded border border-gray-100">
+                            <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                            {lead.state.assigned_to}
+                          </span>
+                        )}
+                        <span className="text-[10px] text-gray-400">
+                          {formatKST(lead.state.analyzed_at || lead.created_at)}
+                        </span>
+                        {lead.notes_count > 0 && (
+                          <>
+                            <span className="text-[10px] text-gray-400">•</span>
+                            <span className="text-[10px] text-gray-500">💬 {lead.notes_count}</span>
+                          </>
+                        )}
                       </div>
                     </div>
 
-                    <div>
-                      <div className="font-semibold text-gray-700">이벤트 요약</div>
-                      <div className="text-gray-900">
-                        {selectedLead.ai_analysis.event_summary}
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="font-semibold text-gray-700">타겟 고객층</div>
-                      <div className="text-gray-900">
-                        {selectedLead.ai_analysis.target_audience}
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="font-semibold text-gray-700">적합 이유</div>
-                      <div className="text-gray-900">
-                        {selectedLead.ai_analysis.atv_fit_reason}
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="font-semibold text-gray-700">영업 접근법</div>
-                      <div className="text-gray-900 whitespace-pre-wrap">
-                        {selectedLead.ai_analysis.sales_angle}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Notes */}
-                  <div className="border-t border-gray-200 pt-4">
-                    <h3 className="font-semibold text-gray-900 mb-3">
-                      메모 ({notes.length})
-                    </h3>
-
-                    <div className="space-y-2 mb-3">
-                      {notes.map((note) => (
-                        <div
-                          key={note.id}
-                          className="p-3 bg-gray-50 rounded-lg text-sm"
-                        >
-                          <div className="text-gray-900">{note.content}</div>
-                          <div className="text-xs text-gray-500 mt-1">
-                            {new Date(note.created_at).toLocaleString()}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={newNote}
-                        onChange={(e) => setNewNote(e.target.value)}
-                        onKeyDown={(e) =>
-                          e.key === 'Enter' && handleAddNote()
-                        }
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                        placeholder="메모 추가..."
-                      />
+                    <div className="flex items-center gap-2">
                       <button
-                        onClick={handleAddNote}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleExcludeLead(lead.lead_id);
+                        }}
+                        className={`flex items-center gap-1 px-2 py-1 rounded-lg border transition-all text-xs font-semibold ${lead.state.status === LeadStatus.EXCLUDED
+                          ? 'bg-orange-50 text-orange-600 border-orange-200'
+                          : 'bg-white text-gray-400 border-gray-200 hover:border-orange-300 hover:text-orange-600'
+                          }`}
+                        title="제외"
                       >
-                        추가
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636" />
+                        </svg>
+                        제외
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteLead(lead.lead_id);
+                        }}
+                        className="p-1.5 bg-white text-gray-400 border border-gray-200 rounded-lg hover:border-red-300 hover:text-red-600 transition-all"
+                        title="삭제"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0 1 16.138 21H7.862a2 2 0 0 1-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v3M4 7h16" />
+                        </svg>
                       </button>
                     </div>
                   </div>
                 </div>
               </div>
-            ) : (
-              <div className="h-full flex items-center justify-center text-gray-500">
-                리드를 선택하세요
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Lead Detail */}
+      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        {selectedLead ? (
+          <div className="h-full flex flex-col">
+            <div className="p-4 border-b border-gray-200">
+              <h2 className="font-semibold text-gray-900 mb-2">
+                {selectedLead.title}
+              </h2>
+              <div className="flex flex-wrap gap-2 mb-3">
+                <select
+                  value={selectedLead.state.status}
+                  onChange={(e) => handleUpdateStatus(e.target.value)}
+                  className="px-3 py-1 border border-gray-300 rounded-lg text-sm"
+                >
+                  {STATUSES.filter((s) => s !== 'ALL').map((status) => (
+                    <option key={status} value={status}>
+                      {STATUS_LABELS[status]}
+                    </option>
+                  ))}
+                </select>
+
+                <input
+                  type="text"
+                  placeholder="담당자"
+                  defaultValue={selectedLead.state.assigned_to || ''}
+                  onBlur={(e) => handleUpdateAssignedTo(e.target.value)}
+                  className="px-3 py-1 border border-gray-300 rounded-lg text-sm w-24"
+                />
+
+                <button
+                  onClick={copySalesScript}
+                  className="px-3 py-1 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700"
+                  title="클립보드에 복사 → 이메일, 문자, CRM에 붙여넣기"
+                >
+                  📋 스크립트 복사
+                </button>
+                <span className="text-[10px] text-gray-400 hidden lg:inline">
+                  → 이메일/문자에 붙여넣기
+                </span>
               </div>
-            )}
-          </div>
-        </div >
-      </div >
-      {/* Floating Bulk Action Bar */}
-      {
-        selectedLeads.size > 0 && (
-          <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-4 rounded-2xl shadow-2xl z-50 flex items-center gap-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
-            <div className="flex items-center gap-3">
-              <span className="bg-blue-600 text-[10px] font-bold px-2 py-1 rounded-full">{selectedLeads.size}</span>
-              <span className="text-sm font-medium">개 리드 선택됨</span>
+
+              <a
+                href={selectedLead.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-blue-600 hover:underline"
+              >
+                원문 보기 →
+              </a>
             </div>
 
-            <div className="flex items-center gap-2 border-l border-gray-700 pl-8">
-              <button
-                onClick={handleBulkDelete}
-                className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-lg transition-all text-xs font-semibold"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0 1 16.138 21H7.862a2 2 0 0 1-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v3M4 7h16" />
-                </svg>
-                선택 삭제
-              </button>
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {/* AI Analysis */}
+              <div className="space-y-3 text-sm">
+                <div>
+                  <div className="font-semibold text-gray-700">회사명</div>
+                  <div className="text-gray-900">
+                    {selectedLead.ai_analysis.company_name}
+                  </div>
+                </div>
 
-              <button
-                onClick={() => setSelectedLeads(new Set())}
-                className="px-3 py-2 text-gray-400 hover:text-white transition-colors text-xs"
-              >
-                취소
-              </button>
+                <div>
+                  <div className="font-semibold text-gray-700">이벤트 요약</div>
+                  <div className="text-gray-900">
+                    {selectedLead.ai_analysis.event_summary}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="font-semibold text-gray-700">타겟 고객층</div>
+                  <div className="text-gray-900">
+                    {selectedLead.ai_analysis.target_audience}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="font-semibold text-gray-700">적합 이유</div>
+                  <div className="text-gray-900">
+                    {selectedLead.ai_analysis.atv_fit_reason}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="font-semibold text-gray-700">영업 접근법</div>
+                  <div className="text-gray-900 whitespace-pre-wrap">
+                    {selectedLead.ai_analysis.sales_angle}
+                  </div>
+                </div>
+              </div>
+
+              {/* Notes */}
+              <div className="border-t border-gray-200 pt-4">
+                <h3 className="font-semibold text-gray-900 mb-3">
+                  메모 ({notes.length})
+                </h3>
+
+                <div className="space-y-2 mb-3">
+                  {notes.map((note) => (
+                    <div
+                      key={note.id}
+                      className="p-3 bg-gray-50 rounded-lg text-sm"
+                    >
+                      <div className="text-gray-900">{note.content}</div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {new Date(note.created_at).toLocaleString()}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newNote}
+                    onChange={(e) => setNewNote(e.target.value)}
+                    onKeyDown={(e) =>
+                      e.key === 'Enter' && handleAddNote()
+                    }
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                    placeholder="메모 추가..."
+                  />
+                  <button
+                    onClick={handleAddNote}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700"
+                  >
+                    추가
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
-        )
-      }
+        ) : (
+          <div className="h-full flex items-center justify-center text-gray-500">
+            리드를 선택하세요
+          </div>
+        )}
+      </div>
+    </div >
+  </div >
+  {/* Floating Bulk Action Bar */ }
+  {
+    selectedLeads.size > 0 && (
+      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-4 rounded-2xl shadow-2xl z-50 flex items-center gap-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
+        <div className="flex items-center gap-3">
+          <span className="bg-blue-600 text-[10px] font-bold px-2 py-1 rounded-full">{selectedLeads.size}</span>
+          <span className="text-sm font-medium">개 리드 선택됨</span>
+        </div>
+
+        <div className="flex items-center gap-2 border-l border-gray-700 pl-8">
+          <button
+            onClick={handleBulkDelete}
+            className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-lg transition-all text-xs font-semibold"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0 1 16.138 21H7.862a2 2 0 0 1-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v3M4 7h16" />
+            </svg>
+            선택 삭제
+          </button>
+
+          <button
+            onClick={() => setSelectedLeads(new Set())}
+            className="px-3 py-2 text-gray-400 hover:text-white transition-colors text-xs"
+          >
+            취소
+          </button>
+        </div>
+      </div>
+    )
+  }
     </div >
   );
 }
