@@ -23,9 +23,9 @@ export default function SalesLayout({ children }: SalesLayoutProps) {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex">
-            {/* Mobile Top Bar */}
-            <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-white border-b border-gray-200 flex items-center px-4 z-50">
+        <div className="min-h-screen bg-gray-50 flex flex-col">
+            {/* Top Bar */}
+            <div className="fixed top-0 left-0 right-0 h-14 bg-white border-b border-gray-200 flex items-center px-4 z-[60]">
                 <button
                     onClick={() => setSidebarOpen(!sidebarOpen)}
                     className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
@@ -35,72 +35,72 @@ export default function SalesLayout({ children }: SalesLayoutProps) {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
                 </button>
-                <span className="ml-3 font-bold text-gray-900">KOBACO Sniper</span>
+                <Link href="/sales" className="ml-3 font-bold text-gray-900 flex items-center gap-2">
+                    <span className="text-xl">🎯</span>
+                    <span>KOBACO Sniper</span>
+                </Link>
             </div>
 
-            {/* Mobile Overlay */}
-            {sidebarOpen && (
-                <div
-                    className="md:hidden fixed inset-0 bg-black/50 z-40"
-                    onClick={() => setSidebarOpen(false)}
-                />
-            )}
+            {/* Content Wrapper */}
+            <div className="flex-1 flex pt-14 h-screen overflow-hidden">
+                {/* Mobile Overlay */}
+                {sidebarOpen && (
+                    <div
+                        className="fixed inset-0 bg-black/50 z-40 transition-opacity"
+                        onClick={() => setSidebarOpen(false)}
+                    />
+                )}
 
-            {/* Sidebar */}
-            <aside
-                className={`
-          fixed md:sticky top-0 left-0 h-screen w-64 bg-slate-50 border-r border-gray-200 flex flex-col z-50
-          transform transition-transform duration-200 ease-in-out
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-          md:translate-x-0
-        `}
-            >
-                {/* Header */}
-                <div className="h-14 flex items-center px-4 border-b border-gray-200">
-                    <div className="flex items-center gap-2">
-                        <span className="text-xl">🎯</span>
-                        <span className="font-bold text-gray-900">KOBACO Sniper</span>
-                    </div>
-                </div>
+                {/* Sidebar */}
+                <aside
+                    className={`
+            fixed top-14 left-0 bottom-0 w-64 bg-slate-50 border-r border-gray-200 flex flex-col z-50
+            transform transition-transform duration-300 ease-in-out shadow-xl
+            ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+          `}
+                >
+                    {/* Navigation */}
+                    <nav className="flex-1 p-3 space-y-1">
+                        {navItems.map((item) => {
+                            const active = isActive(item.href);
+                            return (
+                                <Link
+                                    key={item.href}
+                                    href={item.href}
+                                    onClick={() => setSidebarOpen(false)}
+                                    className={`
+                    flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                    ${active
+                                            ? 'bg-blue-600 text-white shadow-md'
+                                            : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'}
+                  `}
+                                >
+                                    <span className="text-lg">{item.icon}</span>
+                                    <span>{item.label}</span>
+                                </Link>
+                            );
+                        })}
+                    </nav>
 
-                {/* Navigation */}
-                <nav className="flex-1 p-3 space-y-1">
-                    {navItems.map((item) => (
-                        <Link
-                            key={item.href}
-                            href={item.href}
-                            onClick={() => setSidebarOpen(false)}
-                            className={`
-                flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
-                ${isActive(item.href)
-                                    ? 'bg-blue-100 text-blue-700'
-                                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}
-              `}
-                        >
-                            <span>{item.icon}</span>
-                            <span>{item.label}</span>
-                        </Link>
-                    ))}
-                </nav>
-
-                {/* Footer */}
-                <div className="p-4 border-t border-gray-200">
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-bold">
-                            S
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium text-gray-900 truncate">Sales Rep</div>
-                            <div className="text-xs text-gray-500">KOBACO</div>
+                    {/* Footer */}
+                    <div className="p-4 border-t border-gray-200 bg-white/50">
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-bold shadow-sm">
+                                S
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <div className="text-sm font-bold text-gray-900 truncate">Sales Rep</div>
+                                <div className="text-[10px] text-blue-600 font-black uppercase tracking-wider">Authorized</div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </aside>
+                </aside>
 
-            {/* Main Content */}
-            <main className="flex-1 md:ml-0 pt-14 md:pt-0 min-h-screen overflow-y-auto">
-                {children}
-            </main>
+                {/* Main Content */}
+                <main className="flex-1 min-h-0 bg-gray-50 relative overflow-hidden">
+                    {children}
+                </main>
+            </div>
         </div>
     );
 }

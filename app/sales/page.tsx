@@ -438,19 +438,7 @@ export default function SalesDashboardPage() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-slate-50 overflow-hidden">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4 flex-shrink-0">
-        <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold text-gray-900">KOBACO Lead Sniper</h1>
-          <button
-            onClick={() => (window.location.href = '/sales/settings')}
-            className="text-sm text-blue-600 hover:underline"
-          >
-            설정
-          </button>
-        </div>
-      </div>
+    <div className="h-full flex flex-col bg-slate-50 overflow-hidden">
 
       {/* Scan Controls */}
       <div className="bg-white border-b border-gray-200 px-6 py-3 flex-shrink-0">
