@@ -105,9 +105,25 @@ export async function POST(request: NextRequest) {
       `Scan: ${allArticles.length} total, ${dedupedAll.length} dedup, ${deduped.length} for AI`
     );
 
+    // Filter out already EXCLUDED leads (skip re-analysis)
+    const articlesToAnalyze: NormalizedArticle[] = [];
+    for (const article of deduped) {
+      const link = normalizeLink(article);
+      const leadId = generateLeadId(link);
+      const existingState = await redis.get<any>(RedisKeys.leadState(leadId));
+
+      if (existingState?.status === 'EXCLUDED') {
+        console.log(`Skipping EXCLUDED lead: ${leadId}`);
+        continue;
+      }
+      articlesToAnalyze.push(article);
+    }
+
+    console.log(`After excluding: ${articlesToAnalyze.length} to analyze`);
+
     // Analyze with AI (with concurrency control)
     const limiter = pLimit(AI_CONCURRENCY);
-    const analyzePromises = deduped.map((article) =>
+    const analyzePromises = articlesToAnalyze.map((article) =>
       limiter(() =>
         analyzeArticle(article.title, article.contentSnippet, article._source)
       )
@@ -118,8 +134,8 @@ export async function POST(request: NextRequest) {
     // Build leads with scoring
     const leads: LeadCore[] = [];
 
-    for (let i = 0; i < deduped.length; i++) {
-      const article = deduped[i];
+    for (let i = 0; i < articlesToAnalyze.length; i++) {
+      const article = articlesToAnalyze[i];
       const analysis = analyses[i];
 
       // Calculate final score
