@@ -40,8 +40,32 @@ const KEYS = {
         CTA_COUNT_MONTH: (id: string, month: string) => `stats:cta:${id}:count:month:${month}`,
         ADMIN_SAVE_DAY: (date: string) => `stats:admin:save:day:${date}`,
         ADMIN_UPLOAD_DAY: (date: string) => `stats:admin:image_upload:day:${date}`,
-    }
+    },
+    CONFIG: 'system:config:notifications'
 };
+
+// ... existing code ...
+
+// --- System Config Service ---
+
+export async function getSystemConfig() {
+    const redis = await getClient();
+    if (redis) {
+        try {
+            const data = await redis.get(KEYS.CONFIG);
+            if (data) return JSON.parse(data);
+        } catch (e) { console.error('KV Config Get Error', e); }
+    }
+    return {};
+}
+
+export async function saveSystemConfig(config: any) {
+    const redis = await getClient();
+    if (redis) {
+        await redis.set(KEYS.CONFIG, JSON.stringify(config));
+    }
+}
+
 
 // --- Helper: ETag ---
 async function bumpEtag(redis: any) {
@@ -88,7 +112,7 @@ export async function getSection(id: string) {
 
 export async function saveHome(homeData: any) {
     const redis = await getClient();
-    
+
     // Basic Validation
     if (!homeData.sections || !Array.isArray(homeData.sections)) {
         throw new Error("Invalid Home Data: sections array required");
@@ -120,7 +144,7 @@ export async function saveHome(homeData: any) {
 
 export async function saveSection(id: string, type: string, data: any) {
     const redis = await getClient();
-    
+
     // 1. Validate Schema
     const schema = SECTION_SCHEMAS[type];
     if (!schema) throw new Error(`Unknown Section Type: ${type}`);
@@ -143,7 +167,7 @@ export async function saveSection(id: string, type: string, data: any) {
 
         await multi.exec();
     }
-    
+
     // Also Save to File System (Persist for Git)
     await setFallbackJSON('content', id, safeData);
 }
@@ -156,7 +180,7 @@ export async function deleteSection(id: string) {
         multi.set(KEYS.ETAG, `v${Date.now()}`); // Bump Etag
         await multi.exec();
     }
-    
+
     // Also Delete from File System
     try {
         const filePath = path.join(process.cwd(), 'content', 'sections', `${id}.json`);

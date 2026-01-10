@@ -10,7 +10,7 @@ import {
     Sparkles, Target, CheckCircle2
 } from 'lucide-react';
 
-type Tab = 'home' | 'content' | 'policies' | 'segments' | 'usage' | 'dashboard';
+type Tab = 'home' | 'content' | 'policies' | 'segments' | 'usage' | 'dashboard' | 'settings';
 
 // Stats Interfaces
 interface DashboardStats {
@@ -140,7 +140,7 @@ const ImageUploader = ({ value, onChange, label }: { value: string, onChange: (u
                             className="flex-1 p-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium outline-none focus:border-blue-500 transition-all font-mono text-slate-500 shadow-sm"
                         />
                     </div>
-                    
+
                     <input
                         ref={fileInputRef}
                         type="file"
@@ -148,7 +148,7 @@ const ImageUploader = ({ value, onChange, label }: { value: string, onChange: (u
                         className="hidden"
                         onChange={handleFileChange}
                     />
-                    
+
                     <div className="flex flex-wrap gap-2">
                         <button
                             disabled={uploading}
@@ -164,7 +164,7 @@ const ImageUploader = ({ value, onChange, label }: { value: string, onChange: (u
                         >
                             <Database size={14} /> 라이브러리
                         </button>
-                        
+
                         <div className="w-px h-8 bg-slate-200 mx-1 hidden sm:block" />
 
                         <button
@@ -209,6 +209,7 @@ export default function AdminPortal() {
     const [policies, setPolicies] = useState<{ channels: any[], bonuses: any[], surcharges: any[] }>({ channels: [], bonuses: [], surcharges: [] });
     const [segments, setSegments] = useState<any[]>([]);
     const [usageLogs, setUsageLogs] = useState<any[]>([]);
+    const [systemConfig, setSystemConfig] = useState<any>({});
 
     // Editor State
     const [editingSection, setEditingSection] = useState<{ id: string, type: string, content: any } | null>(null);
@@ -263,7 +264,12 @@ export default function AdminPortal() {
                 setSegments(segmentData);
             } else if (activeTab === 'usage') {
                 const res = await axios.get('/api/log/usage');
+            } else if (activeTab === 'usage') {
+                const res = await axios.get('/api/log/usage');
                 setUsageLogs(res.data);
+            } else if (activeTab === 'settings') {
+                const res = await axios.get('/api/admin/config');
+                setSystemConfig(res.data || {});
             }
         } catch (e) {
             // Stats failing shouldn't break the app
@@ -416,6 +422,19 @@ export default function AdminPortal() {
         }
     };
 
+    // --- Settings Handler ---
+    const saveSystemConfig = async () => {
+        const toastId = toast.loading("Saving settings...");
+        try {
+            await axios.post('/api/admin/config', systemConfig);
+            toast.success("설정이 저장되었습니다.");
+        } catch (e) {
+            toast.error("저장 실패");
+        } finally {
+            toast.dismiss(toastId);
+        }
+    };
+
     // --- Render Helpers ---
 
     return (
@@ -451,6 +470,7 @@ export default function AdminPortal() {
                         { id: 'policies', label: '정책 관리', icon: ShieldCheck },
                         { id: 'segments', label: '세그먼트 DB', icon: Database },
                         { id: 'usage', label: '사용 기록', icon: BarChart3 },
+                        { id: 'settings', label: '환경 설정', icon: Settings },
                     ].map(item => (
                         <button key={item.id} onClick={() => { setActiveTab(item.id as Tab); setSidebarOpen(false); }}
                             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-sm ${activeTab === item.id ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
@@ -469,7 +489,7 @@ export default function AdminPortal() {
                 {activeTab !== 'home' && (
                     <header className="mb-12">
                         <h1 className="text-4xl font-black text-slate-900 capitalize tracking-tight">
-                            {activeTab === 'content' ? '섹션 관리' : activeTab === 'policies' ? '정책 관리' : activeTab === 'segments' ? '세그먼트 DB' : '사용 기록'}
+                            {activeTab === 'content' ? '섹션 관리' : activeTab === 'policies' ? '정책 관리' : activeTab === 'segments' ? '세그먼트 DB' : activeTab === 'usage' ? '사용 기록' : '환경 설정'}
                         </h1>
                     </header>
                 )}
@@ -603,7 +623,7 @@ export default function AdminPortal() {
                                                                 section.id === 'howItWorks' ? '작동 방식' :
                                                                     section.id === 'faq' ? '자주 묻는 질문' :
                                                                         section.id === 'reporting' ? '리포트 안내' :
-                                                                            section.id === 'estimateGuide' ? '견적 가이드' : 
+                                                                            section.id === 'estimateGuide' ? '견적 가이드' :
                                                                                 section.id.includes('imageCards') ? '이미지 카드 섹션' : section.id
                                                     }</span>
                                                     <span className="bg-slate-100 text-slate-500 text-[10px] font-black px-2 py-0.5 rounded uppercase">{section.type}</span>
@@ -1316,7 +1336,7 @@ export default function AdminPortal() {
                                             <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Description</label>
                                             <textarea value={editingSection.content.description || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, description: e.target.value } })} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-bold focus:border-blue-500 outline-none min-h-[100px]" />
                                         </div>
-                                        
+
                                         {/* Features List (Reporting Only) */}
                                         {editingSection.type === 'reporting' && (
                                             <div className="space-y-2">
@@ -1324,14 +1344,14 @@ export default function AdminPortal() {
                                                 <div className="space-y-2">
                                                     {(editingSection.content.features || []).map((feature: string, i: number) => (
                                                         <div key={i} className="flex gap-2">
-                                                            <input 
-                                                                type="text" 
-                                                                value={feature} 
+                                                            <input
+                                                                type="text"
+                                                                value={feature}
                                                                 onChange={e => {
                                                                     const newFeatures = [...editingSection.content.features];
                                                                     newFeatures[i] = e.target.value;
                                                                     setEditingSection({ ...editingSection, content: { ...editingSection.content, features: newFeatures } });
-                                                                }} 
+                                                                }}
                                                                 className="flex-1 p-3 bg-white border border-slate-200 rounded-xl font-medium outline-none text-sm"
                                                             />
                                                             <button onClick={() => {
@@ -1362,7 +1382,7 @@ export default function AdminPortal() {
                                             <div className="space-y-6 pt-6 border-t border-slate-200">
                                                 <div className="flex justify-between items-center">
                                                     <h4 className="font-black text-slate-800">Right Side Card (Optional)</h4>
-                                                    <button 
+                                                    <button
                                                         onClick={() => {
                                                             if (editingSection.content.card) {
                                                                 // Remove card
@@ -1397,7 +1417,7 @@ export default function AdminPortal() {
                                                             <label className="text-[10px] font-bold text-slate-400 uppercase">Card Description</label>
                                                             <textarea value={editingSection.content.card.description || ''} onChange={e => setEditingSection({ ...editingSection, content: { ...editingSection.content, card: { ...editingSection.content.card, description: e.target.value } } })} className="w-full p-3 bg-slate-50 border-none rounded-xl font-medium text-slate-600 text-sm outline-none h-20 resize-none" />
                                                         </div>
-                                                        
+
                                                         {/* Stats in Card */}
                                                         <div className="space-y-2">
                                                             <label className="text-[10px] font-bold text-slate-400 uppercase">Stats Grid (Max 4)</label>
@@ -1431,7 +1451,7 @@ export default function AdminPortal() {
                                                         <div className="space-y-2 pt-2 border-t border-slate-100">
                                                             <div className="flex justify-between items-center">
                                                                 <label className="text-[10px] font-bold text-slate-400 uppercase">Card CTA Button</label>
-                                                                <button 
+                                                                <button
                                                                     onClick={() => {
                                                                         if (editingSection.content.card.cta) {
                                                                             const { cta, ...restCard } = editingSection.content.card;
@@ -1496,13 +1516,13 @@ export default function AdminPortal() {
                                                 </div>
                                                 <div className="space-y-2">
                                                     <label className="text-[10px] font-bold text-slate-400 uppercase">Points (Enter로 구분)</label>
-                                                    <textarea 
-                                                        value={editingSection.content.left?.points ? (Array.isArray(editingSection.content.left.points) ? editingSection.content.left.points.join('\n') : editingSection.content.left.points) : ''} 
+                                                    <textarea
+                                                        value={editingSection.content.left?.points ? (Array.isArray(editingSection.content.left.points) ? editingSection.content.left.points.join('\n') : editingSection.content.left.points) : ''}
                                                         onChange={e => {
                                                             const points = e.target.value.split('\n');
                                                             setEditingSection({ ...editingSection, content: { ...editingSection.content, left: { ...editingSection.content.left, points } } });
-                                                        }} 
-                                                        className="w-full p-3 bg-slate-50 border-none rounded-xl font-medium text-slate-600 text-sm outline-none h-32 resize-none" 
+                                                        }}
+                                                        className="w-full p-3 bg-slate-50 border-none rounded-xl font-medium text-slate-600 text-sm outline-none h-32 resize-none"
                                                         placeholder="한 줄에 하나씩 입력하세요"
                                                     />
                                                 </div>
@@ -1536,13 +1556,13 @@ export default function AdminPortal() {
                                                 </div>
                                                 <div className="space-y-2">
                                                     <label className="text-[10px] font-bold text-blue-400 uppercase">Points (Enter로 구분)</label>
-                                                    <textarea 
-                                                        value={editingSection.content.right?.points ? (Array.isArray(editingSection.content.right.points) ? editingSection.content.right.points.join('\n') : editingSection.content.right.points) : ''} 
+                                                    <textarea
+                                                        value={editingSection.content.right?.points ? (Array.isArray(editingSection.content.right.points) ? editingSection.content.right.points.join('\n') : editingSection.content.right.points) : ''}
                                                         onChange={e => {
                                                             const points = e.target.value.split('\n');
                                                             setEditingSection({ ...editingSection, content: { ...editingSection.content, right: { ...editingSection.content.right, points } } });
-                                                        }} 
-                                                        className="w-full p-3 bg-white border border-blue-100 rounded-xl font-medium text-slate-600 text-sm outline-none h-32 resize-none" 
+                                                        }}
+                                                        className="w-full p-3 bg-white border border-blue-100 rounded-xl font-medium text-slate-600 text-sm outline-none h-32 resize-none"
                                                         placeholder="한 줄에 하나씩 입력하세요"
                                                     />
                                                 </div>
@@ -1753,14 +1773,14 @@ export default function AdminPortal() {
                                                     {(editingSection.content.steps || []).map((step: any, i: number) => {
                                                         const title = typeof step === 'string' ? step : step.title;
                                                         const description = typeof step === 'string' ? '' : step.description;
-                                                        
+
                                                         return (
                                                             <div key={i} className="flex flex-col gap-2 p-4 hover:bg-slate-50 transition-colors">
                                                                 <div className="flex items-center gap-4">
                                                                     <span className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-xs flex-shrink-0">{i + 1}</span>
-                                                                    <input 
-                                                                        type="text" 
-                                                                        value={title} 
+                                                                    <input
+                                                                        type="text"
+                                                                        value={title}
                                                                         placeholder="단계 제목"
                                                                         onChange={e => {
                                                                             const newSteps = [...editingSection.content.steps];
@@ -1768,7 +1788,7 @@ export default function AdminPortal() {
                                                                             const oldDesc = typeof newSteps[i] === 'string' ? '' : newSteps[i].description;
                                                                             newSteps[i] = { title: e.target.value, description: oldDesc };
                                                                             setEditingSection({ ...editingSection, content: { ...editingSection.content, steps: newSteps } });
-                                                                        }} 
+                                                                        }}
                                                                         className="flex-1 bg-transparent outline-none font-bold text-slate-800"
                                                                     />
                                                                     <button onClick={() => {
@@ -1777,7 +1797,7 @@ export default function AdminPortal() {
                                                                     }} className="text-red-300 hover:text-red-500"><Trash2 size={16} /></button>
                                                                 </div>
                                                                 <div className="pl-12">
-                                                                    <input 
+                                                                    <input
                                                                         type="text"
                                                                         value={description || ''}
                                                                         placeholder="부가 설명을 입력하세요..."
@@ -1939,3 +1959,82 @@ export default function AdminPortal() {
         </div>
     );
 }// Forced update to trigger rebuild
+                        </div >
+                    </div >
+                )}
+
+{/* Tab: Settings */ }
+{
+    activeTab === 'settings' && (
+        <div className="max-w-3xl space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm">
+                <h3 className="text-2xl font-black text-slate-800 mb-6 flex items-center gap-2">
+                    <Sparkles className="text-yellow-500" size={24} />
+                    알림 설정 (Notification)
+                </h3>
+                <div className="space-y-6">
+                    <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 text-sm text-slate-600 leading-relaxed mb-6">
+                        상담 요청이 들어왔을 때 실시간 알림을 받을 채널을 설정합니다.<br />
+                        값이 설정되어 있지 않으면 <code>.env</code> 파일의 환경변수를 기본값으로 사용합니다.
+                    </div>
+
+                    {/* Slack */}
+                    <div className="space-y-3">
+                        <label className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                            <img src="https://cdn.worldvectorlogo.com/logos/slack-new-logo.svg" className="w-5 h-5" alt="Slack" />
+                            Slack Webhook URL
+                        </label>
+                        <input
+                            type="text"
+                            value={systemConfig.slackWebhookUrl || ''}
+                            onChange={e => setSystemConfig({ ...systemConfig, slackWebhookUrl: e.target.value })}
+                            className="w-full p-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono text-xs"
+                            placeholder="https://hooks.slack.com/services/..."
+                        />
+                        <p className="text-xs text-slate-400">Slack Incoming Webhook URL을 입력하세요.</p>
+                    </div>
+
+                    <div className="h-px bg-slate-100 my-6" />
+
+                    {/* Telegram */}
+                    <div className="space-y-4">
+                        <div className="space-y-3">
+                            <label className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Telegram_logo.svg/2048px-Telegram_logo.svg.png" className="w-5 h-5" alt="Telegram" />
+                                Telegram Bot Token
+                            </label>
+                            <input
+                                type="text"
+                                value={systemConfig.telegramBotToken || ''}
+                                onChange={e => setSystemConfig({ ...systemConfig, telegramBotToken: e.target.value })}
+                                className="w-full p-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono text-xs"
+                                placeholder="123456789:ABCdef..."
+                            />
+                        </div>
+                        <div className="space-y-3">
+                            <label className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                                Telegram Chat ID
+                            </label>
+                            <input
+                                type="text"
+                                value={systemConfig.telegramChatId || ''}
+                                onChange={e => setSystemConfig({ ...systemConfig, telegramChatId: e.target.value })}
+                                className="w-full p-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono text-xs"
+                                placeholder="123456789"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="pt-6 flex justify-end">
+                        <button
+                            onClick={saveSystemConfig}
+                            className="px-8 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all flex items-center gap-2"
+                        >
+                            <Save size={18} /> 설정 저장하기
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    )
+}
