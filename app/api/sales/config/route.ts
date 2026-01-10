@@ -1,19 +1,31 @@
 /**
  * Sales Config API
- * Manages Naver API credentials and keywords
+ * Manages Naver API credentials, keywords, and RSS feeds
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { redis } from '@/lib/redis';
-import { RedisKeys } from '@/lib/crm-types';
 
+export const dynamic = 'force-dynamic';
+
+const REDIS_KEY = 'config:sales:settings';
 const MASKED_SECRET = '********';
 const MAX_KEYWORDS = 20;
+const MAX_RSS_FEEDS = 30;
+
+interface RSSFeed {
+  category: string;
+  originalUrl: string;
+  url: string;
+  title: string;
+}
 
 interface ConfigData {
   naverClientId: string;
   naverClientSecret: string;
   keywords: string[];
+  rssFeeds: RSSFeed[];
+  updated_at?: string;
 }
 
 /**
@@ -22,22 +34,23 @@ interface ConfigData {
  */
 export async function GET() {
   try {
-    const key = RedisKeys.config();
-    const data = await redis.get<ConfigData>(key);
+    const data = await redis.get<ConfigData>(REDIS_KEY);
 
     if (!data) {
       return NextResponse.json({
         naverClientId: '',
-        naverClientSecret: MASKED_SECRET,
+        naverClientSecret: '',
         keywords: [],
+        rssFeeds: [],
       });
     }
 
     // Never return raw secret
     return NextResponse.json({
       naverClientId: data.naverClientId || '',
-      naverClientSecret: MASKED_SECRET,
+      naverClientSecret: data.naverClientSecret ? MASKED_SECRET : '',
       keywords: data.keywords || [],
+      rssFeeds: data.rssFeeds || [],
     });
   } catch (error) {
     console.error('Error fetching config:', error);
@@ -56,17 +69,18 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const { naverClientId, naverClientSecret, keywords } = body;
+    const { naverClientId, naverClientSecret, keywords, rssFeeds } = body;
 
     // Get existing config
-    const key = RedisKeys.config();
-    const existing = await redis.get<ConfigData>(key);
+    const existing = await redis.get<ConfigData>(REDIS_KEY);
 
     // Prepare updated config
     const updatedConfig: ConfigData = {
-      naverClientId: naverClientId?.trim() || '',
+      naverClientId: (naverClientId?.trim() as string) || '',
       naverClientSecret: '',
       keywords: [],
+      rssFeeds: [],
+      updated_at: new Date().toISOString(),
     };
 
     // Handle secret: only update if new value provided (not masked/empty)
@@ -81,22 +95,64 @@ export async function POST(request: NextRequest) {
       updatedConfig.naverClientSecret = existing?.naverClientSecret || '';
     }
 
-    // Process keywords
-    if (Array.isArray(keywords)) {
-      updatedConfig.keywords = keywords
+    // Process keywords - accept array OR comma-separated string
+    if (keywords) {
+      let keywordList: string[] = [];
+      if (Array.isArray(keywords)) {
+        keywordList = keywords;
+      } else if (typeof keywords === 'string') {
+        keywordList = keywords.split(',');
+      }
+      updatedConfig.keywords = keywordList
         .map((k: any) => (typeof k === 'string' ? k.trim() : ''))
         .filter((k: string) => k.length > 0)
         .slice(0, MAX_KEYWORDS);
     }
 
+    // Process RSS feeds
+    if (Array.isArray(rssFeeds)) {
+      const seen = new Set<string>();
+      const validFeeds: RSSFeed[] = [];
+
+      for (const feed of rssFeeds) {
+        if (!feed || typeof feed !== 'object') continue;
+
+        const category = (feed.category || '').trim();
+        const originalUrl = (feed.originalUrl || '').trim();
+        const url = (feed.url || '').trim();
+        const title = (feed.title || '').trim();
+
+        // Validate required fields
+        if (!url || !originalUrl) continue;
+
+        // Validate URL format
+        if (
+          !url.startsWith('http://') &&
+          !url.startsWith('https://')
+        ) continue;
+        if (
+          !originalUrl.startsWith('http://') &&
+          !originalUrl.startsWith('https://')
+        ) continue;
+
+        // Dedupe by url (case-insensitive)
+        const urlLower = url.toLowerCase();
+        if (seen.has(urlLower)) continue;
+        seen.add(urlLower);
+
+        validFeeds.push({ category, originalUrl, url, title });
+
+        if (validFeeds.length >= MAX_RSS_FEEDS) break;
+      }
+
+      updatedConfig.rssFeeds = validFeeds;
+    }
+
     // Save to Redis
-    await redis.set(key, updatedConfig);
+    await redis.set(REDIS_KEY, updatedConfig);
 
     return NextResponse.json({
       success: true,
-      naverClientId: updatedConfig.naverClientId,
-      naverClientSecret: MASKED_SECRET,
-      keywords: updatedConfig.keywords,
     });
   } catch (error) {
     console.error('Error saving config:', error);

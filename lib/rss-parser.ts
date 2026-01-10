@@ -17,26 +17,26 @@ export interface NormalizedArticle {
   pubDate: string;
   _source: string;
   _keyword?: string;
+  _category?: string;
+}
+
+export interface RSSFeedConfig {
+  category: string;
+  url: string;
+  title?: string;
+  originalUrl?: string;
 }
 
 // ============================================================================
-// RSS Feed Sources (Korean Newswires)
+// Default RSS Feed Sources (Fallback)
 // ============================================================================
 
-const RSS_FEEDS = [
-  {
-    name: '연합뉴스',
-    url: 'https://www.yonhapnewstv.co.kr/category/news/economy/feed/',
-  },
-  {
-    name: '뉴시스',
-    url: 'https://newsis.com/RSS/economy.xml',
-  },
-  {
-    name: '뉴스1',
-    url: 'https://www.news1.kr/rss/S1N1.xml',
-  },
-] as const;
+const DEFAULT_RSS: RSSFeedConfig[] = [
+  { category: '신상품/신기술', url: 'https://www.newswire.co.kr/rss/industry/200' },
+  { category: '소비재/쇼핑', url: 'https://www.newswire.co.kr/rss/industry/500' },
+  { category: '생활/식음료', url: 'https://www.newswire.co.kr/rss/industry/504' },
+  { category: '헬스케어', url: 'https://www.newswire.co.kr/rss/industry/900' },
+];
 
 // ============================================================================
 // RSS Parser
@@ -54,7 +54,7 @@ const parser = new Parser({
  */
 async function fetchFeed(
   feedUrl: string,
-  sourceName: string,
+  category: string,
   limit: number = 6
 ): Promise<NormalizedArticle[]> {
   try {
@@ -66,64 +66,74 @@ async function fetchFeed(
       contentSnippet: stripHtml(item.contentSnippet || item.content || ''),
       pubDate: item.pubDate || item.isoDate || new Date().toISOString(),
       _source: 'RSS',
-      _keyword: sourceName,
+      _keyword: category,
+      _category: category,
     }));
   } catch (error) {
-    console.error(`Failed to fetch RSS feed ${sourceName}:`, error);
+    console.error(`Failed to fetch RSS feed ${category} (${feedUrl}):`, error);
     return [];
   }
 }
 
 /**
- * Fetch articles from all RSS feeds
+ * Fetch articles from custom/configured RSS feeds
+ */
+export async function fetchCustomFeeds(
+  feeds: RSSFeedConfig[],
+  limitPerFeed: number = 6
+): Promise<NormalizedArticle[]> {
+  if (!feeds || feeds.length === 0) {
+    return fetchDefaultFeeds(limitPerFeed);
+  }
+
+  const results = await Promise.allSettled(
+    feeds.map((feed) => fetchFeed(feed.url, feed.category, limitPerFeed))
+  );
+
+  const articles: NormalizedArticle[] = [];
+
+  for (const result of results) {
+    if (result.status === 'fulfilled') {
+      articles.push(...result.value);
+    }
+  }
+
+  return articles;
+}
+
+/**
+ * Fetch articles from default RSS feeds (fallback)
+ */
+export async function fetchDefaultFeeds(
+  limitPerFeed: number = 6
+): Promise<NormalizedArticle[]> {
+  const results = await Promise.allSettled(
+    DEFAULT_RSS.map((feed) => fetchFeed(feed.url, feed.category, limitPerFeed))
+  );
+
+  const articles: NormalizedArticle[] = [];
+
+  for (const result of results) {
+    if (result.status === 'fulfilled') {
+      articles.push(...result.value);
+    }
+  }
+
+  return articles;
+}
+
+/**
+ * Fetch articles from all RSS feeds (legacy - uses default feeds)
  */
 export async function fetchAllRSSFeeds(
   limitPerFeed: number = 6
 ): Promise<NormalizedArticle[]> {
-  const results = await Promise.allSettled(
-    RSS_FEEDS.map((feed) => fetchFeed(feed.url, feed.name, limitPerFeed))
-  );
-
-  const articles: NormalizedArticle[] = [];
-
-  for (const result of results) {
-    if (result.status === 'fulfilled') {
-      articles.push(...result.value);
-    }
-  }
-
-  return articles;
+  return fetchDefaultFeeds(limitPerFeed);
 }
 
 /**
- * Fetch articles from specific RSS feeds by name
+ * Get default RSS feed configs
  */
-export async function fetchRSSByNames(
-  feedNames: string[],
-  limitPerFeed: number = 6
-): Promise<NormalizedArticle[]> {
-  const selectedFeeds = RSS_FEEDS.filter((feed) =>
-    feedNames.includes(feed.name)
-  );
-
-  const results = await Promise.allSettled(
-    selectedFeeds.map((feed) => fetchFeed(feed.url, feed.name, limitPerFeed))
-  );
-
-  const articles: NormalizedArticle[] = [];
-
-  for (const result of results) {
-    if (result.status === 'fulfilled') {
-      articles.push(...result.value);
-    }
-  }
-
-  return articles;
-}
-
-/**
- * Get list of available RSS feed names
- */
-export function getAvailableFeeds(): string[] {
-  return RSS_FEEDS.map((feed) => feed.name);
+export function getDefaultRSSFeeds(): RSSFeedConfig[] {
+  return [...DEFAULT_RSS];
 }

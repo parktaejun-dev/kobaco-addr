@@ -118,7 +118,7 @@ export const RedisKeys = {
     `sales:leads:scan:limit=${limit}:min=${minScore}`,
 
   // Config
-  config: () => `config:sales:naver`,
+  config: () => `config:sales:settings`,
 } as const;
 
 // ============================================================================

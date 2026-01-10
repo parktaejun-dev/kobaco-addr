@@ -17,7 +17,7 @@ import {
   type LeadCore,
   type LeadState,
 } from '@/lib/crm-types';
-import { fetchAllRSSFeeds, type NormalizedArticle } from '@/lib/rss-parser';
+import { fetchCustomFeeds, type NormalizedArticle, type RSSFeedConfig } from '@/lib/rss-parser';
 import { fetchNaverNews, type NaverConfig } from '@/lib/naver';
 import { analyzeArticle } from '@/lib/ai-provider';
 
@@ -28,6 +28,13 @@ export const runtime = 'nodejs';
 
 const CACHE_TTL = 300; // 5 minutes
 const AI_CONCURRENCY = 3; // Max concurrent AI calls
+
+interface SalesConfig {
+  naverClientId?: string;
+  naverClientSecret?: string;
+  keywords?: string[];
+  rssFeeds?: RSSFeedConfig[];
+}
 
 interface ScanResponse {
   success: boolean;
@@ -69,14 +76,20 @@ export async function POST(request: NextRequest) {
       } as ScanResponse);
     }
 
-    // Fetch articles from all sources
-    const [rssArticles, naverConfig] = await Promise.all([
-      fetchAllRSSFeeds(6),
-      redis.get<NaverConfig>(RedisKeys.config()),
-    ]);
+    // Load config from Redis
+    const config = await redis.get<SalesConfig>(RedisKeys.config());
 
+    // Fetch articles from RSS (custom or default)
+    const rssArticles = await fetchCustomFeeds(config?.rssFeeds || [], 6);
+
+    // Fetch articles from Naver if configured
     let naverArticles: NormalizedArticle[] = [];
-    if (naverConfig && naverConfig.naverClientId) {
+    if (config?.naverClientId && config?.naverClientSecret) {
+      const naverConfig: NaverConfig = {
+        naverClientId: config.naverClientId,
+        naverClientSecret: config.naverClientSecret,
+        keywords: config.keywords || [],
+      };
       naverArticles = await fetchNaverNews(naverConfig);
     }
 
