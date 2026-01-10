@@ -348,7 +348,7 @@ ${selectedLead.ai_analysis.sales_angle}
       <div className="bg-white border-b border-gray-200 px-4 py-3">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center gap-3">
           <button
-            onClick={handleIncrementalScan}
+            onClick={() => handleIncrementalScan(false)}
             disabled={scanning}
             className="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-sm"
             title="피드별로 순차 스캔 (60초 타임아웃 방지)"
