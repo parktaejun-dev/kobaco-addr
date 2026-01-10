@@ -415,6 +415,7 @@ export default function SalesDashboardPage() {
 [제안 핵심 논리 (Sales Angle)]
 "${lead.ai_analysis.sales_angle}"
 - KOBACO의 어드레서블 TV는 지상파 수준의 신뢰도를 갖추면서도, 원하는 타겟(지역/성별/관심사)에게만 송출하여 예산을 절감할 수 있습니다.
+- 상세 서비스 안내 및 제안서 확인: https://kobaco-addr.vercel.app/
 
 [요청사항]
 위 정보를 바탕으로, 담당자가 이 메일을 읽고 "한번 만나서 들어보고 싶다"는 생각이 들도록 매력적인 **콜드메일 초안**을 작성해주세요.
