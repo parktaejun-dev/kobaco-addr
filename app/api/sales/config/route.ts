@@ -82,8 +82,6 @@ export async function POST(request: NextRequest) {
       naverClientSecret: '',
       keywords: [],
       rssFeeds: [],
-      keywords: [],
-      rssFeeds: [],
       minScore: typeof minScore === 'number' ? minScore : 50,
       updated_at: new Date().toISOString(),
     };
