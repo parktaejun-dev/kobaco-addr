@@ -285,50 +285,16 @@ ${selectedLead.ai_analysis.sales_angle}
       <div className="bg-white border-b border-gray-200 px-4 py-3">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center gap-3">
           <button
-            onClick={handleScan}
-            disabled={scanning || cooldown > 0}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-sm"
-          >
-            {scanning
-              ? '스캔 중...'
-              : cooldown > 0
-                ? `대기 (${cooldown}s)`
-                : '🎯 리드 스캔'}
-          </button>
-
-          <div className="flex items-center gap-1">
-            <label className="text-xs text-gray-500">최대 개수</label>
-            <input
-              type="number"
-              value={scanLimit}
-              onChange={(e) => setScanLimit(Number(e.target.value))}
-              className="w-16 px-2 py-2 border border-gray-300 rounded-lg text-sm"
-            />
-          </div>
-
-          <div className="flex items-center gap-1">
-            <label className="text-xs text-gray-500">최소 점수</label>
-            <input
-              type="number"
-              value={minScore}
-              onChange={(e) => setMinScore(Number(e.target.value))}
-              className="w-16 px-2 py-2 border border-gray-300 rounded-lg text-sm"
-            />
-          </div>
-
-          <div className="border-l border-gray-300 h-6 mx-2" />
-
-          <button
             onClick={handleIncrementalScan}
             disabled={scanning}
             className="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-sm"
             title="피드별로 순차 스캔 (60초 타임아웃 방지)"
           >
-            {scanning ? '스캔 중...' : '📥 증분 스캔'}
+            {scanning ? '스캔 중...' : '📥 리드 스캔'}
           </button>
 
-          <span className="text-[10px] text-gray-400 hidden sm:block max-w-[150px]">
-            피드별로 10개씩 순차 스캔. 여러 번 클릭!
+          <span className="text-xs text-gray-500">
+            네이버 + RSS 피드를 순차적으로 10개씩 스캔합니다. 전체 스캔하려면 여러 번 클릭하세요.
           </span>
         </div>
       </div>

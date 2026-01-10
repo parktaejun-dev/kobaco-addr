@@ -44,7 +44,8 @@ interface SalesConfig {
 
 /**
  * GET /api/sales/scan/cron
- * Called by Vercel Cron - processes one feed at a time
+ * Called by Vercel Cron - processes one source at a time
+ * Index 0 = Naver News, Index 1+ = RSS Feeds
  */
 export async function GET() {
     try {
@@ -52,7 +53,11 @@ export async function GET() {
         const config = await redis.get<SalesConfig>(RedisKeys.config());
         const feeds = config?.rssFeeds || [];
 
-        if (feeds.length === 0) {
+        // Naver counts as index 0, RSS feeds start from index 1
+        const hasNaver = !!(config?.naverClientId && config?.naverClientSecret && config?.keywords?.length);
+        const totalSources = (hasNaver ? 1 : 0) + feeds.length;
+
+        if (totalSources === 0) {
             return NextResponse.json({
                 success: true,
                 message: 'No feeds configured',
@@ -62,29 +67,38 @@ export async function GET() {
 
         // Get current cron state
         let state = await redis.get<CronState>(CRON_STATE_KEY);
-        if (!state || state.feedIndex >= feeds.length) {
-            state = { feedIndex: 0, lastRun: new Date().toISOString(), totalFeeds: feeds.length };
+        if (!state || state.feedIndex >= totalSources) {
+            state = { feedIndex: 0, lastRun: new Date().toISOString(), totalFeeds: totalSources };
         }
 
-        const currentFeed = feeds[state.feedIndex];
-        console.log(`Cron: Processing feed ${state.feedIndex + 1}/${feeds.length}: ${currentFeed.category}`);
+        let allArticles: NormalizedArticle[] = [];
+        let sourceName = '';
 
-        // Fetch articles from current feed only
-        const rssArticles = await fetchCustomFeeds([currentFeed], 10);
+        // Index 0 = Naver (if configured), otherwise RSS[0]
+        if (hasNaver && state.feedIndex === 0) {
+            // Process Naver
+            sourceName = '네이버 뉴스';
+            console.log(`Cron: Processing ${state.feedIndex + 1}/${totalSources}: ${sourceName}`);
 
-        // Also fetch Naver if configured and this is the first feed
-        let naverArticles: NormalizedArticle[] = [];
-        if (state.feedIndex === 0 && config?.naverClientId && config?.naverClientSecret) {
             const naverConfig: NaverConfig = {
-                naverClientId: config.naverClientId,
-                naverClientSecret: config.naverClientSecret,
-                keywords: config.keywords || [],
+                naverClientId: config!.naverClientId!,
+                naverClientSecret: config!.naverClientSecret!,
+                keywords: config!.keywords || [],
             };
-            naverArticles = await fetchNaverNews(naverConfig);
+            allArticles = await fetchNaverNews(naverConfig);
+        } else {
+            // Process RSS feed
+            const rssIndex = hasNaver ? state.feedIndex - 1 : state.feedIndex;
+            const currentFeed = feeds[rssIndex];
+            sourceName = currentFeed?.category || `RSS ${rssIndex + 1}`;
+
+            console.log(`Cron: Processing ${state.feedIndex + 1}/${totalSources}: ${sourceName}`);
+
+            if (currentFeed) {
+                allArticles = await fetchCustomFeeds([currentFeed], 10);
+            }
         }
 
-        // Combine and deduplicate
-        const allArticles = [...rssArticles, ...naverArticles];
         const deduped = deduplicateArticles(allArticles);
 
         // Filter out already EXCLUDED or already processed
@@ -157,19 +171,20 @@ export async function GET() {
         // Upsert leads
         await upsertLeads(leads);
 
-        // Update cron state - move to next feed
-        const nextIndex = (state.feedIndex + 1) % feeds.length;
+        // Update cron state - move to next source
+        const nextIndex = (state.feedIndex + 1) % totalSources;
         await redis.set(CRON_STATE_KEY, {
             feedIndex: nextIndex,
             lastRun: new Date().toISOString(),
-            totalFeeds: feeds.length,
+            totalFeeds: totalSources,
         });
 
         return NextResponse.json({
             success: true,
-            feed: currentFeed.category,
-            feedIndex: state.feedIndex,
-            nextFeedIndex: nextIndex,
+            source: sourceName,
+            sourceIndex: state.feedIndex,
+            nextSourceIndex: nextIndex,
+            totalSources,
             articlesFound: allArticles.length,
             newLeads: leads.length,
         });
