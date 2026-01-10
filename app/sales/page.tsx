@@ -20,7 +20,15 @@ interface LeadState {
   assigned_to?: string;
   status_changed_at: number;
   last_contacted_at?: number;
+  analyzed_at?: number;
 }
+
+const LeadStatus = {
+  NEW: 'NEW',
+  EXCLUDED: 'EXCLUDED',
+  WON: 'WON',
+  LOST: 'LOST',
+};
 
 interface Lead {
   lead_id: string;
@@ -568,7 +576,7 @@ ${selectedLead.ai_analysis.sales_angle}
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleUpdateStatus(lead.lead_id, LeadStatus.EXCLUDED);
+                              handleExcludeLead(lead.lead_id);
                             }}
                             className={`p-1.5 rounded-lg border transition-all ${lead.state.status === LeadStatus.EXCLUDED
                               ? 'bg-orange-50 text-orange-600 border-orange-200'
