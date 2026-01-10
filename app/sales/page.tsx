@@ -67,6 +67,7 @@ export default function SalesDashboardPage() {
 
   const [scanning, setScanning] = useState(false);
   const [autoScanning, setAutoScanning] = useState(false);
+  const autoScanRef = useRef(false);
   const [scanStatus, setScanStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
@@ -165,11 +166,13 @@ export default function SalesDashboardPage() {
   async function handleAutoFullScan() {
     if (autoScanning) {
       setAutoScanning(false);
+      autoScanRef.current = false;
       setScanStatus('스캔 중단됨');
       return;
     }
 
     setAutoScanning(true);
+    autoScanRef.current = true;
     setScanStatus('자동 스캔 시작...');
 
     try {
@@ -177,12 +180,13 @@ export default function SalesDashboardPage() {
       let total = 99; // Initial dummy
       let count = 0;
 
-      while (count < total) {
+      while (count < total && autoScanRef.current) {
         setScanStatus(`스캔 중... (${count + 1}번째 소스)`);
         const result = await handleIncrementalScan();
 
-        if (!result) {
-          setScanStatus('스캔 실패로 중단됨');
+        if (!result || !autoScanRef.current) {
+          if (!autoScanRef.current) setScanStatus('스캔 중단됨');
+          else setScanStatus('스캔 실패로 중단됨');
           break;
         }
 
@@ -195,19 +199,18 @@ export default function SalesDashboardPage() {
         }
 
         count++;
+        // Wait 15 seconds with countdown
         for (let i = 15; i > 0; i--) {
-          if (!(window as any)._autoScanning) break; // Should use a ref or actual state check
+          if (!autoScanRef.current) break;
           setScanStatus(`대기 중 (${i}초)... 다음 소스: ${currentIdx + 1}번째`);
           await new Promise(r => setTimeout(r, 1000));
         }
-
-        // Actually react state check
-        // We'll use a local check inside the loop if necessary, but for now simple loop
       }
     } catch (err) {
       setScanStatus('오류 발생으로 중단됨');
     } finally {
       setAutoScanning(false);
+      autoScanRef.current = false;
     }
   }
 
