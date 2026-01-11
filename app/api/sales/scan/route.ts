@@ -149,7 +149,7 @@ export async function POST(request: NextRequest) {
     );
 
     const analyses = await Promise.all(analyzePromises);
-    const excludedCompanyKeys = buildExcludedCompanySet(config);
+    const excludedCompanyKeys = buildExcludedCompanySet(config || undefined);
 
     const analyzedArticles = articlesToAnalyze.map((article, index) => ({
       article,
