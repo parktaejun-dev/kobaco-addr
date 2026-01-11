@@ -177,7 +177,7 @@ export async function GET(req: NextRequest) {
                 link,
                 contentSnippet: article.contentSnippet,
                 pubDate: article.pubDate,
-                source: article._source,
+                source: sourceName,
                 keyword: article._keyword,
                 ai_analysis: analysis,
                 contact: {

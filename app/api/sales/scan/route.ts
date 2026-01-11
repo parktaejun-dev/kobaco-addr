@@ -180,7 +180,7 @@ export async function POST(request: NextRequest) {
         link,
         contentSnippet: article.contentSnippet,
         pubDate: article.pubDate,
-        source: article._source,
+        source: article._category || article._source,
         keyword: article._keyword,
         ai_analysis: analysis,
         contact: {

@@ -598,6 +598,14 @@ export default function SalesDashboardPage() {
                               }`}>
                               {STATUS_LABELS[lead.state.status]}
                             </span>
+                            <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold border border-slate-200">
+                              🔍 {lead.source}
+                            </span>
+                            {lead.keyword && (
+                              <span className="px-2 py-0.5 rounded-full bg-orange-50 text-orange-600 text-[10px] font-bold border border-orange-100">
+                                # {lead.keyword}
+                              </span>
+                            )}
                             {lead.state.assigned_to && (
                               <span className="flex items-center gap-1 text-[10px] text-gray-500 bg-gray-50 px-2 py-0.5 rounded border border-gray-100">
                                 <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
@@ -755,6 +763,28 @@ export default function SalesDashboardPage() {
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
+                  {/* Metadata Bar */}
+                  <div className="flex items-center gap-3 py-2 px-3 bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">수집 출처</span>
+                      <span className="text-xs font-bold text-slate-700 truncate">{selectedLead.source}</span>
+                    </div>
+                    {selectedLead.keyword && (
+                      <>
+                        <div className="h-6 w-px bg-slate-200 mx-1"></div>
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">검색 키워드</span>
+                          <span className="text-xs font-bold text-orange-600 truncate">{selectedLead.keyword}</span>
+                        </div>
+                      </>
+                    )}
+                    <div className="h-6 w-px bg-slate-200 mx-1 ml-auto"></div>
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">게시일</span>
+                      <span className="text-xs font-bold text-slate-700">{formatKST(selectedLead.pubDate)}</span>
+                    </div>
+                  </div>
+
                   {/* AI Analysis */}
                   <div className="space-y-3 text-sm">
                     <div>
