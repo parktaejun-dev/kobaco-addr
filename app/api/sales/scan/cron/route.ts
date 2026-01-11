@@ -36,7 +36,7 @@ const BLOCKED_COMPANIES_KEY = 'scan:blocked:companies'; // Sorted Set for 7-day 
 
 // Configuration
 const MAX_QUEUE_FOR_FETCH = 15;   // Skip fetch if queue has more than this
-const TIMEOUT_THRESHOLD = 50000;  // 50s (10s safety margin for Vercel 60s limit)
+const TIMEOUT_THRESHOLD = 40000;  // 40s (20s safety margin for AI analysis)
 const ENQUEUE_LIMIT = 30;         // Max articles to enqueue per fetch
 
 interface CronState {
@@ -211,6 +211,13 @@ export async function GET(req: NextRequest) {
                 const leadId = generateLeadId(link);
                 const existingState = await redis.get<any>(RedisKeys.leadState(leadId));
                 if (existingState) continue;
+
+                // Check time before expensive AI analysis
+                if (Date.now() - startTime > TIMEOUT_THRESHOLD) {
+                    console.warn(`Cron: Time budget exhausted before AI analysis. Re-queueing.`);
+                    await redis.rPush(CRON_QUEUE_KEY, rawItem);
+                    break;
+                }
 
                 // AI Analysis
                 let contentToAnalyze = article.contentSnippet;
