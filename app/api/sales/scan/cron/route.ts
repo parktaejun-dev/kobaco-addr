@@ -5,7 +5,6 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import pLimit from 'p-limit';
 import { redis } from '@/lib/redis';
 import {
     RedisKeys,
@@ -28,8 +27,11 @@ export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
 
 const CRON_STATE_KEY = 'scan:cron:state';
-const AI_CONCURRENCY = 3;
-const ARTICLES_PER_RUN = 5;
+const CRON_QUEUE_KEY = 'scan:cron:queue';
+const CRON_PENDING_PREFIX = 'scan:cron:pending:';
+const ENQUEUE_LIMIT = 20;
+const ANALYZE_PER_RUN = 2;
+const TIMEOUT_THRESHOLD = 45000; // 45 seconds
 
 interface CronState {
     feedIndex: number;
@@ -40,6 +42,7 @@ interface CronState {
 interface SalesConfig {
     naverClientId?: string;
     naverClientSecret?: string;
+    naverEnabled?: boolean;
     keywords?: string[];
     rssFeeds?: RSSFeedConfig[];
     minScore?: number;
@@ -109,38 +112,68 @@ export async function GET(req: NextRequest) {
 
         const deduped = deduplicateArticles(allArticles);
 
-        // Filter out already EXCLUDED or already processed
-        const articlesToAnalyze: NormalizedArticle[] = [];
-        for (const article of deduped.slice(0, ARTICLES_PER_RUN)) {
+        // Enqueue new articles (avoid re-analysis within a short window)
+        let enqueued = 0;
+        for (const article of deduped.slice(0, ENQUEUE_LIMIT)) {
             const link = normalizeLink(article);
+            if (!link) continue;
+
             const leadId = generateLeadId(link);
             const existingState = await redis.get<any>(RedisKeys.leadState(leadId));
-
-            if (existingState?.status === 'EXCLUDED') {
+            if (existingState?.status === 'EXCLUDED' || existingState) {
                 continue;
             }
-            // Skip if already exists (to save AI calls)
+
+            const pendingKey = `${CRON_PENDING_PREFIX}${leadId}`;
+            const pending = await redis.get(pendingKey);
+            if (pending) {
+                continue;
+            }
+
+            await redis.lPush(CRON_QUEUE_KEY, JSON.stringify({ article, sourceName }));
+            await redis.set(pendingKey, Date.now(), { ex: 60 * 60 * 24 });
+            enqueued += 1;
+        }
+
+        console.log(`Cron: ${allArticles.length} fetched, ${enqueued} enqueued`);
+
+        const startTime = Date.now();
+
+        const queuedItems = await redis.lPop(CRON_QUEUE_KEY, ANALYZE_PER_RUN);
+        const itemsToAnalyze = queuedItems || [];
+
+        // Build and save leads
+        const leads: LeadCore[] = [];
+        const minScore = queryMinScore ? Number(queryMinScore) : (config?.minScore ?? 50);
+
+        for (const rawItem of itemsToAnalyze) {
+            if (Date.now() - startTime > TIMEOUT_THRESHOLD) {
+                console.warn('Cron: Approaching timeout, re-queueing remaining items');
+                await redis.rPush(CRON_QUEUE_KEY, rawItem);
+                break;
+            }
+
+            let payload: { article: NormalizedArticle; sourceName?: string };
+            try {
+                payload = JSON.parse(rawItem) as { article: NormalizedArticle; sourceName?: string };
+            } catch {
+                continue;
+            }
+
+            const article = payload.article;
+            const sourceLabel = payload.sourceName || article._category || article._source;
+
+            const link = normalizeLink(article);
+            if (!link) continue;
+
+            const leadId = generateLeadId(link);
+            const existingState = await redis.get<any>(RedisKeys.leadState(leadId));
             if (existingState) {
                 continue;
             }
-            articlesToAnalyze.push(article);
-        }
 
-        console.log(`Cron: ${allArticles.length} fetched, ${articlesToAnalyze.length} new to analyze`);
-
-        const startTime = Date.now();
-        const TIMEOUT_THRESHOLD = 45000; // 45 seconds
-
-        // Analyze with AI
-        const limiter = pLimit(AI_CONCURRENCY);
-        const analyzePromises = articlesToAnalyze.map((article) =>
-            limiter(async () => {
-                // Check if we are running out of time
-                if (Date.now() - startTime > TIMEOUT_THRESHOLD) {
-                    console.warn('Cron: Approaching timeout, skipping remaining analysis');
-                    return null;
-                }
-
+            let analysis;
+            try {
                 let contentToAnalyze = article.contentSnippet;
 
                 // For Newswire, fetch full content to get contact info
@@ -151,20 +184,12 @@ export async function GET(req: NextRequest) {
                     }
                 }
 
-                return analyzeArticle(article.title, contentToAnalyze, article._source);
-            })
-        );
-        const analyses = await Promise.all(analyzePromises);
-
-        // Build and save leads
-        const leads: LeadCore[] = [];
-        const minScore = queryMinScore ? Number(queryMinScore) : (config?.minScore ?? 50);
-
-        for (let i = 0; i < articlesToAnalyze.length; i++) {
-            const article = articlesToAnalyze[i];
-            const analysis = analyses[i];
-
-            if (!analysis) continue; // Skip skipped/failed analyses
+                analysis = await analyzeArticle(article.title, contentToAnalyze, article._source);
+            } catch (error) {
+                console.warn('Cron: Failed to analyze, re-queueing', error);
+                await redis.rPush(CRON_QUEUE_KEY, rawItem);
+                continue;
+            }
 
             const hasKeyword = !!article._keyword;
             const recencyBonus = getRecencyBonus(article.pubDate);
@@ -179,16 +204,13 @@ export async function GET(req: NextRequest) {
 
             if (finalScore < minScore) continue;
 
-            const link = normalizeLink(article);
-            const leadId = generateLeadId(link);
-
             const lead: LeadCore = {
                 lead_id: leadId,
                 title: article.title,
                 link,
                 contentSnippet: article.contentSnippet,
                 pubDate: article.pubDate,
-                source: sourceName,
+                source: sourceLabel,
                 keyword: article._keyword,
                 ai_analysis: analysis,
                 contact: {
@@ -255,6 +277,8 @@ export async function GET(req: NextRequest) {
             totalFeeds: totalSources,
         });
 
+        const queueLength = await redis.llen(CRON_QUEUE_KEY);
+
         return NextResponse.json({
             success: true,
             source: sourceName,
@@ -263,6 +287,9 @@ export async function GET(req: NextRequest) {
             nextSourceName,
             totalSources,
             articlesFound: allArticles.length,
+            enqueued,
+            processed: leads.length,
+            queueLength,
             newLeads: leads.length,
         });
     } catch (error) {

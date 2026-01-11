@@ -83,6 +83,13 @@ export const redis = {
     return await redisClient.lRange(key, start, stop);
   },
 
+  async lPop(key: string, count?: number): Promise<string[] | null> {
+    await ensureConnected();
+    const result = await redisClient.lPop(key, count);
+    if (!result) return null;
+    return Array.isArray(result) ? result : [result];
+  },
+
   async lTrim(key: string, start: number, stop: number): Promise<void> {
     await ensureConnected();
     await redisClient.lTrim(key, start, stop);
@@ -109,6 +116,11 @@ export const redis = {
   async llen(key: string): Promise<number> {
     await ensureConnected();
     return await redisClient.lLen(key);
+  },
+
+  async rPush(key: string, value: string): Promise<void> {
+    await ensureConnected();
+    await redisClient.rPush(key, value);
   },
 
   async zRangeByScore(key: string, min: number | string, max: number | string, options?: { limit?: { offset: number; count: number } }): Promise<string[]> {
