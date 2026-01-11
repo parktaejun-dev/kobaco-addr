@@ -23,37 +23,36 @@ export async function POST(request: NextRequest) {
       leadIds.map((leadId) => redis.get<LeadState>(RedisKeys.leadState(leadId)))
     );
 
-    const pipeline = redis.pipeline();
     const timestamp = Date.now();
     let updatedCount = 0;
 
-    leadIds.forEach((leadId, index) => {
-      const existingState = states[index];
-      if (!existingState) return;
+    await Promise.all(
+      leadIds.map(async (leadId, index) => {
+        const existingState = states[index];
+        if (!existingState) return;
 
-      const oldStatus = existingState.status;
-      const newStatus = status as LeadStatusType;
+        const oldStatus = existingState.status;
+        const newStatus = status as LeadStatusType;
 
-      const updatedState: LeadState = {
-        ...existingState,
-        status: newStatus,
-        status_changed_at: newStatus !== oldStatus ? timestamp : existingState.status_changed_at,
-      };
+        const updatedState: LeadState = {
+          ...existingState,
+          status: newStatus,
+          status_changed_at: newStatus !== oldStatus ? timestamp : existingState.status_changed_at,
+        };
 
-      pipeline.set(RedisKeys.leadState(leadId), updatedState);
-      pipeline.zadd(RedisKeys.idxAll(), { score: timestamp, member: leadId });
+        await redis.set(RedisKeys.leadState(leadId), updatedState);
+        await redis.zadd(RedisKeys.idxAll(), { score: timestamp, member: leadId });
 
-      if (newStatus !== oldStatus) {
-        pipeline.zRem(RedisKeys.idxStatus(oldStatus), leadId);
-        pipeline.zadd(RedisKeys.idxStatus(newStatus), { score: timestamp, member: leadId });
-      } else {
-        pipeline.zadd(RedisKeys.idxStatus(newStatus), { score: timestamp, member: leadId });
-      }
+        if (newStatus !== oldStatus) {
+          await redis.zRem(RedisKeys.idxStatus(oldStatus), leadId);
+          await redis.zadd(RedisKeys.idxStatus(newStatus), { score: timestamp, member: leadId });
+        } else {
+          await redis.zadd(RedisKeys.idxStatus(newStatus), { score: timestamp, member: leadId });
+        }
 
-      updatedCount += 1;
-    });
-
-    await pipeline.exec();
+        updatedCount += 1;
+      })
+    );
 
     return NextResponse.json({ success: true, updatedCount });
   } catch (error) {
