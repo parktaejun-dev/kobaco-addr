@@ -598,7 +598,6 @@ export default function SalesDashboardPage() {
         (company) => !companies.some((name) => name.toLowerCase() === company.toLowerCase())
       );
       await updateExcludedConfig({ replacePermanent: remaining });
-      await bulkUpdateStatus('NEW');
       setSelectedLeads(new Set());
       loadLeads(currentStatus);
     } catch (error) {
@@ -711,9 +710,6 @@ export default function SalesDashboardPage() {
           (name) => name.toLowerCase() !== lowerCompany
         );
         await updateExcludedConfig({ replacePermanent: remaining });
-        if (lead.state.status === LeadStatus.EXCLUDED) {
-          await handleExcludeLead(lead);
-        }
       } else {
         await updateExcludedConfig({ permanent: [company] });
         if (lead.state.status !== LeadStatus.EXCLUDED) {
