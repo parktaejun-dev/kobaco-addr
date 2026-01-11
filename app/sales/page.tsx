@@ -107,6 +107,7 @@ export default function SalesDashboardPage() {
   const [cooldown, setCooldown] = useState(0);
   const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
   const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
+  const [excludedCompanies, setExcludedCompanies] = useState<string[]>([]);
 
   // Helper for KST time formatting
   function formatKST(dateStr?: string | number) {
@@ -149,6 +150,10 @@ export default function SalesDashboardPage() {
   }, [currentStatus, sortBy]);
 
   useEffect(() => {
+    loadExcludedCompanies();
+  }, []);
+
+  useEffect(() => {
     if (selectedLead) {
       loadNotes(selectedLead.lead_id);
     }
@@ -176,6 +181,18 @@ export default function SalesDashboardPage() {
       console.error('Failed to load leads:', error);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadExcludedCompanies() {
+    try {
+      const res = await fetch('/api/sales/config');
+      if (res.ok) {
+        const data = (await res.json()) as SalesConfig;
+        setExcludedCompanies(data.excludedCompanies || []);
+      }
+    } catch (error) {
+      console.error('Failed to load excluded companies:', error);
     }
   }
 
@@ -476,6 +493,8 @@ export default function SalesDashboardPage() {
     if (!saveRes.ok) {
       throw new Error('Failed to save config');
     }
+
+    setExcludedCompanies(permanent);
   }
 
   async function bulkUpdateStatus(status: string) {
@@ -803,7 +822,9 @@ export default function SalesDashboardPage() {
             >
               {STATUS_LABELS[status]}
               <span className="ml-2 text-[10px] font-semibold text-gray-400">
-                {statusCounts[status] ?? 0}
+                {status === 'EXCLUDED'
+                  ? (statusCounts[status] ?? 0) + excludedCompanies.length
+                  : statusCounts[status] ?? 0}
               </span>
             </button>
           ))}
@@ -853,6 +874,28 @@ export default function SalesDashboardPage() {
                 </div>
               </div>
             </div>
+
+            {currentStatus === 'EXCLUDED' && (
+              <div className="px-4 py-3 border-b border-gray-200 bg-white">
+                <div className="text-xs font-semibold text-gray-500 mb-2">
+                  영구 제외 기업 ({excludedCompanies.length})
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {excludedCompanies.length === 0 ? (
+                    <span className="text-xs text-gray-400">등록된 기업 없음</span>
+                  ) : (
+                    excludedCompanies.map((company, index) => (
+                      <span
+                        key={`${company}-${index}`}
+                        className="inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-[11px] font-semibold bg-gray-100 text-gray-600"
+                      >
+                        {company}
+                      </span>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
 
             <div className="flex-1 overflow-y-auto divide-y divide-gray-100 min-h-0">
               {loading ? (
@@ -1002,7 +1045,10 @@ export default function SalesDashboardPage() {
                               e.stopPropagation();
                               handlePermanentExclude(lead);
                             }}
-                            className="flex items-center gap-1 px-2 py-1 rounded-lg border border-red-200 bg-red-50 text-red-600 transition-all text-xs font-semibold hover:bg-red-100"
+                            className={`flex items-center gap-1 px-2 py-1 rounded-lg border transition-all text-xs font-semibold ${excludedCompanies.some((company) => company.toLowerCase() === lead.ai_analysis.company_name?.trim().toLowerCase())
+                              ? 'border-red-200 bg-red-50 text-red-600 hover:bg-red-100'
+                              : 'border-gray-200 bg-white text-gray-400 hover:border-red-300 hover:text-red-600'
+                              }`}
                             title="영구 제외"
                           >
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
