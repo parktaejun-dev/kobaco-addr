@@ -181,9 +181,10 @@ export async function GET(req: NextRequest) {
             }
 
             // Pop one item from queue
-            const rawItem = await redis.lPop(CRON_QUEUE_KEY);
-            if (!rawItem) break; // Queue empty
+            const rawItems = await redis.lPop(CRON_QUEUE_KEY);
+            if (!rawItems || rawItems.length === 0) break; // Queue empty
 
+            const rawItem = rawItems[0]; // Get first item from array
             processedCount++;
 
             try {
