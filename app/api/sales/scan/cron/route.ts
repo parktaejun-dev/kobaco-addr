@@ -69,7 +69,7 @@ export async function GET(req: NextRequest) {
         const queryMinScore = searchParams.get('minScore');
 
         // Step 1: Clean up expired blocked companies (7-day TTL)
-        await redis.zremrangebyscore(BLOCKED_COMPANIES_KEY, '-inf', Date.now());
+        await redis.zRemRangeByScore(BLOCKED_COMPANIES_KEY, '-inf', Date.now());
 
         // Load active blocked keywords
         const blockedKeywords = await redis.zrange(BLOCKED_COMPANIES_KEY, 0, -1);
