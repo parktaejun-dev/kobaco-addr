@@ -29,7 +29,7 @@ export default function SalesSettingsPage() {
     naverEnabled: true,
     keywords: [],
     rssFeeds: [],
-    minScore: 50,
+    minScore: 70,
     leadNotificationsEnabled: true,
     minLeadScoreForNotify: 70,
     excludedCompanies: [],

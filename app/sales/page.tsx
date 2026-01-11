@@ -91,7 +91,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export default function SalesDashboardPage() {
-  const [currentStatus, setCurrentStatus] = useState('ALL');
+  const [currentStatus, setCurrentStatus] = useState('NEW');
   const [sortBy, setSortBy] = useState('latest');
   const [leads, setLeads] = useState<Lead[]>([]);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
@@ -144,7 +144,7 @@ export default function SalesDashboardPage() {
   }
 
   const [scanLimit, setScanLimit] = useState(30);
-  const [minScore, setMinScore] = useState(60);
+  const [minScore, setMinScore] = useState(70);
 
   useEffect(() => {
     loadLeads(currentStatus, sortBy);
@@ -819,6 +819,7 @@ export default function SalesDashboardPage() {
             disabled={scanning && !autoScanning}
             className={`px-4 py-2 text-white rounded-lg font-medium transition-colors text-sm ${autoScanning ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-600 hover:bg-blue-700'
               }`}
+            title="모든 소스를 순차 스캔 (15초 간격)"
           >
             {autoScanning ? '🛑 자동 스캔 중단' : '🔥 자동 전체 스캔'}
           </button>
