@@ -81,6 +81,8 @@ export default function SalesDashboardPage() {
   const [scanning, setScanning] = useState(false);
   const [autoScanning, setAutoScanning] = useState(false);
   const autoScanRef = useRef(false);
+  const [smartScanning, setSmartScanning] = useState(false);
+  const smartScanRef = useRef(false);
   const [scanStatus, setScanStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
@@ -259,6 +261,75 @@ export default function SalesDashboardPage() {
     } finally {
       setAutoScanning(false);
       autoScanRef.current = false;
+    }
+  }
+
+  async function handleSmartQueueScan() {
+    if (smartScanning) {
+      setSmartScanning(false);
+      smartScanRef.current = false;
+      setScanStatus('큐 처리 중단됨');
+      return;
+    }
+
+    setSmartScanning(true);
+    smartScanRef.current = true;
+    setScanStatus('스마트 큐 처리 시작...');
+
+    const MAX_ROUNDS = 20; // Max 20 rounds (safety limit)
+    let round = 1;
+    let totalProcessed = 0;
+
+    try {
+      while (round <= MAX_ROUNDS && smartScanRef.current) {
+        setScanStatus(`큐 처리 중... (Round ${round})`);
+
+        const res = await fetch(`/api/sales/scan/cron?minScore=${minScore}`);
+
+        if (!res.ok) {
+          setScanStatus('큐 처리 실패로 중단됨');
+          break;
+        }
+
+        const data = await res.json();
+        totalProcessed += data.processed || 0;
+
+        // Update status with queue info
+        setScanStatus(
+          `Round ${round}: ${data.processed || 0}개 처리 (큐: ${data.queueLength || 0}개 남음)`
+        );
+
+        // Check if queue is empty or API says to stop
+        if (!data.continue || data.queueLength === 0) {
+          setScanStatus(`✅ 큐 처리 완료! (총 ${totalProcessed}개 처리)`);
+          loadLeads(currentStatus);
+          break;
+        }
+
+        round++;
+
+        // Wait 2 seconds before next round (prevent rate limiting)
+        if (smartScanRef.current && round <= MAX_ROUNDS) {
+          for (let i = 2; i > 0; i--) {
+            if (!smartScanRef.current) break;
+            setScanStatus(`대기 중 (${i}초)... 큐: ${data.queueLength || 0}개`);
+            await new Promise(r => setTimeout(r, 1000));
+          }
+        }
+      }
+
+      if (round > MAX_ROUNDS) {
+        setScanStatus(`⚠️ 최대 라운드 도달 (${totalProcessed}개 처리). 나머지는 Cron이 처리합니다.`);
+      }
+
+      // Reload leads after completion
+      loadLeads(currentStatus);
+    } catch (err) {
+      console.error('Smart queue scan error:', err);
+      setScanStatus('오류 발생으로 중단됨');
+    } finally {
+      setSmartScanning(false);
+      smartScanRef.current = false;
     }
   }
 
@@ -462,6 +533,16 @@ export default function SalesDashboardPage() {
             {autoScanning ? '🛑 자동 스캔 중단' : '🔥 자동 전체 스캔'}
           </button>
 
+          <button
+            onClick={handleSmartQueueScan}
+            disabled={(scanning || autoScanning) && !smartScanning}
+            className={`px-4 py-2 text-white rounded-lg font-medium transition-colors text-sm shadow-md ${smartScanning ? 'bg-red-500 hover:bg-red-600' : 'bg-purple-600 hover:bg-purple-700'
+              }`}
+            title="큐에 쌓인 항목들을 Time-Budget 방식으로 빠르게 처리 (50초씩 최대한 처리)"
+          >
+            {smartScanning ? '🛑 큐 처리 중단' : '⚡ 스마트 큐 처리'}
+          </button>
+
           <div className="flex items-center gap-2">
             <label className="text-xs font-medium text-gray-500">최소 점수</label>
             <input
@@ -481,7 +562,7 @@ export default function SalesDashboardPage() {
           )}
 
           <span className="text-xs text-gray-400 ml-auto hidden sm:inline">
-            Vercel 60초 제한을 피하기 위해 15초 간격으로 순차 스캔합니다.
+            ⚡ 스마트 큐 처리: Time-Budget (50초) 활용하여 고속 처리
           </span>
         </div>
       </div>
