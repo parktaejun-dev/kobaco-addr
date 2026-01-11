@@ -1104,12 +1104,12 @@ export default function SalesDashboardPage() {
                               ? 'bg-orange-50 text-orange-600 border-orange-200'
                               : 'bg-white text-gray-400 border-gray-200 hover:border-orange-300 hover:text-orange-600'
                               }`}
-                            title={isExcluded ? '제외 해제' : '제외'}
+                            title="제외"
                           >
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636" />
                             </svg>
-                            {isExcluded ? '제외 해제' : '제외'}
+                            제외
                           </button>
                           <button
                             onClick={(e) => {
@@ -1120,12 +1120,12 @@ export default function SalesDashboardPage() {
                               ? 'border-red-200 bg-red-50 text-red-600 hover:bg-red-100'
                               : 'border-gray-200 bg-white text-gray-400 hover:border-red-300 hover:text-red-600'
                               }`}
-                            title={isPermanentExcluded ? '영구 제외 해제' : '영구 제외'}
+                            title="영구 제외"
                           >
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v3m0 4h.01M9.172 9.172a4 4 0 015.656 0m0 0L12 12m2.828-2.828a4 4 0 010 5.656M6 6l12 12" />
                             </svg>
-                            {isPermanentExcluded ? '영구 제외 해제' : '영구 제외'}
+                            영구 제외
                           </button>
                           <button
                             onClick={(e) => {
