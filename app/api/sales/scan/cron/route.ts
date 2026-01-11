@@ -29,7 +29,7 @@ export const dynamic = 'force-dynamic';
 
 const CRON_STATE_KEY = 'scan:cron:state';
 const AI_CONCURRENCY = 3;
-const ARTICLES_PER_RUN = 10;
+const ARTICLES_PER_RUN = 5;
 
 interface CronState {
     feedIndex: number;
@@ -128,10 +128,19 @@ export async function GET(req: NextRequest) {
 
         console.log(`Cron: ${allArticles.length} fetched, ${articlesToAnalyze.length} new to analyze`);
 
+        const startTime = Date.now();
+        const TIMEOUT_THRESHOLD = 45000; // 45 seconds
+
         // Analyze with AI
         const limiter = pLimit(AI_CONCURRENCY);
         const analyzePromises = articlesToAnalyze.map((article) =>
             limiter(async () => {
+                // Check if we are running out of time
+                if (Date.now() - startTime > TIMEOUT_THRESHOLD) {
+                    console.warn('Cron: Approaching timeout, skipping remaining analysis');
+                    return null;
+                }
+
                 let contentToAnalyze = article.contentSnippet;
 
                 // For Newswire, fetch full content to get contact info
@@ -154,6 +163,8 @@ export async function GET(req: NextRequest) {
         for (let i = 0; i < articlesToAnalyze.length; i++) {
             const article = articlesToAnalyze[i];
             const analysis = analyses[i];
+
+            if (!analysis) continue; // Skip skipped/failed analyses
 
             const hasKeyword = !!article._keyword;
             const recencyBonus = getRecencyBonus(article.pubDate);
