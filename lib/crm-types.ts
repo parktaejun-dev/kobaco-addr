@@ -196,13 +196,11 @@ export function getRecencyBonus(pubDate: string): number {
  */
 export function calculateFinalScore(
   aiScore: number,
-  hasKeyword: boolean,
   recencyBonus: number,
   sourceBonus: number
 ): number {
   const base = aiScore * 0.6;
-  const keyword = hasKeyword ? 20 : 0;
-  const total = base + keyword + recencyBonus + sourceBonus;
+  const total = base + recencyBonus + sourceBonus;
 
   // Clamp to 0-100
   return Math.max(0, Math.min(100, Math.round(total)));

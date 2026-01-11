@@ -7,8 +7,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { redis } from '@/lib/redis';
 import {
   RedisKeys,
-  LeadStatus,
   isValidStatus,
+  ALL_STATUSES,
   type LeadCore,
   type LeadState,
   type Lead,
@@ -23,6 +23,7 @@ interface LeadsResponse {
   status: string;
   total: number;
   limit: number;
+  counts: Record<string, number>;
 }
 
 /**
@@ -93,13 +94,16 @@ export async function GET(request: NextRequest) {
     // Final limit after sorting
     const finalLeads = leads.slice(0, limit);
 
+    const counts = await getStatusCounts();
+
     return NextResponse.json({
       success: true,
       leads: finalLeads,
       status: statusParam,
       total: finalLeads.length,
       limit,
-      sortBy
+      sortBy,
+      counts,
     } as LeadsResponse);
   } catch (error) {
     console.error('Error fetching leads:', error);
@@ -108,4 +112,23 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+async function getStatusCounts(): Promise<Record<string, number>> {
+  const counts: Record<string, number> = {};
+  const allCount = await redis.zcard(RedisKeys.idxAll());
+  counts.ALL = allCount;
+
+  const statusCounts = await Promise.all(
+    ALL_STATUSES.map(async (status) => ({
+      status,
+      count: await redis.zcard(RedisKeys.idxStatus(status)),
+    }))
+  );
+
+  for (const item of statusCounts) {
+    counts[item.status] = item.count;
+  }
+
+  return counts;
 }

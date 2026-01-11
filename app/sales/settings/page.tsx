@@ -19,6 +19,7 @@ interface ConfigData {
   minScore: number;
   leadNotificationsEnabled: boolean;
   minLeadScoreForNotify: number;
+  excludedCompanies: string[];
 }
 
 export default function SalesSettingsPage() {
@@ -31,9 +32,11 @@ export default function SalesSettingsPage() {
     minScore: 50,
     leadNotificationsEnabled: true,
     minLeadScoreForNotify: 70,
+    excludedCompanies: [],
   });
 
   const [keywordsInput, setKeywordsInput] = useState('');
+  const [excludedInput, setExcludedInput] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -54,6 +57,7 @@ export default function SalesSettingsPage() {
         const data = await res.json();
         setConfig(data);
         setKeywordsInput((data.keywords || []).join(', '));
+        setExcludedInput('');
       }
     } catch (error) {
       console.error('Failed to load config:', error);
@@ -85,6 +89,7 @@ export default function SalesSettingsPage() {
           minScore: config.minScore,
           leadNotificationsEnabled: config.leadNotificationsEnabled,
           minLeadScoreForNotify: config.minLeadScoreForNotify,
+          excludedCompanies: config.excludedCompanies,
         }),
       });
 
@@ -167,6 +172,35 @@ export default function SalesSettingsPage() {
     const updated = [...config.rssFeeds];
     updated[index] = { ...updated[index], enabled: !(updated[index].enabled ?? true) };
     setConfig({ ...config, rssFeeds: updated });
+  }
+
+  function addExcludedCompanies() {
+    const names = excludedInput
+      .split(',')
+      .map((name) => name.trim())
+      .filter((name) => name.length > 0);
+
+    if (names.length === 0) return;
+
+    const existing = new Set(config.excludedCompanies.map((c) => c.toLowerCase()));
+    const merged = [...config.excludedCompanies];
+
+    for (const name of names) {
+      const key = name.toLowerCase();
+      if (!existing.has(key)) {
+        merged.push(name);
+        existing.add(key);
+      }
+    }
+
+    setConfig({ ...config, excludedCompanies: merged });
+    setExcludedInput('');
+  }
+
+  function removeExcludedCompany(index: number) {
+    const updated = [...config.excludedCompanies];
+    updated.splice(index, 1);
+    setConfig({ ...config, excludedCompanies: updated });
   }
 
   if (loading) {
@@ -313,6 +347,54 @@ export default function SalesSettingsPage() {
                 <p className="text-xs text-gray-500 mt-1">
                   이 점수 미만의 리드는 저장되지 않습니다. 권장: 50-60
                 </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Permanent Exclusions Section */}
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              영구 제외 기업
+            </h2>
+            <div className="space-y-3">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <input
+                  type="text"
+                  value={excludedInput}
+                  onChange={(e) => setExcludedInput(e.target.value)}
+                  className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="기업명을 쉼표로 구분해서 입력"
+                />
+                <button
+                  onClick={addExcludedCompanies}
+                  className="px-4 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors"
+                >
+                  추가
+                </button>
+              </div>
+              <p className="text-xs text-gray-500">
+                여기에 등록된 기업은 무기한 제외됩니다.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {config.excludedCompanies.length === 0 ? (
+                  <span className="text-sm text-gray-400">등록된 기업 없음</span>
+                ) : (
+                  config.excludedCompanies.map((company, index) => (
+                    <span
+                      key={`${company}-${index}`}
+                      className="inline-flex items-center gap-2 bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full text-xs font-medium"
+                    >
+                      {company}
+                      <button
+                        onClick={() => removeExcludedCompany(index)}
+                        className="text-gray-500 hover:text-red-600"
+                        title="삭제"
+                      >
+                        ✕
+                      </button>
+                    </span>
+                  ))
+                )}
               </div>
             </div>
           </div>

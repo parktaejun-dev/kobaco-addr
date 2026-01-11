@@ -14,6 +14,7 @@ import {
   calculateFinalScore,
   createInitialState,
   LeadStatus,
+  type AIAnalysis,
   type LeadCore,
   type LeadState,
 } from '@/lib/crm-types';
@@ -39,6 +40,8 @@ interface SalesConfig {
   rssFeeds?: RSSFeedConfig[];
   leadNotificationsEnabled?: boolean;
   minLeadScoreForNotify?: number;
+  excludedCompanies?: string[];
+  excludedCompaniesTemporary?: Array<{ name: string; expiresAt: number }>;
 }
 
 interface ScanResponse {
@@ -146,22 +149,29 @@ export async function POST(request: NextRequest) {
     );
 
     const analyses = await Promise.all(analyzePromises);
+    const excludedCompanyKeys = buildExcludedCompanySet(config);
+
+    const analyzedArticles = articlesToAnalyze.map((article, index) => ({
+      article,
+      analysis: analyses[index],
+    }));
+    const filteredByExclusions = filterExcludedCompanies(
+      analyzedArticles,
+      excludedCompanyKeys
+    );
+    const dedupedByCompany = deduplicateByCompany(filteredByExclusions);
 
     // Build leads with scoring
     const leads: LeadCore[] = [];
 
-    for (let i = 0; i < articlesToAnalyze.length; i++) {
-      const article = articlesToAnalyze[i];
-      const analysis = analyses[i];
+    for (const { article, analysis } of dedupedByCompany) {
 
       // Calculate final score
-      const hasKeyword = !!article._keyword;
       const recencyBonus = getRecencyBonus(article.pubDate);
       const sourceBonus = article._source === 'NAVER' ? 5 : 0;
 
       const finalScore = calculateFinalScore(
         analysis.ai_score,
-        hasKeyword,
         recencyBonus,
         sourceBonus
       );
@@ -258,6 +268,84 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+type AnalyzedArticle = { article: NormalizedArticle; analysis: AIAnalysis };
+
+function normalizeCompanyKey(name: string): string {
+  return name.trim().toLowerCase();
+}
+
+function getPubDateMs(pubDate: string): number {
+  const ts = Date.parse(pubDate);
+  return Number.isNaN(ts) ? 0 : ts;
+}
+
+function buildExcludedCompanySet(config?: SalesConfig): Set<string> {
+  const keys = new Set<string>();
+
+  for (const company of config?.excludedCompanies || []) {
+    const key = normalizeCompanyKey(company);
+    if (key) keys.add(key);
+  }
+
+  const now = Date.now();
+  for (const item of config?.excludedCompaniesTemporary || []) {
+    if (!item || item.expiresAt <= now) continue;
+    const key = normalizeCompanyKey(item.name || '');
+    if (key) keys.add(key);
+  }
+
+  return keys;
+}
+
+function filterExcludedCompanies(
+  articles: AnalyzedArticle[],
+  excludedCompanies: Set<string>
+): AnalyzedArticle[] {
+  if (excludedCompanies.size === 0) return articles;
+
+  return articles.filter((item) => {
+    const company = item.analysis.company_name?.trim();
+    if (!company) return true;
+    return !excludedCompanies.has(normalizeCompanyKey(company));
+  });
+}
+
+/**
+ * Keep only the newest article per company name.
+ */
+function deduplicateByCompany(articles: AnalyzedArticle[]): AnalyzedArticle[] {
+  const byCompany = new Map<string, AnalyzedArticle>();
+  const withoutCompany: AnalyzedArticle[] = [];
+
+  for (const item of articles) {
+    const company = item.analysis.company_name?.trim();
+    if (!company) {
+      withoutCompany.push(item);
+      continue;
+    }
+
+    const key = company.toLowerCase();
+    const existing = byCompany.get(key);
+    if (!existing) {
+      byCompany.set(key, item);
+      continue;
+    }
+
+    const currentTime = getPubDateMs(item.article.pubDate);
+    const existingTime = getPubDateMs(existing.article.pubDate);
+    if (currentTime > existingTime) {
+      byCompany.set(key, item);
+    } else if (
+      currentTime === existingTime &&
+      item.analysis.ai_score > existing.analysis.ai_score
+    ) {
+      byCompany.set(key, item);
+    }
+  }
+
+  return [...byCompany.values(), ...withoutCompany];
 }
 
 /**

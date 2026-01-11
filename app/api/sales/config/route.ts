@@ -12,6 +12,8 @@ const REDIS_KEY = 'config:sales:settings';
 const MASKED_SECRET = '********';
 const MAX_KEYWORDS = 20;
 const MAX_RSS_FEEDS = 30;
+const MAX_EXCLUDED_COMPANIES = 200;
+const MAX_TEMP_EXCLUDED_COMPANIES = 300;
 
 interface RSSFeed {
   category: string;
@@ -30,6 +32,8 @@ interface ConfigData {
   minScore?: number;
   leadNotificationsEnabled?: boolean;
   minLeadScoreForNotify?: number;
+  excludedCompanies?: string[];
+  excludedCompaniesTemporary?: Array<{ name: string; expiresAt: number }>;
   updated_at?: string;
 }
 
@@ -54,6 +58,8 @@ export async function GET(req: NextRequest) {
         minScore: 50,
         leadNotificationsEnabled: true,
         minLeadScoreForNotify: 70,
+        excludedCompanies: [],
+        excludedCompaniesTemporary: [],
       });
     }
 
@@ -67,6 +73,8 @@ export async function GET(req: NextRequest) {
       minScore: queryMinScore ? Number(queryMinScore) : (data.minScore ?? 50),
       leadNotificationsEnabled: data.leadNotificationsEnabled ?? true,
       minLeadScoreForNotify: data.minLeadScoreForNotify ?? 70,
+      excludedCompanies: data.excludedCompanies || [],
+      excludedCompaniesTemporary: data.excludedCompaniesTemporary || [],
     });
   } catch (error) {
     console.error('Error fetching config:', error);
@@ -93,7 +101,9 @@ export async function POST(request: NextRequest) {
       rssFeeds,
       minScore,
       leadNotificationsEnabled,
-      minLeadScoreForNotify
+      minLeadScoreForNotify,
+      excludedCompanies,
+      excludedCompaniesTemporary,
     } = body;
 
     // Get existing config
@@ -109,6 +119,8 @@ export async function POST(request: NextRequest) {
       minScore: typeof minScore === 'number' ? minScore : 50,
       leadNotificationsEnabled: typeof leadNotificationsEnabled === 'boolean' ? leadNotificationsEnabled : true,
       minLeadScoreForNotify: typeof minLeadScoreForNotify === 'number' ? minLeadScoreForNotify : 70,
+      excludedCompanies: existing?.excludedCompanies || [],
+      excludedCompaniesTemporary: existing?.excludedCompaniesTemporary || [],
       updated_at: new Date().toISOString(),
     };
 
@@ -181,6 +193,53 @@ export async function POST(request: NextRequest) {
       }
 
       updatedConfig.rssFeeds = validFeeds;
+    }
+
+    if (excludedCompanies !== undefined) {
+      const companyList = Array.isArray(excludedCompanies)
+        ? excludedCompanies
+        : typeof excludedCompanies === 'string'
+          ? excludedCompanies.split(',')
+          : [];
+
+      const seen = new Set<string>();
+      const normalized = companyList
+        .map((c: any) => (typeof c === 'string' ? c.trim() : ''))
+        .filter((c: string) => c.length > 0)
+        .filter((c: string) => {
+          const key = c.toLowerCase();
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        })
+        .slice(0, MAX_EXCLUDED_COMPANIES);
+
+      updatedConfig.excludedCompanies = normalized;
+    }
+
+    if (excludedCompaniesTemporary !== undefined) {
+      const now = Date.now();
+      const tempList = Array.isArray(excludedCompaniesTemporary)
+        ? excludedCompaniesTemporary
+        : [];
+
+      const seen = new Set<string>();
+      const normalized = tempList
+        .map((item: any) => ({
+          name: typeof item?.name === 'string' ? item.name.trim() : '',
+          expiresAt: Number(item?.expiresAt),
+        }))
+        .filter((item) => item.name.length > 0 && Number.isFinite(item.expiresAt))
+        .filter((item) => item.expiresAt > now)
+        .filter((item) => {
+          const key = item.name.toLowerCase();
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        })
+        .slice(0, MAX_TEMP_EXCLUDED_COMPANIES);
+
+      updatedConfig.excludedCompaniesTemporary = normalized;
     }
 
     // Save to Redis
