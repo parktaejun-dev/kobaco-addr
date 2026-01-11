@@ -62,7 +62,7 @@ export async function GET(req: NextRequest) {
         const feeds = config?.rssFeeds || [];
 
         // Naver counts as index 0, RSS feeds start from index 1
-        const hasNaver = !!(config?.naverClientId && config?.naverClientSecret && config?.keywords?.length);
+        const hasNaver = !!(config?.naverEnabled !== false && config?.naverClientId && config?.naverClientSecret && config?.keywords?.length);
         const totalSources = (hasNaver ? 1 : 0) + feeds.length;
 
         if (totalSources === 0) {
