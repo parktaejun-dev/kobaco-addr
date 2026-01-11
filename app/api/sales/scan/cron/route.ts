@@ -204,7 +204,7 @@ export async function GET(req: NextRequest) {
             analyzedArticles.push({ article, analysis, sourceLabel, leadId });
         }
 
-        const excludedCompanyKeys = buildExcludedCompanySet(config);
+        const excludedCompanyKeys = buildExcludedCompanySet(config || undefined);
         const filteredByExclusions = filterExcludedCompanies(
             analyzedArticles,
             excludedCompanyKeys
