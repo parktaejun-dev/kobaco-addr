@@ -1,7 +1,10 @@
 /**
- * Sales Scan Cron Endpoint
- * Processes one RSS feed per call for incremental scanning
- * Designed to be called by Vercel Cron every hour
+ * Smart Sales Scan Cron Endpoint (Option A Enhanced)
+ * - Round-Robin Fetching: Processes one RSS/Naver source per call
+ * - Time-Budget Processing: Maximizes 60s Vercel limit with 50s budget
+ * - Queue Priority: Skips fetch when queue is full, focuses on analysis
+ * - 7-Day Company Blocking: Auto-filters excluded companies for 7 days
+ * - Recursive Execution Support: Returns 'continue' signal for client
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -23,15 +26,18 @@ import { analyzeArticle } from '@/lib/ai-provider';
 import { getSystemConfig } from '@/lib/content/kv';
 import { sendLeadNotification } from '@/lib/notifications';
 
-export const maxDuration = 60;
+export const maxDuration = 60; // Vercel Hobby Plan max
 export const dynamic = 'force-dynamic';
 
 const CRON_STATE_KEY = 'scan:cron:state';
 const CRON_QUEUE_KEY = 'scan:cron:queue';
 const CRON_PENDING_PREFIX = 'scan:cron:pending:';
-const ENQUEUE_LIMIT = 20;
-const ANALYZE_PER_RUN = 2;
-const TIMEOUT_THRESHOLD = 45000; // 45 seconds
+const BLOCKED_COMPANIES_KEY = 'scan:blocked:companies'; // Sorted Set for 7-day blocking
+
+// Configuration
+const MAX_QUEUE_FOR_FETCH = 15;   // Skip fetch if queue has more than this
+const TIMEOUT_THRESHOLD = 50000;  // 50s (10s safety margin for Vercel 60s limit)
+const ENQUEUE_LIMIT = 30;         // Max articles to enqueue per fetch
 
 interface CronState {
     feedIndex: number;
@@ -52,19 +58,33 @@ interface SalesConfig {
 
 /**
  * GET /api/sales/scan/cron
- * Called by Vercel Cron - processes one source at a time
+ * Smart cron endpoint with queue priority and 7-day blocking
  * Index 0 = Naver News, Index 1+ = RSS Feeds
  */
 export async function GET(req: NextRequest) {
+    const startTime = Date.now();
+
     try {
         const { searchParams } = new URL(req.url);
         const queryMinScore = searchParams.get('minScore');
 
-        // Load config
+        // Step 1: Clean up expired blocked companies (7-day TTL)
+        await redis.zRemRangeByScore(BLOCKED_COMPANIES_KEY, '-inf', Date.now());
+
+        // Load active blocked keywords
+        const blockedKeywords = await redis.zrange(BLOCKED_COMPANIES_KEY, 0, -1);
+        console.log(`Cron: ${blockedKeywords.length} companies blocked`);
+
+        // Step 2: Check queue status
+        let queueLength = await redis.llen(CRON_QUEUE_KEY);
+        let allArticles: NormalizedArticle[] = [];
+        let sourceName = 'Queue Processing';
+        let fetchedCount = 0;
+        let enqueuedCount = 0;
+
+        // Step 3: Load config
         const config = await redis.get<SalesConfig>(RedisKeys.config());
         const feeds = config?.rssFeeds || [];
-
-        // Naver counts as index 0, RSS feeds start from index 1
         const hasNaver = !!(config?.naverEnabled !== false && config?.naverClientId && config?.naverClientSecret && config?.keywords?.length);
         const totalSources = (hasNaver ? 1 : 0) + feeds.length;
 
@@ -72,166 +92,179 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({
                 success: true,
                 message: 'No feeds configured',
-                leads: 0,
+                queueLength,
+                continue: queueLength > 0,
             });
         }
 
-        // Get current cron state
-        let state = await redis.get<CronState>(CRON_STATE_KEY);
-        if (!state || state.feedIndex >= totalSources) {
-            state = { feedIndex: 0, lastRun: new Date().toISOString(), totalFeeds: totalSources };
-        }
+        // Step 4: Smart Fetch Strategy (skip if queue is busy)
+        if (queueLength < MAX_QUEUE_FOR_FETCH) {
+            let state = await redis.get<CronState>(CRON_STATE_KEY);
+            if (!state || state.feedIndex >= totalSources) {
+                state = { feedIndex: 0, lastRun: new Date().toISOString(), totalFeeds: totalSources };
+            }
 
-        let allArticles: NormalizedArticle[] = [];
-        let sourceName = '';
+            // Fetch from current source (Round-Robin)
+            if (hasNaver && state.feedIndex === 0) {
+                sourceName = '네이버 뉴스';
+                console.log(`Cron: Fetching ${sourceName}`);
+                const naverConfig: NaverConfig = {
+                    naverClientId: config!.naverClientId!,
+                    naverClientSecret: config!.naverClientSecret!,
+                    keywords: config!.keywords || [],
+                };
+                allArticles = await fetchNaverNews(naverConfig);
+            } else {
+                const rssIndex = hasNaver ? state.feedIndex - 1 : state.feedIndex;
+                const currentFeed = feeds[rssIndex];
+                sourceName = currentFeed?.category || `RSS ${rssIndex + 1}`;
+                console.log(`Cron: Fetching ${sourceName}`);
+                if (currentFeed) {
+                    allArticles = await fetchCustomFeeds([currentFeed], 10);
+                }
+            }
 
-        // Index 0 = Naver (if configured), otherwise RSS[0]
-        if (hasNaver && state.feedIndex === 0) {
-            // Process Naver
-            sourceName = '네이버 뉴스';
-            console.log(`Cron: Processing ${state.feedIndex + 1}/${totalSources}: ${sourceName}`);
+            fetchedCount = allArticles.length;
+            const deduped = deduplicateArticles(allArticles);
 
-            const naverConfig: NaverConfig = {
-                naverClientId: config!.naverClientId!,
-                naverClientSecret: config!.naverClientSecret!,
-                keywords: config!.keywords || [],
-            };
-            allArticles = await fetchNaverNews(naverConfig);
+            // Enqueue with keyword blocking
+            for (const article of deduped.slice(0, ENQUEUE_LIMIT)) {
+                const link = normalizeLink(article);
+                if (!link) continue;
+
+                // Check if blocked by company keyword
+                const isBlocked = blockedKeywords.some(keyword =>
+                    article.title.includes(keyword) ||
+                    (article.contentSnippet && article.contentSnippet.includes(keyword))
+                );
+                if (isBlocked) {
+                    continue; // Skip without AI analysis
+                }
+
+                const leadId = generateLeadId(link);
+                const existingState = await redis.get<any>(RedisKeys.leadState(leadId));
+                if (existingState) continue;
+
+                const pendingKey = `${CRON_PENDING_PREFIX}${leadId}`;
+                const pending = await redis.get(pendingKey);
+                if (pending) continue;
+
+                await redis.lPush(CRON_QUEUE_KEY, JSON.stringify({ article, sourceName }));
+                await redis.set(pendingKey, Date.now(), { ex: 60 * 60 * 24 });
+                enqueuedCount += 1;
+            }
+
+            // Update state to next source (Round-Robin)
+            const nextIndex = (state.feedIndex + 1) % totalSources;
+            await redis.set(CRON_STATE_KEY, {
+                feedIndex: nextIndex,
+                lastRun: new Date().toISOString(),
+                totalFeeds: totalSources,
+            });
+
+            queueLength = await redis.llen(CRON_QUEUE_KEY);
+            console.log(`Cron: ${fetchedCount} fetched, ${enqueuedCount} enqueued, queue=${queueLength}`);
         } else {
-            // Process RSS feed
-            const rssIndex = hasNaver ? state.feedIndex - 1 : state.feedIndex;
-            const currentFeed = feeds[rssIndex];
-            sourceName = currentFeed?.category || `RSS ${rssIndex + 1}`;
-
-            console.log(`Cron: Processing ${state.feedIndex + 1}/${totalSources}: ${sourceName}`);
-
-            if (currentFeed) {
-                allArticles = await fetchCustomFeeds([currentFeed], 10);
-            }
+            console.log(`Cron: Queue busy (${queueLength} items). Skipping fetch, focusing on analysis.`);
         }
 
-        const deduped = deduplicateArticles(allArticles);
-
-        // Enqueue new articles (avoid re-analysis within a short window)
-        let enqueued = 0;
-        for (const article of deduped.slice(0, ENQUEUE_LIMIT)) {
-            const link = normalizeLink(article);
-            if (!link) continue;
-
-            const leadId = generateLeadId(link);
-            const existingState = await redis.get<any>(RedisKeys.leadState(leadId));
-            if (existingState?.status === 'EXCLUDED' || existingState) {
-                continue;
-            }
-
-            const pendingKey = `${CRON_PENDING_PREFIX}${leadId}`;
-            const pending = await redis.get(pendingKey);
-            if (pending) {
-                continue;
-            }
-
-            await redis.lPush(CRON_QUEUE_KEY, JSON.stringify({ article, sourceName }));
-            await redis.set(pendingKey, Date.now(), { ex: 60 * 60 * 24 });
-            enqueued += 1;
-        }
-
-        console.log(`Cron: ${allArticles.length} fetched, ${enqueued} enqueued`);
-
-        const startTime = Date.now();
-
-        const queuedItems = await redis.lPop(CRON_QUEUE_KEY, ANALYZE_PER_RUN);
-        const itemsToAnalyze = queuedItems || [];
-
-        // Build and save leads
+        // Step 5: Time-Budget Processing (process as many as possible in 50s)
         const leads: LeadCore[] = [];
         const minScore = queryMinScore ? Number(queryMinScore) : (config?.minScore ?? 50);
+        let processedCount = 0;
 
-        for (const rawItem of itemsToAnalyze) {
+        while (true) {
+            // Timeout check
             if (Date.now() - startTime > TIMEOUT_THRESHOLD) {
-                console.warn('Cron: Approaching timeout, re-queueing remaining items');
-                await redis.rPush(CRON_QUEUE_KEY, rawItem);
+                console.warn(`Cron: Time budget exhausted (${processedCount} processed). Stopping.`);
                 break;
             }
 
-            let payload: { article: NormalizedArticle; sourceName?: string };
+            // Pop one item from queue
+            const rawItems = await redis.lPop(CRON_QUEUE_KEY);
+            if (!rawItems || rawItems.length === 0) break; // Queue empty
+
+            const rawItem = rawItems[0]; // Get first item from array
+            processedCount++;
+
             try {
-                payload = JSON.parse(rawItem) as { article: NormalizedArticle; sourceName?: string };
-            } catch {
-                continue;
-            }
-
-            const article = payload.article;
-            const sourceLabel = payload.sourceName || article._category || article._source;
-
-            const link = normalizeLink(article);
-            if (!link) continue;
-
-            const leadId = generateLeadId(link);
-            const existingState = await redis.get<any>(RedisKeys.leadState(leadId));
-            if (existingState) {
-                continue;
-            }
-
-            let analysis;
-            try {
-                let contentToAnalyze = article.contentSnippet;
-
-                // For Newswire, fetch full content to get contact info
-                if (article.link.includes('newswire.co.kr')) {
-                    const fullContent = await fetchFullContent(article.link);
-                    if (fullContent) {
-                        contentToAnalyze = fullContent;
-                    }
+                let payload: { article: NormalizedArticle; sourceName?: string };
+                if (typeof rawItem === 'string') {
+                    payload = JSON.parse(rawItem);
+                } else {
+                    continue;
                 }
 
-                analysis = await analyzeArticle(article.title, contentToAnalyze, article._source);
+                const { article, sourceName: itemSource } = payload;
+                const sourceLabel = itemSource || article._category || article._source;
+
+                // Double-check blocking (in case company was blocked while in queue)
+                const isBlocked = blockedKeywords.some(keyword =>
+                    article.title.includes(keyword) ||
+                    (article.contentSnippet && article.contentSnippet.includes(keyword))
+                );
+                if (isBlocked) continue;
+
+                const link = normalizeLink(article);
+                if (!link) continue;
+
+                const leadId = generateLeadId(link);
+                const existingState = await redis.get<any>(RedisKeys.leadState(leadId));
+                if (existingState) continue;
+
+                // AI Analysis
+                let contentToAnalyze = article.contentSnippet;
+                if (article.link.includes('newswire.co.kr')) {
+                    const full = await fetchFullContent(article.link);
+                    if (full) contentToAnalyze = full;
+                }
+
+                const analysis = await analyzeArticle(article.title, contentToAnalyze, article._source);
+
+                // Scoring
+                const hasKeyword = !!article._keyword;
+                const recencyBonus = getRecencyBonus(article.pubDate);
+                const sourceBonus = article._source === 'NAVER' ? 5 : 0;
+                const finalScore = calculateFinalScore(
+                    analysis.ai_score,
+                    hasKeyword,
+                    recencyBonus,
+                    sourceBonus
+                );
+
+                if (finalScore >= minScore) {
+                    const lead: LeadCore = {
+                        lead_id: leadId,
+                        title: article.title,
+                        link,
+                        contentSnippet: article.contentSnippet,
+                        pubDate: article.pubDate,
+                        source: sourceLabel,
+                        keyword: article._keyword,
+                        ai_analysis: analysis,
+                        contact: {
+                            email: analysis.contact_email || undefined,
+                            phone: analysis.contact_phone || undefined,
+                            pr_agency: analysis.pr_agency || undefined,
+                            homepage: analysis.homepage_url || undefined,
+                            source: article._source === 'NAVER' ? 'NEWS' : 'NEWS',
+                        },
+                        final_score: finalScore,
+                        created_at: Date.now(),
+                        updated_at: Date.now(),
+                    };
+                    leads.push(lead);
+                }
             } catch (error) {
-                console.warn('Cron: Failed to analyze, re-queueing', error);
+                console.error('Item processing error, re-queueing:', error);
                 await redis.rPush(CRON_QUEUE_KEY, rawItem);
-                continue;
             }
-
-            const hasKeyword = !!article._keyword;
-            const recencyBonus = getRecencyBonus(article.pubDate);
-            const sourceBonus = article._source === 'NAVER' ? 5 : 0;
-
-            const finalScore = calculateFinalScore(
-                analysis.ai_score,
-                hasKeyword,
-                recencyBonus,
-                sourceBonus
-            );
-
-            if (finalScore < minScore) continue;
-
-            const lead: LeadCore = {
-                lead_id: leadId,
-                title: article.title,
-                link,
-                contentSnippet: article.contentSnippet,
-                pubDate: article.pubDate,
-                source: sourceLabel,
-                keyword: article._keyword,
-                ai_analysis: analysis,
-                contact: {
-                    email: analysis.contact_email || undefined,
-                    phone: analysis.contact_phone || undefined,
-                    pr_agency: analysis.pr_agency || undefined,
-                    homepage: analysis.homepage_url || undefined,
-                    source: article._source === 'NAVER' ? 'NEWS' : 'NEWS',
-                },
-                final_score: finalScore,
-                created_at: Date.now(),
-                updated_at: Date.now(),
-            };
-
-            leads.push(lead);
         }
 
-        // Upsert leads
-        const newLeadIds = await upsertLeads(leads);
+        // Step 6: Batch save leads
+        const newLeadIds = leads.length > 0 ? await upsertLeads(leads) : [];
 
-        // 4. Send Notifications for NEW high-score leads
+        // Step 7: Send notifications
         if (newLeadIds.length > 0 && config?.leadNotificationsEnabled !== false) {
             const systemConfig = await getSystemConfig().catch(() => ({}));
             const notificationConfig = {
@@ -240,14 +273,13 @@ export async function GET(req: NextRequest) {
                 telegramChatId: systemConfig.telegramChatId || process.env.TELEGRAM_CHAT_ID,
             };
 
-            // Use user-defined threshold or default to 70
             const notifyThreshold = config?.minLeadScoreForNotify ?? 70;
             const leadsToNotify = leads.filter(l =>
                 newLeadIds.includes(l.lead_id) && l.final_score >= notifyThreshold
             );
 
-            for (const lead of leadsToNotify) {
-                await sendLeadNotification({
+            await Promise.all(leadsToNotify.map(lead =>
+                sendLeadNotification({
                     title: lead.title,
                     company: lead.ai_analysis.company_name,
                     score: lead.final_score,
@@ -255,42 +287,24 @@ export async function GET(req: NextRequest) {
                     link: lead.link,
                     email: lead.contact?.email,
                     phone: lead.contact?.phone,
-                }, notificationConfig);
-            }
+                }, notificationConfig)
+            ));
         }
 
-        // Update cron state - move to next source
-        const nextIndex = (state.feedIndex + 1) % totalSources;
-
-        // Determine next source name for UX
-        let nextSourceName = '';
-        if (hasNaver && nextIndex === 0) {
-            nextSourceName = '네이버 뉴스';
-        } else {
-            const nextRssIndex = hasNaver ? nextIndex - 1 : nextIndex;
-            nextSourceName = feeds[nextRssIndex]?.category || `RSS ${nextRssIndex + 1}`;
-        }
-
-        await redis.set(CRON_STATE_KEY, {
-            feedIndex: nextIndex,
-            lastRun: new Date().toISOString(),
-            totalFeeds: totalSources,
-        });
-
-        const queueLength = await redis.llen(CRON_QUEUE_KEY);
+        const remainingQueue = await redis.llen(CRON_QUEUE_KEY);
+        const elapsedTime = Date.now() - startTime;
 
         return NextResponse.json({
             success: true,
             source: sourceName,
-            sourceIndex: state.feedIndex,
-            nextSourceIndex: nextIndex,
-            nextSourceName,
-            totalSources,
-            articlesFound: allArticles.length,
-            enqueued,
-            processed: leads.length,
-            queueLength,
-            newLeads: leads.length,
+            fetched: fetchedCount,
+            enqueued: enqueuedCount,
+            processed: processedCount,
+            newLeads: newLeadIds.length,
+            queueLength: remainingQueue,
+            continue: remainingQueue > 0, // Signal for recursive execution
+            blockedKeywords: blockedKeywords.length,
+            elapsedMs: elapsedTime,
         });
     } catch (error) {
         console.error('Cron scan error:', error);

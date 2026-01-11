@@ -1,6 +1,7 @@
 /**
  * Lead State Update API
  * Update lead status and metadata
+ * - Automatically blocks companies for 7 days when marked as EXCLUDED
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -10,9 +11,13 @@ import {
   isValidStatus,
   type LeadState,
   type LeadStatusType,
+  type LeadCore,
 } from '@/lib/crm-types';
 
 export const dynamic = 'force-dynamic';
+
+const BLOCKED_COMPANIES_KEY = 'scan:blocked:companies'; // Same as cron route
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
 
 interface UpdateStateRequest {
   status?: LeadStatusType;
@@ -96,6 +101,24 @@ export async function PATCH(
         score: timestamp,
         member: leadId,
       });
+
+      // 🔥 NEW: If marked as EXCLUDED, block the company for 7 days
+      if (newStatus === 'EXCLUDED') {
+        const leadCore = await redis.get<LeadCore>(RedisKeys.leadCore(leadId));
+        const companyName = leadCore?.ai_analysis?.company_name;
+
+        if (companyName && companyName.trim()) {
+          const expireAt = Date.now() + SEVEN_DAYS_MS;
+
+          // Add to blocked companies (Sorted Set with expiration score)
+          await redis.zadd(BLOCKED_COMPANIES_KEY, {
+            score: expireAt,
+            member: companyName,
+          });
+
+          console.log(`Blocked company "${companyName}" for 7 days (until ${new Date(expireAt).toISOString()})`);
+        }
+      }
     } else {
       // Just refresh timestamp in current status index
       await redis.zadd(RedisKeys.idxStatus(newStatus), {

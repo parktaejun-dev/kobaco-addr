@@ -144,6 +144,11 @@ export const redis = {
     return result;
   },
 
+  async zRemRangeByScore(key: string, min: number | string, max: number | string): Promise<number> {
+    await ensureConnected();
+    return await redisClient.zRemRangeByScore(key, min, max);
+  },
+
   /**
    * Pipeline for batch operations
    */
