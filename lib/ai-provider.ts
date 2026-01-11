@@ -46,29 +46,50 @@ Unlike traditional broad TV ads, Addressable TV allows:
 - **Data-Driven**: Targeting based on set-top box data (location, interests, behavior).
 - **Cost-Effective**: Reach only the most relevant households without waste.
 
-Your task is to analyze news articles to identify potential advertisers for **Addressable TV**.
+**Your task is to identify companies whose current marketing situation would be INEFFICIENT or RISKY WITHOUT Addressable TV.**
 
-Focus on companies/events with:
-1. **New Product/Service Launches**: Companies needing broad reach with targeted precision.
-2. **Expansion/Funding**: Startups or companies with a new marketing budget.
-3. **Specific Target Audiences**: e.g., "parents in their 30s", "frequent travelers", "luxury car enthusiasts".
-4. **Promotion/Campaign Signals**: Mentions of "marketing campaign", "brand building", or "sales competition".
+IMPORTANT:
+You must evaluate every article from the perspective of:
+"KOBACO Addressable TV is the PRIMARY and MOST EFFECTIVE solution for this situation."
+
+If Addressable TV is NOT clearly superior to:
+- digital ads alone
+- social media ads alone
+- general (untargeted) TV ads
+
+then the lead score MUST be low (below 50).
+
+Do NOT explain why advertising in general is good.
+Explain why Addressable TV is UNIQUELY NECESSARY at this moment.
+
+Focus on companies/events where:
+1. **Mass reach is needed, but untargeted TV would be wasteful** (e.g., premium product for a niche demographic).
+2. **Digital alone is insufficient** (e.g., older demographic, brand building, trust-building).
+3. **Specific household-level targeting is possible** (e.g., families with children, apartment residents in specific regions).
 
 For each article, evaluate:
 1. **Company/Organization name** mentioned
 2. **Event summary** - what's happening
-3. **Target audience** - who they're trying to reach
-4. **ATV fit (CRITICAL)** - SPECIFICALLY why **Addressable TV** (not just general advertising) is the best choice for this company's current situation.
-5. **Sales angle** - pitch logic: "Since you are launching [Product] for [Audience], Addressable TV is ideal because..."
+3. **Target Audience (Addressable-ready)**: Describe the audience ONLY in terms that can be activated via set-top box / household-level TV targeting. (e.g., "수도권 아파트 거주, 초등 자녀 있는 가구", "최근 여행 채널 시청 빈도 높은 가구")
+4. **ATV Fit (MANDATORY, DEAL-BREAKER)**:
+   - What specific waste or risk would occur if this company used: a) general TV advertising, b) digital-only advertising?
+   - Which household-level targeting dimension (location, life-stage, behavior) makes Addressable TV uniquely effective here?
+5. **Sales angle** - pitch logic: "Since you are launching [Product] for [Audience], Addressable TV is ideal because [specific ATV advantage]..."
 6. **AI Score (0-100)** - lead quality score based on:
+   - **ATV Necessity**: Would this company's marketing be inefficient WITHOUT Addressable TV? (If no, score < 50)
+   - **Targeting potential**: Does their product have a clear, household-level targetable audience?
    - **Budget likelihood**: New funding, product launch, or industry ranking.
-   - **Targeting potential**: Does their product have a clear, targetable audience?
-   - **Service fit**: Is their product/service suitable for a TV screen?
 7. **Contact Information** - Extract public contact info:
    - Representative Email (e.g., press@..., contact@...)
    - Representative Phone (e.g., 02-123-4567, 010-1234-5678)
    - PR Agency name (if mentioned as handling the press release)
    - Company Homepage URL
+
+SCORING GUIDELINES:
+- 80-100: ATV is clearly the best solution; high budget likelihood; clear household targeting possible.
+- 60-79: Good ATV fit, but one factor is weaker (e.g., unclear budget, or digital might also work).
+- 40-59: Possible ATV fit, but digital or general TV might be equally effective.
+- 0-39: ATV is NOT clearly superior; general advertising or PR news only.
 
 CRITICAL REQUIREMENTS:
 - Output ONLY valid JSON
@@ -81,8 +102,8 @@ CRITICAL REQUIREMENTS:
 {
   "company_name": "기업명",
   "event_summary": "이벤트 요약",
-  "target_audience": "타겟 고객층",
-  "atv_fit_reason": "KOBACO 서비스 적합 이유",
+  "target_audience": "타겟 고객층 (가구 단위 타겟팅 가능한 용어로)",
+  "atv_fit_reason": "ATV 필수 이유: 일반 TV/디지털만 쓰면 생기는 낭비 또는 리스크",
   "sales_angle": "영업 접근 방식",
   "ai_score": 75,
   "contact_email": "null 또는 이메일",
