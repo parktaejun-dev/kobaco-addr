@@ -77,7 +77,7 @@ interface SalesConfig {
   excludedCompaniesTemporary?: Array<{ name: string; expiresAt: number }>;
 }
 
-const STATUSES = ['ALL', 'NEW', 'CONTACTED', 'IN_PROGRESS', 'ON_HOLD', 'WON', 'LOST', 'EXCLUDED'];
+const STATUSES = ['ALL', 'NEW', 'CONTACTED', 'IN_PROGRESS', 'ON_HOLD', 'WON', 'LOST', 'EXCLUDED', 'PERMANENT_EXCLUDED'];
 const STATUS_LABELS: Record<string, string> = {
   ALL: '전체',
   NEW: '신규',
@@ -87,6 +87,7 @@ const STATUS_LABELS: Record<string, string> = {
   WON: '성공',
   LOST: '실패',
   EXCLUDED: '제외',
+  PERMANENT_EXCLUDED: '영구제외',
 };
 
 export default function SalesDashboardPage() {
@@ -147,6 +148,9 @@ export default function SalesDashboardPage() {
 
   useEffect(() => {
     loadLeads(currentStatus, sortBy);
+    if (currentStatus === 'PERMANENT_EXCLUDED') {
+      setSelectedLeads(new Set());
+    }
   }, [currentStatus, sortBy]);
 
   useEffect(() => {
@@ -169,6 +173,11 @@ export default function SalesDashboardPage() {
   async function loadLeads(status: string, sort: string = 'latest') {
     setLoading(true);
     try {
+      if (status === 'PERMANENT_EXCLUDED') {
+        setLeads([]);
+        return;
+      }
+
       const res = await fetch(`/api/sales/leads?status=${status}&sortBy=${sort}&limit=50`);
       if (res.ok) {
         const data = await res.json();
@@ -432,6 +441,7 @@ export default function SalesDashboardPage() {
 
   async function updateExcludedConfig(options: {
     permanent?: string[];
+    replacePermanent?: string[];
     temporary?: Array<{ name: string; expiresAt: number }>;
   }) {
     const configRes = await fetch('/api/sales/config');
@@ -440,10 +450,12 @@ export default function SalesDashboardPage() {
     }
 
     const config = (await configRes.json()) as SalesConfig;
-    const permanent = config.excludedCompanies || [];
+    let permanent = config.excludedCompanies || [];
     const temporary = config.excludedCompaniesTemporary || [];
 
-    if (options.permanent) {
+    if (options.replacePermanent) {
+      permanent = options.replacePermanent;
+    } else if (options.permanent) {
       const seen = new Set(permanent.map((name) => name.toLowerCase()));
       for (const name of options.permanent) {
         const key = name.toLowerCase();
@@ -512,6 +524,20 @@ export default function SalesDashboardPage() {
     }
   }
 
+  async function handleBulkRestoreExcluded() {
+    if (selectedLeads.size === 0) return;
+    if (!confirm(`선택한 ${selectedLeads.size}개의 리드를 제외 해제하시겠습니까?`)) return;
+
+    try {
+      await bulkUpdateStatus('NEW');
+      setSelectedLeads(new Set());
+      loadLeads(currentStatus);
+    } catch (error) {
+      console.error('Bulk restore failed:', error);
+      alert('제외 해제 처리 중 오류가 발생했습니다.');
+    }
+  }
+
   async function handleBulkTemporaryExclude(days: number) {
     if (selectedLeads.size === 0) return;
     if (!confirm(`선택한 ${selectedLeads.size}개의 리드를 ${days}일 제외하시겠습니까?`)) return;
@@ -554,6 +580,30 @@ export default function SalesDashboardPage() {
     } catch (error) {
       console.error('Bulk permanent exclude failed:', error);
       alert('영구 제외 처리 중 오류가 발생했습니다.');
+    }
+  }
+
+  async function handleBulkPermanentRestore() {
+    if (selectedLeads.size === 0) return;
+    if (!confirm(`선택한 ${selectedLeads.size}개의 리드를 영구 제외 해제하시겠습니까?`)) return;
+
+    const companies = getSelectedCompanyNames();
+    if (companies.length === 0) {
+      alert('기업명이 없는 리드는 제외 해제할 수 없습니다.');
+      return;
+    }
+
+    try {
+      const remaining = excludedCompanies.filter(
+        (company) => !companies.some((name) => name.toLowerCase() === company.toLowerCase())
+      );
+      await updateExcludedConfig({ replacePermanent: remaining });
+      await bulkUpdateStatus('NEW');
+      setSelectedLeads(new Set());
+      loadLeads(currentStatus);
+    } catch (error) {
+      console.error('Bulk permanent restore failed:', error);
+      alert('영구 제외 해제 처리 중 오류가 발생했습니다.');
     }
   }
 
@@ -626,19 +676,20 @@ export default function SalesDashboardPage() {
     }
   }
 
-  async function handleExcludeLead(leadId: string) {
+  async function handleExcludeLead(lead: Lead) {
+    const nextStatus = lead.state.status === LeadStatus.EXCLUDED ? 'NEW' : 'EXCLUDED';
     try {
-      const res = await fetch(`/api/sales/leads/${leadId}/state`, {
+      const res = await fetch(`/api/sales/leads/${lead.lead_id}/state`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'EXCLUDED' }),
+        body: JSON.stringify({ status: nextStatus }),
       });
 
       if (res.ok) {
         loadLeads(currentStatus);
       }
     } catch (error) {
-      console.error('Failed to exclude lead:', error);
+      console.error('Failed to update exclude status:', error);
     }
   }
 
@@ -650,45 +701,42 @@ export default function SalesDashboardPage() {
     }
 
     try {
-      const configRes = await fetch('/api/sales/config');
-      if (!configRes.ok) {
-        alert('설정 정보를 불러오지 못했습니다.');
-        return;
+      const lowerCompany = company.toLowerCase();
+      const isExcluded = excludedCompanies.some(
+        (name) => name.toLowerCase() === lowerCompany
+      );
+
+      if (isExcluded) {
+        const remaining = excludedCompanies.filter(
+          (name) => name.toLowerCase() !== lowerCompany
+        );
+        await updateExcludedConfig({ replacePermanent: remaining });
+        if (lead.state.status === LeadStatus.EXCLUDED) {
+          await handleExcludeLead(lead);
+        }
+      } else {
+        await updateExcludedConfig({ permanent: [company] });
+        if (lead.state.status !== LeadStatus.EXCLUDED) {
+          await handleExcludeLead(lead);
+        }
       }
 
-      const config = (await configRes.json()) as SalesConfig;
-      const current = config.excludedCompanies || [];
-      const normalized = new Set(current.map((c) => c.toLowerCase()));
-      if (!normalized.has(company.toLowerCase())) {
-        current.push(company);
-      }
-
-      const saveRes = await fetch('/api/sales/config', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          naverClientId: config.naverClientId,
-          naverClientSecret: config.naverClientSecret,
-          naverEnabled: config.naverEnabled,
-          keywords: config.keywords,
-          rssFeeds: config.rssFeeds,
-          minScore: config.minScore,
-          leadNotificationsEnabled: config.leadNotificationsEnabled,
-          minLeadScoreForNotify: config.minLeadScoreForNotify,
-          excludedCompanies: current,
-        }),
-      });
-
-      if (!saveRes.ok) {
-        alert('영구 제외 목록 저장에 실패했습니다.');
-        return;
-      }
-
-      await handleExcludeLead(lead.lead_id);
       loadLeads(currentStatus);
     } catch (error) {
       console.error('Failed to permanently exclude company:', error);
       alert('영구 제외 처리 중 오류가 발생했습니다.');
+    }
+  }
+
+  async function handleRemovePermanentCompany(company: string) {
+    const remaining = excludedCompanies.filter(
+      (name) => name.toLowerCase() !== company.toLowerCase()
+    );
+    try {
+      await updateExcludedConfig({ replacePermanent: remaining });
+    } catch (error) {
+      console.error('Failed to remove permanent exclusion:', error);
+      alert('영구 제외 해제 중 오류가 발생했습니다.');
     }
   }
 
@@ -746,6 +794,14 @@ export default function SalesDashboardPage() {
     navigator.clipboard.writeText(prompt);
     alert("ChatGPT용 프롬프트가 복사되었습니다! AI 채팅창에 붙여넣으세요.");
   };
+
+  const selectedCompanyNames = getSelectedCompanyNames();
+  const hasExcludedSelected = leads.some(
+    (lead) => selectedLeads.has(lead.lead_id) && lead.state.status === LeadStatus.EXCLUDED
+  );
+  const hasPermanentSelected = selectedCompanyNames.some((name) =>
+    excludedCompanies.some((company) => company.toLowerCase() === name.toLowerCase())
+  );
 
   return (
     <div className="h-full flex flex-col bg-slate-50 overflow-hidden">
@@ -822,8 +878,8 @@ export default function SalesDashboardPage() {
             >
               {STATUS_LABELS[status]}
               <span className="ml-2 text-[10px] font-semibold text-gray-400">
-                {status === 'EXCLUDED'
-                  ? (statusCounts[status] ?? 0) + excludedCompanies.length
+                {status === 'PERMANENT_EXCLUDED'
+                  ? excludedCompanies.length
                   : statusCounts[status] ?? 0}
               </span>
             </button>
@@ -857,27 +913,29 @@ export default function SalesDashboardPage() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 bg-white px-2 py-1 rounded-md border border-gray-200 shadow-sm">
-                  <input
-                    type="checkbox"
-                    id="selectAllLeads"
-                    checked={leads.length > 0 && selectedLeads.size === leads.length}
-                    onChange={toggleSelectAll}
-                    className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
-                  />
-                  <label htmlFor="selectAllLeads" className="text-xs font-bold text-gray-700 cursor-pointer select-none">전체 선택</label>
-                </div>
+              {currentStatus !== 'PERMANENT_EXCLUDED' && (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 bg-white px-2 py-1 rounded-md border border-gray-200 shadow-sm">
+                    <input
+                      type="checkbox"
+                      id="selectAllLeads"
+                      checked={leads.length > 0 && selectedLeads.size === leads.length}
+                      onChange={toggleSelectAll}
+                      className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    />
+                    <label htmlFor="selectAllLeads" className="text-xs font-bold text-gray-700 cursor-pointer select-none">전체 선택</label>
+                  </div>
 
-                <div className="text-[10px] text-gray-400 font-medium">
-                  {sortBy === 'score' ? '* 점수 상위 200개 중 정렬' : '* 최신 50개 표시'}
+                  <div className="text-[10px] text-gray-400 font-medium">
+                    {sortBy === 'score' ? '* 점수 상위 200개 중 정렬' : '* 최신 50개 표시'}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
-            {currentStatus === 'EXCLUDED' && (
-              <div className="px-4 py-3 border-b border-gray-200 bg-white">
-                <div className="text-xs font-semibold text-gray-500 mb-2">
+            {currentStatus === 'PERMANENT_EXCLUDED' ? (
+              <div className="flex-1 overflow-y-auto p-4">
+                <div className="text-xs font-semibold text-gray-500 mb-3">
                   영구 제외 기업 ({excludedCompanies.length})
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -890,14 +948,20 @@ export default function SalesDashboardPage() {
                         className="inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-[11px] font-semibold bg-gray-100 text-gray-600"
                       >
                         {company}
+                        <button
+                          onClick={() => handleRemovePermanentCompany(company)}
+                          className="text-gray-400 hover:text-red-600"
+                          title="영구 제외 해제"
+                        >
+                          ✕
+                        </button>
                       </span>
                     ))
                   )}
                 </div>
               </div>
-            )}
-
-            <div className="flex-1 overflow-y-auto divide-y divide-gray-100 min-h-0">
+            ) : (
+              <div className="flex-1 overflow-y-auto divide-y divide-gray-100 min-h-0">
               {loading ? (
                 <div className="p-8 text-center text-gray-500">로딩 중...</div>
               ) : leads.length === 0 ? (
@@ -905,27 +969,34 @@ export default function SalesDashboardPage() {
                   리드가 없습니다. 스캔을 실행하세요.
                 </div>
               ) : (
-                leads.map((lead) => (
-                  <div
-                    key={lead.lead_id}
-                    className={`border-b border-gray-100 hover:bg-slate-50 transition-colors group relative flex items-center ${selectedLeads.has(lead.lead_id) ? 'bg-blue-50/50' : ''}`}
-                  >
-                    <div className="pl-4 pr-2 py-4 flex items-center h-full">
-                      <input
-                        type="checkbox"
-                        checked={selectedLeads.has(lead.lead_id)}
-                        onChange={() => toggleSelectLead(lead.lead_id)}
-                        className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
-                      />
-                    </div>
+                leads.map((lead) => {
+                  const isExcluded = lead.state.status === LeadStatus.EXCLUDED;
+                  const isPermanentExcluded = excludedCompanies.some(
+                    (company) =>
+                      company.toLowerCase() === lead.ai_analysis.company_name?.trim().toLowerCase()
+                  );
 
+                  return (
                     <div
-                      className="flex-1 px-4 py-4 cursor-pointer"
-                      onClick={() => {
-                        setSelectedLead(lead);
-                        loadNotes(lead.lead_id);
-                      }}
+                      key={lead.lead_id}
+                      className={`border-b border-gray-100 hover:bg-slate-50 transition-colors group relative flex items-center ${selectedLeads.has(lead.lead_id) ? 'bg-blue-50/50' : ''}`}
                     >
+                      <div className="pl-4 pr-2 py-4 flex items-center h-full">
+                        <input
+                          type="checkbox"
+                          checked={selectedLeads.has(lead.lead_id)}
+                          onChange={() => toggleSelectLead(lead.lead_id)}
+                          className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                        />
+                      </div>
+
+                      <div
+                        className="flex-1 px-4 py-4 cursor-pointer"
+                        onClick={() => {
+                          setSelectedLead(lead);
+                          loadNotes(lead.lead_id);
+                        }}
+                      >
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
                           <h3 className="text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors truncate">
@@ -1027,34 +1098,34 @@ export default function SalesDashboardPage() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleExcludeLead(lead.lead_id);
+                              handleExcludeLead(lead);
                             }}
-                            className={`flex items-center gap-1 px-2 py-1 rounded-lg border transition-all text-xs font-semibold ${lead.state.status === LeadStatus.EXCLUDED
+                            className={`flex items-center gap-1 px-2 py-1 rounded-lg border transition-all text-xs font-semibold ${isExcluded
                               ? 'bg-orange-50 text-orange-600 border-orange-200'
                               : 'bg-white text-gray-400 border-gray-200 hover:border-orange-300 hover:text-orange-600'
                               }`}
-                            title="제외"
+                            title={isExcluded ? '제외 해제' : '제외'}
                           >
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636" />
                             </svg>
-                            제외
+                            {isExcluded ? '제외 해제' : '제외'}
                           </button>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               handlePermanentExclude(lead);
                             }}
-                            className={`flex items-center gap-1 px-2 py-1 rounded-lg border transition-all text-xs font-semibold ${excludedCompanies.some((company) => company.toLowerCase() === lead.ai_analysis.company_name?.trim().toLowerCase())
+                            className={`flex items-center gap-1 px-2 py-1 rounded-lg border transition-all text-xs font-semibold ${isPermanentExcluded
                               ? 'border-red-200 bg-red-50 text-red-600 hover:bg-red-100'
                               : 'border-gray-200 bg-white text-gray-400 hover:border-red-300 hover:text-red-600'
                               }`}
-                            title="영구 제외"
+                            title={isPermanentExcluded ? '영구 제외 해제' : '영구 제외'}
                           >
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v3m0 4h.01M9.172 9.172a4 4 0 015.656 0m0 0L12 12m2.828-2.828a4 4 0 010 5.656M6 6l12 12" />
                             </svg>
-                            영구 제외
+                            {isPermanentExcluded ? '영구 제외 해제' : '영구 제외'}
                           </button>
                           <button
                             onClick={(e) => {
@@ -1072,9 +1143,11 @@ export default function SalesDashboardPage() {
                       </div>
                     </div>
                   </div>
-                ))
+                );
+              })
               )}
             </div>
+            )}
           </div>
 
           {/* Lead Detail */}
@@ -1094,7 +1167,7 @@ export default function SalesDashboardPage() {
                       onChange={(e) => handleUpdateStatus(e.target.value)}
                       className="px-3 py-1 border border-gray-300 rounded-lg text-sm"
                     >
-                      {STATUSES.filter((s) => s !== 'ALL').map((status) => (
+                      {STATUSES.filter((s) => s !== 'ALL' && s !== 'PERMANENT_EXCLUDED').map((status) => (
                         <option key={status} value={status}>
                           {STATUS_LABELS[status]}
                         </option>
@@ -1278,6 +1351,28 @@ export default function SalesDashboardPage() {
                 </svg>
                 영구 제외
               </button>
+              {hasExcludedSelected && (
+                <button
+                  onClick={handleBulkRestoreExcluded}
+                  className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-white rounded-lg transition-all text-xs font-semibold"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 12a8 8 0 018-8m0 0l-3 3m3-3l3 3m-3-3a8 8 0 018 8" />
+                  </svg>
+                  제외 해제
+                </button>
+              )}
+              {hasPermanentSelected && (
+                <button
+                  onClick={handleBulkPermanentRestore}
+                  className="flex items-center gap-2 px-4 py-2 bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white rounded-lg transition-all text-xs font-semibold"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  영구 제외 해제
+                </button>
+              )}
               <button
                 onClick={handleBulkDelete}
                 className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-lg transition-all text-xs font-semibold"
