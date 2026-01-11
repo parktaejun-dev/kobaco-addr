@@ -100,6 +100,11 @@ export const redis = {
     await redisClient.zAdd(key, { score: options.score, value: options.member });
   },
 
+  async zcard(key: string): Promise<number> {
+    await ensureConnected();
+    return await redisClient.zCard(key);
+  },
+
   async zRem(key: string, member: string): Promise<void> {
     await ensureConnected();
     await redisClient.zRem(key, member);
@@ -169,6 +174,14 @@ export const redis = {
         commands.push(async () => {
           await ensureConnected();
           await redisClient.zAdd(key, { score: options.score, value: options.member });
+        });
+        return this;
+      },
+
+      zcard(key: string) {
+        commands.push(async () => {
+          await ensureConnected();
+          await redisClient.zCard(key);
         });
         return this;
       },
