@@ -352,11 +352,17 @@ export default function SalesDashboardPage() {
     setSmartScanning(true);
     smartScanRef.current = true;
     const initialQueue = queueLength ?? 0;
-    setScanStatus(`스마트 큐 처리 시작... (${initialQueue}개 중 0개 처리 완료. 잔여 ${initialQueue}개)`);
+    const formatProgress = (total: number, processed: number, found: number, discarded: number, remaining: number) => {
+      const base = total > 0 ? Math.min(100, Math.round(((total - remaining) / total) * 100)) : 0;
+      return `${total}개 중 ${processed}개 처리완료. ${found}개 발견, ${discarded}개 폐기. ${remaining}개 남음. 진도율 ${base}%`;
+    };
+    setScanStatus(formatProgress(initialQueue, 0, 0, 0, initialQueue));
 
     const MAX_ROUNDS = 20; // Max 20 rounds (safety limit)
     let round = 1;
     let totalProcessed = 0;
+    let totalAnalyzed = 0;
+    let totalFound = 0;
 
     try {
       while (round <= MAX_ROUNDS && smartScanRef.current) {
@@ -368,18 +374,23 @@ export default function SalesDashboardPage() {
         }
 
         const data = await res.json();
-        totalProcessed += data.processed || 0;
+        const processed = data.processed || 0;
+        const analyzed = data.analyzed || 0;
+        totalProcessed += processed;
+        totalAnalyzed += analyzed;
+        totalFound += processed;
         if (typeof data.queueLength === 'number') {
           setQueueLength(data.queueLength);
         }
 
-        // Update status with queue info
+        // Update status with cumulative progress
         const remaining = data.queueLength || 0;
-        const total = totalProcessed + remaining;
-        const analyzed = data.analyzed || 0;
-        setScanStatus(
-          `Round ${round}: ${total}개 중 ${totalProcessed}개 처리 완료 (분석 ${analyzed}개). 잔여 ${remaining}개`
-        );
+        const total = initialQueue;
+        const discarded = Math.max(0, totalAnalyzed - totalFound);
+        setScanStatus(formatProgress(total, totalProcessed, totalFound, discarded, remaining));
+        if (processed > 0) {
+          loadLeads(currentStatus);
+        }
 
         // Stop only when queue is empty
         if (data.queueLength === 0) {
@@ -395,14 +406,15 @@ export default function SalesDashboardPage() {
         if (smartScanRef.current && round <= MAX_ROUNDS) {
           for (let i = 2; i > 0; i--) {
             if (!smartScanRef.current) break;
-            setScanStatus(`Round ${round}: ${total}개 중 ${totalProcessed}개 처리 완료. 잔여 ${remaining}개`);
             await new Promise(r => setTimeout(r, 1000));
           }
         }
       }
 
       if (round > MAX_ROUNDS) {
-        setScanStatus(`⚠️ 최대 라운드 도달 (${totalProcessed}개 처리). 나머지는 Cron이 처리합니다.`);
+        const remaining = queueLength ?? 0;
+        const discarded = Math.max(0, totalAnalyzed - totalFound);
+        setScanStatus(`⚠️ 최대 라운드 도달. ${formatProgress(initialQueue, totalProcessed, totalFound, discarded, remaining)}`);
       }
 
       // Reload leads after completion
