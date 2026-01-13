@@ -14,6 +14,8 @@ interface ConfigData {
   naverClientId: string;
   naverClientSecret: string;
   naverEnabled?: boolean;
+  naverDaysWindow?: number;
+  rssDaysWindow?: number;
   keywords: string[];
   rssFeeds: RSSFeed[];
   minScore: number;
@@ -27,6 +29,8 @@ export default function SalesSettingsPage() {
     naverClientId: '',
     naverClientSecret: '',
     naverEnabled: true,
+    naverDaysWindow: 3,
+    rssDaysWindow: 7,
     keywords: [],
     rssFeeds: [],
     minScore: 70,
@@ -84,6 +88,8 @@ export default function SalesSettingsPage() {
           naverClientId: config.naverClientId,
           naverClientSecret: config.naverClientSecret,
           naverEnabled: config.naverEnabled,
+          naverDaysWindow: config.naverDaysWindow,
+          rssDaysWindow: config.rssDaysWindow,
           keywords,
           rssFeeds: config.rssFeeds,
           minScore: config.minScore,
@@ -319,6 +325,25 @@ export default function SalesSettingsPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Naver 검색 기간 (일)
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={30}
+                  value={config.naverDaysWindow ?? 3}
+                  onChange={(e) =>
+                    setConfig({ ...config, naverDaysWindow: Number(e.target.value) })
+                  }
+                  className="w-24 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  네이버 뉴스는 최근 N일만 스캔합니다. 기본값: 3일
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   검색 키워드 (최대 20개)
                 </label>
                 <textarea
@@ -432,6 +457,25 @@ export default function SalesSettingsPage() {
               </button>
               <p className="text-xs text-gray-500 mt-2">
                 홈페이지 URL을 입력하면 RSS 피드를 자동으로 탐색합니다.
+              </p>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                RSS 검색 기간 (일)
+              </label>
+              <input
+                type="number"
+                min={1}
+                max={30}
+                value={config.rssDaysWindow ?? 7}
+                onChange={(e) =>
+                  setConfig({ ...config, rssDaysWindow: Number(e.target.value) })
+                }
+                className="w-24 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                RSS는 최근 N일만 스캔합니다. 기본값: 7일
               </p>
             </div>
 

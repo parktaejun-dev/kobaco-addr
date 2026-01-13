@@ -3,6 +3,7 @@
  * Discovers and analyzes leads from RSS + Naver News
  */
 
+import { randomUUID } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import pLimit from 'p-limit';
 import { redis } from '@/lib/redis';
@@ -31,11 +32,16 @@ export const runtime = 'nodejs';
 
 const CACHE_TTL = 300; // 5 minutes
 const AI_CONCURRENCY = 3; // Max concurrent AI calls
+const SCAN_TTL = 60 * 60; // 1 hour
+const TIMEOUT_THRESHOLD = 45000; // 45 seconds
+const DEFAULT_BATCH_SIZE = 10;
 
 interface SalesConfig {
   naverClientId?: string;
   naverClientSecret?: string;
   naverEnabled?: boolean;
+  naverDaysWindow?: number;
+  rssDaysWindow?: number;
   keywords?: string[];
   rssFeeds?: RSSFeedConfig[];
   leadNotificationsEnabled?: boolean;
@@ -50,16 +56,19 @@ interface ScanResponse {
   leads: LeadCore[];
   limit: number;
   minScore: number;
+  cursor?: string | null;
+  done?: boolean;
   stats?: {
     total_articles: number;
     analyzed: number;
     passed_filter: number;
+    remaining?: number;
   };
 }
 
 /**
  * POST /api/sales/scan
- * Query: { limit?: number, minScore?: number }
+ * Query: { limit?: number, minScore?: number, cursor?: string, batchSize?: number, feedLimit?: number, days?: number }
  */
 export async function POST(request: NextRequest) {
   try {
@@ -69,54 +78,136 @@ export async function POST(request: NextRequest) {
       100
     );
     const minScore = parseInt(searchParams.get('minScore') || '60');
+    const cursor = searchParams.get('cursor');
+    const batchSize = Math.min(
+      Math.max(parseInt(searchParams.get('batchSize') || `${DEFAULT_BATCH_SIZE}`), 1),
+      50
+    );
+    const feedLimitParam = searchParams.get('feedLimit');
+    const parsedFeedLimit = feedLimitParam ? parseInt(feedLimitParam) : 0;
+    const feedLimit = Number.isFinite(parsedFeedLimit) ? Math.max(0, parsedFeedLimit) : 0;
+    const daysParam = searchParams.get('days');
+    const parsedDays = daysParam ? parseInt(daysParam) : null;
+    const queryDaysWindow = Number.isFinite(parsedDays) ? Math.max(1, parsedDays as number) : null;
 
-    // Check cache first
-    const cacheKey = RedisKeys.scanCache(limit, minScore);
-    const cached = await redis.get<LeadCore[]>(cacheKey);
+    if (!cursor) {
+      // Check cache first (only for single-shot scans)
+      const cacheKey = RedisKeys.scanCache(limit, minScore);
+      const cached = await redis.get<LeadCore[]>(cacheKey);
 
-    if (cached && Array.isArray(cached)) {
-      return NextResponse.json({
-        success: true,
-        cached: true,
-        leads: cached,
-        limit,
-        minScore,
-      } as ScanResponse);
+      if (cached && Array.isArray(cached)) {
+        return NextResponse.json({
+          success: true,
+          cached: true,
+          leads: cached,
+          limit,
+          minScore,
+          cursor: null,
+          done: true,
+        } as ScanResponse);
+      }
     }
 
     // Load config from Redis
     const config = await redis.get<SalesConfig>(RedisKeys.config());
 
-    // Fetch articles from RSS (custom or default)
-    const activeFeeds = (config?.rssFeeds || []).filter(f => f.enabled !== false);
-    const rssArticles = await fetchCustomFeeds(activeFeeds, 6);
+    const scanToken = cursor || randomUUID();
+    const listKey = RedisKeys.scanList(scanToken);
+    const metaKey = RedisKeys.scanMeta(scanToken);
 
-    // Fetch articles from Naver if configured and enabled
-    let naverArticles: NormalizedArticle[] = [];
-    if (config?.naverEnabled !== false && config?.naverClientId && config?.naverClientSecret) {
-      const naverConfig: NaverConfig = {
-        naverClientId: config.naverClientId,
-        naverClientSecret: config.naverClientSecret,
-        keywords: config.keywords || [],
-      };
-      naverArticles = await fetchNaverNews(naverConfig);
+    let totalArticles = 0;
+    let dedupedCount = 0;
+
+    if (!cursor) {
+      // Fetch articles from RSS (custom or default)
+      const activeFeeds = (config?.rssFeeds || []).filter(f => f.enabled !== false);
+      const rssArticles = await fetchCustomFeeds(activeFeeds, feedLimit);
+
+      // Fetch articles from Naver if configured and enabled
+      let naverArticles: NormalizedArticle[] = [];
+      if (config?.naverEnabled !== false && config?.naverClientId && config?.naverClientSecret) {
+        const naverConfig: NaverConfig = {
+          naverClientId: config.naverClientId,
+          naverClientSecret: config.naverClientSecret,
+          keywords: config.keywords || [],
+        };
+        const naverDaysWindow = config.naverDaysWindow ?? 3;
+        naverArticles = await fetchNaverNews(naverConfig, { daysWindow: naverDaysWindow });
+      }
+
+      // Merge and deduplicate by canonical link
+      const allArticles = [...rssArticles, ...naverArticles];
+      const dedupedAll = deduplicateArticles(allArticles);
+      const rssDaysWindow = queryDaysWindow ?? (config?.rssDaysWindow ?? 7);
+      const recentAll = filterRecentArticles(dedupedAll, rssDaysWindow);
+
+      // Analyze all deduped articles unless a limit is explicitly provided
+      const analyzeLimitParam = searchParams.get('analyzeLimit');
+      const analyzeLimit = analyzeLimitParam ? Math.max(0, parseInt(analyzeLimitParam)) : recentAll.length;
+      const deduped = analyzeLimit > 0 ? recentAll.slice(0, analyzeLimit) : recentAll;
+
+      totalArticles = recentAll.length;
+      dedupedCount = recentAll.length;
+
+      console.log(
+        `Scan: ${allArticles.length} total, ${dedupedAll.length} dedup, ${recentAll.length} within ${rssDaysWindow}d, ${deduped.length} for AI`
+      );
+
+      for (const article of deduped) {
+        await redis.rPush(listKey, JSON.stringify(article));
+      }
+      await redis.expire(listKey, SCAN_TTL);
+      await redis.set(metaKey, {
+        total_articles: totalArticles,
+        deduped: dedupedCount,
+        created_at: new Date().toISOString(),
+      }, { ex: SCAN_TTL });
     }
 
-    // Merge and deduplicate by canonical link
-    const allArticles = [...rssArticles, ...naverArticles];
-    const dedupedAll = deduplicateArticles(allArticles);
+    const meta = await redis.get<{ total_articles: number; deduped: number }>(metaKey);
+    if (meta) {
+      totalArticles = meta.total_articles;
+      dedupedCount = meta.deduped;
+    }
 
-    // Limit articles for AI analysis (Vercel 60s timeout)
-    const MAX_ANALYZE = 15;
-    const deduped = dedupedAll.slice(0, MAX_ANALYZE);
+    const rawItems = (await redis.lPop(listKey, batchSize)) || [];
+    if (rawItems.length === 0) {
+      await redis.del(listKey);
+      await redis.del(metaKey);
+      return NextResponse.json({
+        success: true,
+        cached: false,
+        leads: [],
+        limit,
+        minScore,
+        cursor: null,
+        done: true,
+        stats: {
+          total_articles: totalArticles,
+          analyzed: 0,
+          passed_filter: 0,
+          remaining: 0,
+        },
+      } as ScanResponse);
+    }
 
-    console.log(
-      `Scan: ${allArticles.length} total, ${dedupedAll.length} dedup, ${deduped.length} for AI`
-    );
-
-    // Filter out already EXCLUDED leads (skip re-analysis)
+    const startTime = Date.now();
+    const deferredRaw: string[] = [];
     const articlesToAnalyze: NormalizedArticle[] = [];
-    for (const article of deduped) {
+
+    for (const rawItem of rawItems) {
+      if (Date.now() - startTime > TIMEOUT_THRESHOLD) {
+        deferredRaw.push(rawItem);
+        continue;
+      }
+
+      let article: NormalizedArticle | null = null;
+      try {
+        article = JSON.parse(rawItem) as NormalizedArticle;
+      } catch {
+        continue;
+      }
+
       const link = normalizeLink(article);
       const leadId = generateLeadId(link);
       const existingState = await redis.get<any>(RedisKeys.leadState(leadId));
@@ -125,10 +216,15 @@ export async function POST(request: NextRequest) {
         console.log(`Skipping EXCLUDED lead: ${leadId}`);
         continue;
       }
+
       articlesToAnalyze.push(article);
     }
 
-    console.log(`After excluding: ${articlesToAnalyze.length} to analyze`);
+    for (const rawItem of deferredRaw) {
+      await redis.rPush(listKey, rawItem);
+    }
+
+    console.log(`Batch: ${articlesToAnalyze.length} to analyze (cursor=${scanToken})`);
 
     // Analyze with AI (with concurrency control)
     const limiter = pLimit(AI_CONCURRENCY);
@@ -243,8 +339,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Cache results
-    await redis.set(cacheKey, leads, { ex: CACHE_TTL });
+    const remaining = await redis.llen(listKey);
+    const done = remaining === 0;
+
+    if (done && !cursor) {
+      // Cache results only when the full scan completes in one request
+      const cacheKey = RedisKeys.scanCache(limit, minScore);
+      await redis.set(cacheKey, leads, { ex: CACHE_TTL });
+    }
 
     return NextResponse.json({
       success: true,
@@ -252,10 +354,13 @@ export async function POST(request: NextRequest) {
       leads: leads.slice(0, limit),
       limit,
       minScore,
+      cursor: done ? null : scanToken,
+      done,
       stats: {
-        total_articles: allArticles.length,
-        analyzed: deduped.length,
+        total_articles: totalArticles,
+        analyzed: articlesToAnalyze.length,
         passed_filter: leads.length,
+        remaining,
       },
     } as ScanResponse);
   } catch (error) {
@@ -365,6 +470,17 @@ function deduplicateArticles(articles: NormalizedArticle[]): NormalizedArticle[]
   }
 
   return result;
+}
+
+function filterRecentArticles(
+  articles: NormalizedArticle[],
+  daysWindow: number
+): NormalizedArticle[] {
+  const cutoffMs = Date.now() - daysWindow * 24 * 60 * 60 * 1000;
+  return articles.filter((article) => {
+    const ts = Date.parse(article.pubDate);
+    return !Number.isNaN(ts) && ts >= cutoffMs;
+  });
 }
 
 /**

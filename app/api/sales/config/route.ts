@@ -27,6 +27,8 @@ interface ConfigData {
   naverClientId: string;
   naverClientSecret: string;
   naverEnabled?: boolean;
+  naverDaysWindow?: number;
+  rssDaysWindow?: number;
   keywords: string[];
   rssFeeds: RSSFeed[];
   minScore?: number;
@@ -53,6 +55,8 @@ export async function GET(req: NextRequest) {
         naverClientId: '',
         naverClientSecret: '',
         naverEnabled: true,
+        naverDaysWindow: 3,
+        rssDaysWindow: 7,
         keywords: [],
         rssFeeds: [],
         minScore: 70,
@@ -68,6 +72,8 @@ export async function GET(req: NextRequest) {
       naverClientId: data.naverClientId || '',
       naverClientSecret: data.naverClientSecret ? MASKED_SECRET : '',
       naverEnabled: data.naverEnabled ?? true,
+      naverDaysWindow: data.naverDaysWindow ?? 3,
+      rssDaysWindow: data.rssDaysWindow ?? 7,
       keywords: data.keywords || [],
       rssFeeds: (data.rssFeeds || []).map(f => ({ ...f, enabled: f.enabled ?? true })),
       minScore: queryMinScore ? Number(queryMinScore) : (data.minScore ?? 70),
@@ -97,6 +103,8 @@ export async function POST(request: NextRequest) {
       naverClientId,
       naverClientSecret,
       naverEnabled,
+      naverDaysWindow,
+      rssDaysWindow,
       keywords,
       rssFeeds,
       minScore,
@@ -114,6 +122,8 @@ export async function POST(request: NextRequest) {
       naverClientId: (naverClientId?.trim() as string) || '',
       naverClientSecret: '',
       naverEnabled: naverEnabled ?? true,
+      naverDaysWindow: Number.isFinite(naverDaysWindow) ? Math.max(1, Number(naverDaysWindow)) : (existing?.naverDaysWindow ?? 3),
+      rssDaysWindow: Number.isFinite(rssDaysWindow) ? Math.max(1, Number(rssDaysWindow)) : (existing?.rssDaysWindow ?? 7),
       keywords: [],
       rssFeeds: [],
       minScore: typeof minScore === 'number' ? minScore : 70,

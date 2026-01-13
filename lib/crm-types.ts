@@ -130,6 +130,8 @@ export const RedisKeys = {
   // Cache
   scanCache: (limit: number, minScore: number) =>
     `sales:leads:scan:limit=${limit}:min=${minScore}`,
+  scanList: (token: string) => `sales:leads:scan:list:${token}`,
+  scanMeta: (token: string) => `sales:leads:scan:meta:${token}`,
 
   // Config
   config: () => `config:sales:settings`,

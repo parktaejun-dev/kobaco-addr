@@ -44,6 +44,8 @@ interface SalesConfig {
     naverClientId?: string;
     naverClientSecret?: string;
     naverEnabled?: boolean;
+    naverDaysWindow?: number;
+    rssDaysWindow?: number;
     keywords?: string[];
     rssFeeds?: RSSFeedConfig[];
     minScore?: number;
@@ -62,6 +64,9 @@ export async function GET(req: NextRequest) {
     try {
         const { searchParams } = new URL(req.url);
         const queryMinScore = searchParams.get('minScore');
+        const daysParam = searchParams.get('days');
+        const parsedDays = daysParam ? parseInt(daysParam) : null;
+        const queryDaysWindow = Number.isFinite(parsedDays) ? Math.max(1, parsedDays as number) : null;
 
         // Load config
         const config = await redis.get<SalesConfig>(RedisKeys.config());
@@ -99,7 +104,8 @@ export async function GET(req: NextRequest) {
                 naverClientSecret: config!.naverClientSecret!,
                 keywords: config!.keywords || [],
             };
-            allArticles = await fetchNaverNews(naverConfig);
+            const naverDaysWindow = config?.naverDaysWindow ?? 3;
+            allArticles = await fetchNaverNews(naverConfig, { daysWindow: naverDaysWindow });
         } else {
             // Process RSS feed
             const rssIndex = hasNaver ? state.feedIndex - 1 : state.feedIndex;
@@ -109,15 +115,17 @@ export async function GET(req: NextRequest) {
             console.log(`Cron: Processing ${state.feedIndex + 1}/${totalSources}: ${sourceName}`);
 
             if (currentFeed) {
-                allArticles = await fetchCustomFeeds([currentFeed], 10);
+                allArticles = await fetchCustomFeeds([currentFeed], 0);
             }
         }
 
         const deduped = deduplicateArticles(allArticles);
+        const rssDaysWindow = queryDaysWindow ?? (config?.rssDaysWindow ?? 7);
+        const recentArticles = filterRecentArticles(deduped, rssDaysWindow);
 
         // Enqueue new articles (avoid re-analysis within a short window)
         let enqueued = 0;
-        for (const article of deduped.slice(0, ENQUEUE_LIMIT)) {
+        for (const article of recentArticles.slice(0, ENQUEUE_LIMIT)) {
             const link = normalizeLink(article);
             if (!link) continue;
 
@@ -328,6 +336,17 @@ function deduplicateArticles(articles: NormalizedArticle[]): NormalizedArticle[]
         if (!link || seen.has(link)) return false;
         seen.add(link);
         return true;
+    });
+}
+
+function filterRecentArticles(
+    articles: NormalizedArticle[],
+    daysWindow: number
+): NormalizedArticle[] {
+    const cutoffMs = Date.now() - daysWindow * 24 * 60 * 60 * 1000;
+    return articles.filter((article) => {
+        const ts = Date.parse(article.pubDate);
+        return !Number.isNaN(ts) && ts >= cutoffMs;
     });
 }
 

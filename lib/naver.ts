@@ -34,7 +34,8 @@ interface NaverNewsResponse {
 
 const NAVER_NEWS_API = 'https://openapi.naver.com/v1/search/news.json';
 const MAX_KEYWORDS = 5;
-const ITEMS_PER_KEYWORD = 10;
+const DISPLAY_PER_PAGE = 100;
+const MAX_TOTAL_PER_KEYWORD = 1000;
 
 // ============================================================================
 // API Functions
@@ -46,47 +47,94 @@ const ITEMS_PER_KEYWORD = 10;
 async function fetchNewsForKeyword(
   keyword: string,
   clientId: string,
-  clientSecret: string
+  clientSecret: string,
+  options?: { daysWindow?: number; maxItems?: number }
 ): Promise<NormalizedArticle[]> {
-  const params = new URLSearchParams({
-    query: keyword,
-    display: ITEMS_PER_KEYWORD.toString(),
-    sort: 'date',
-  });
+  const cutoffMs =
+    options?.daysWindow && options.daysWindow > 0
+      ? Date.now() - options.daysWindow * 24 * 60 * 60 * 1000
+      : null;
+  const maxItems = options?.maxItems ?? MAX_TOTAL_PER_KEYWORD;
+  let start = 1;
+  const collected: NormalizedArticle[] = [];
 
-  const url = `${NAVER_NEWS_API}?${params}`;
-
-  try {
-    const response = await fetch(url, {
-      headers: {
-        'X-Naver-Client-Id': clientId,
-        'X-Naver-Client-Secret': clientSecret,
-      },
+  while (start <= MAX_TOTAL_PER_KEYWORD && collected.length < maxItems) {
+    const params = new URLSearchParams({
+      query: keyword,
+      display: DISPLAY_PER_PAGE.toString(),
+      sort: 'date',
+      start: start.toString(),
     });
 
-    if (!response.ok) {
-      console.error(
-        `Naver API error for keyword "${keyword}":`,
-        response.status,
-        response.statusText
-      );
-      return [];
+    const url = `${NAVER_NEWS_API}?${params}`;
+
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'X-Naver-Client-Id': clientId,
+          'X-Naver-Client-Secret': clientSecret,
+        },
+      });
+
+      if (!response.ok) {
+        console.error(
+          `Naver API error for keyword "${keyword}":`,
+          response.status,
+          response.statusText
+        );
+        break;
+      }
+
+      const data: NaverNewsResponse = await response.json();
+      if (!data.items || data.items.length === 0) {
+        break;
+      }
+
+      let oldestItemMs: number | null = null;
+
+      const normalized = data.items.map((item) => {
+        const link = item.originallink?.trim() || item.link?.trim() || '';
+        const pubMs = Date.parse(item.pubDate);
+        if (!Number.isNaN(pubMs)) {
+          if (oldestItemMs === null || pubMs < oldestItemMs) {
+            oldestItemMs = pubMs;
+          }
+        }
+        return {
+          title: stripHtml(item.title),
+          link,
+          contentSnippet: stripHtml(item.description),
+          pubDate: item.pubDate,
+          _source: 'NAVER',
+          _keyword: keyword,
+        };
+      });
+
+      const filtered = cutoffMs
+        ? normalized.filter((item) => {
+            const ts = Date.parse(item.pubDate);
+            return !Number.isNaN(ts) && ts >= cutoffMs;
+          })
+        : normalized;
+
+      collected.push(...filtered);
+
+      if (cutoffMs && oldestItemMs !== null && oldestItemMs < cutoffMs) {
+        break;
+      }
+
+      if (data.items.length < DISPLAY_PER_PAGE) {
+        break;
+      }
+
+      start += DISPLAY_PER_PAGE;
+    } catch (error) {
+      console.error(`Failed to fetch Naver news for keyword "${keyword}":`, error);
+      break;
     }
-
-    const data: NaverNewsResponse = await response.json();
-
-    return data.items.map((item) => ({
-      title: stripHtml(item.title),
-      link: item.originallink?.trim() || item.link?.trim() || '',
-      contentSnippet: stripHtml(item.description),
-      pubDate: item.pubDate,
-      _source: 'NAVER',
-      _keyword: keyword,
-    }));
-  } catch (error) {
-    console.error(`Failed to fetch Naver news for keyword "${keyword}":`, error);
-    return [];
   }
+
+  return collected.slice(0, maxItems);
 }
 
 /**
@@ -94,7 +142,8 @@ async function fetchNewsForKeyword(
  * Max 5 keywords as per spec
  */
 export async function fetchNaverNews(
-  config: NaverConfig
+  config: NaverConfig,
+  options?: { daysWindow?: number; maxItemsPerKeyword?: number }
 ): Promise<NormalizedArticle[]> {
   if (!config.naverClientId || !config.naverClientSecret) {
     console.warn('Naver API credentials not configured');
@@ -111,7 +160,12 @@ export async function fetchNaverNews(
 
   const results = await Promise.allSettled(
     keywords.map((keyword) =>
-      fetchNewsForKeyword(keyword, config.naverClientId, config.naverClientSecret)
+      fetchNewsForKeyword(
+        keyword,
+        config.naverClientId,
+        config.naverClientSecret,
+        { daysWindow: options?.daysWindow, maxItems: options?.maxItemsPerKeyword }
+      )
     )
   );
 

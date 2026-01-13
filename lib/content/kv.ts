@@ -242,21 +242,33 @@ export async function getStatsDashboard() {
     // Fetch parallel
     const [
         todaySearchCount,
-        todayTopTerms,
-        monthTopTerms,
+        todayTopTermsRaw,
+        monthTopTermsRaw,
         recentTerms,
         todaySaves,
         todayUploads,
         todayCtaCount
     ] = await Promise.all([
         redis.get(KEYS.STATS.SEARCH_COUNT_DAY(date)),
-        redis.zrange(KEYS.STATS.SEARCH_TERMS_DAY(date), 0, 9, 'REV', 'WITHSCORES'),
-        redis.zrange(KEYS.STATS.SEARCH_TERMS_MONTH(month), 0, 9, 'REV', 'WITHSCORES'),
+        redis.zRange(KEYS.STATS.SEARCH_TERMS_DAY(date), 0, 9, { REV: true, WITHSCORES: true }),
+        redis.zRange(KEYS.STATS.SEARCH_TERMS_MONTH(month), 0, 9, { REV: true, WITHSCORES: true }),
         redis.lRange(KEYS.STATS.SEARCH_RECENT, 0, 19), // Latest 20
         redis.get(KEYS.STATS.ADMIN_SAVE_DAY(date)),
         redis.get(KEYS.STATS.ADMIN_UPLOAD_DAY(date)),
         redis.get(`stats:cta:global:count:day:${date}`)
     ]);
+
+    const normalizeZRangeWithScores = (input: any): string[] => {
+        if (!Array.isArray(input)) return [];
+        // node-redis v4 returns objects when WITHSCORES is true
+        if (input.length > 0 && typeof input[0] === 'object' && input[0] !== null && 'value' in input[0]) {
+            return (input as Array<{ value: string; score: number }>).flatMap(({ value, score }) => [value, String(score)]);
+        }
+        return input as string[];
+    };
+
+    const todayTopTerms = normalizeZRangeWithScores(todayTopTermsRaw);
+    const monthTopTerms = normalizeZRangeWithScores(monthTopTermsRaw);
 
     return {
         date, month,

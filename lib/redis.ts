@@ -128,6 +128,11 @@ export const redis = {
     await redisClient.rPush(key, value);
   },
 
+  async expire(key: string, seconds: number): Promise<void> {
+    await ensureConnected();
+    await redisClient.expire(key, seconds);
+  },
+
   async zRangeByScore(key: string, min: number | string, max: number | string, options?: { limit?: { offset: number; count: number } }): Promise<string[]> {
     await ensureConnected();
     if (options?.limit) {

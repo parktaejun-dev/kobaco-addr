@@ -63,7 +63,9 @@ async function fetchFeed(
   try {
     const feed = await parser.parseURL(feedUrl);
 
-    return feed.items.slice(0, limit).map((item) => ({
+    const items = limit > 0 ? feed.items.slice(0, limit) : feed.items;
+
+    return items.map((item) => ({
       title: stripHtml(item.title || ''),
       link: item.link || '',
       contentSnippet: stripHtml(item.contentSnippet || item.content || ''),
