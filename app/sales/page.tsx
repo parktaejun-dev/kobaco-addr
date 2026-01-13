@@ -104,6 +104,7 @@ export default function SalesDashboardPage() {
   const [smartScanning, setSmartScanning] = useState(false);
   const smartScanRef = useRef(false);
   const [scanStatus, setScanStatus] = useState<string | null>(null);
+  const [queueLength, setQueueLength] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
@@ -156,6 +157,30 @@ export default function SalesDashboardPage() {
   useEffect(() => {
     loadExcludedCompanies();
   }, []);
+
+  useEffect(() => {
+    loadQueueLength();
+    const interval = setInterval(() => {
+      loadQueueLength();
+    }, 10000);
+    return () => {
+      clearInterval(interval);
+    };
+  }, []);
+
+  async function loadQueueLength() {
+    try {
+      const res = await fetch('/api/sales/scan/queue');
+      if (res.ok) {
+        const data = await res.json();
+        if (typeof data.queueLength === 'number') {
+          setQueueLength(data.queueLength);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load queue length:', error);
+    }
+  }
 
   useEffect(() => {
     if (selectedLead) {
@@ -241,6 +266,9 @@ export default function SalesDashboardPage() {
         const data = await res.json();
         const msg = `반영 완료: ${data.source || data.feed || '-'}`;
         setScanStatus(msg);
+        if (typeof data.queueLength === 'number') {
+          setQueueLength(data.queueLength);
+        }
 
         if (!isAuto) {
           alert(
@@ -342,15 +370,19 @@ export default function SalesDashboardPage() {
 
         const data = await res.json();
         totalProcessed += data.processed || 0;
+        if (typeof data.queueLength === 'number') {
+          setQueueLength(data.queueLength);
+        }
 
         // Update status with queue info
         setScanStatus(
           `Round ${round}: ${data.processed || 0}개 처리 (큐: ${data.queueLength || 0}개 남음)`
         );
 
-        // Check if queue is empty or API says to stop
-        if (!data.continue || data.queueLength === 0) {
+        // Stop only when queue is empty
+        if (data.queueLength === 0) {
           setScanStatus(`✅ 큐 처리 완료! (총 ${totalProcessed}개 처리)`);
+          setQueueLength(0);
           loadLeads(currentStatus);
           break;
         }
@@ -831,7 +863,7 @@ export default function SalesDashboardPage() {
               }`}
             title="큐에 쌓인 항목들을 Time-Budget 방식으로 빠르게 처리 (50초씩 최대한 처리)"
           >
-            {smartScanning ? '🛑 큐 처리 중단' : '⚡ 스마트 큐 처리'}
+            {smartScanning ? '🛑 큐 처리 중단' : `⚡ 스마트 큐 처리 (${queueLength ?? '-'})`}
           </button>
 
           <div className="flex items-center gap-2">

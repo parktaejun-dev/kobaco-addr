@@ -46,7 +46,7 @@ const DEFAULT_RSS: RSSFeedConfig[] = [
 // ============================================================================
 
 const parser = new Parser({
-  timeout: 10000,
+  timeout: 20000,
   headers: {
     'User-Agent': 'KOBACO-Lead-Sniper/1.0',
   },
