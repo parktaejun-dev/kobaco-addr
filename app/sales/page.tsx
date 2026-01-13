@@ -360,11 +360,7 @@ export default function SalesDashboardPage() {
 
     try {
       while (round <= MAX_ROUNDS && smartScanRef.current) {
-        setScanStatus(
-          `큐 처리 중... (Round ${round})`
-        );
-
-        const res = await fetch(`/api/sales/scan/cron?minScore=${minScore}`);
+        const res = await fetch(`/api/sales/scan/cron?minScore=${minScore}&mode=drain`);
 
         if (!res.ok) {
           setScanStatus('큐 처리 실패로 중단됨');
@@ -398,7 +394,7 @@ export default function SalesDashboardPage() {
         if (smartScanRef.current && round <= MAX_ROUNDS) {
           for (let i = 2; i > 0; i--) {
             if (!smartScanRef.current) break;
-            setScanStatus(`대기 중 (${i}초)... 큐: ${data.queueLength || 0}개`);
+            setScanStatus(`Round ${round}: ${total}개 중 ${totalProcessed}개 처리 완료. 잔여 ${remaining}개`);
             await new Promise(r => setTimeout(r, 1000));
           }
         }

@@ -64,89 +64,97 @@ export async function GET(req: NextRequest) {
     try {
         const { searchParams } = new URL(req.url);
         const queryMinScore = searchParams.get('minScore');
+        const mode = searchParams.get('mode');
+        const drainOnly = mode === 'drain';
         const daysParam = searchParams.get('days');
         const parsedDays = daysParam ? parseInt(daysParam) : null;
         const queryDaysWindow = Number.isFinite(parsedDays) ? Math.max(1, parsedDays as number) : null;
 
         // Load config
         const config = await redis.get<SalesConfig>(RedisKeys.config());
-        const feeds = config?.rssFeeds || [];
-
-        // Naver counts as index 0, RSS feeds start from index 1
-        const hasNaver = !!(config?.naverEnabled !== false && config?.naverClientId && config?.naverClientSecret && config?.keywords?.length);
-        const totalSources = (hasNaver ? 1 : 0) + feeds.length;
-
-        if (totalSources === 0) {
-            return NextResponse.json({
-                success: true,
-                message: 'No feeds configured',
-                leads: 0,
-            });
-        }
-
-        // Get current cron state
-        let state = await redis.get<CronState>(CRON_STATE_KEY);
-        if (!state || state.feedIndex >= totalSources) {
-            state = { feedIndex: 0, lastRun: new Date().toISOString(), totalFeeds: totalSources };
-        }
-
+        let feeds: RSSFeedConfig[] = [];
+        let hasNaver = false;
+        let totalSources = 0;
+        let state: CronState | null = null;
         let allArticles: NormalizedArticle[] = [];
-        let sourceName = '';
-
-        // Index 0 = Naver (if configured), otherwise RSS[0]
-        if (hasNaver && state.feedIndex === 0) {
-            // Process Naver
-            sourceName = '네이버 뉴스';
-            console.log(`Cron: Processing ${state.feedIndex + 1}/${totalSources}: ${sourceName}`);
-
-            const naverConfig: NaverConfig = {
-                naverClientId: config!.naverClientId!,
-                naverClientSecret: config!.naverClientSecret!,
-                keywords: config!.keywords || [],
-            };
-            const naverDaysWindow = config?.naverDaysWindow ?? 3;
-            allArticles = await fetchNaverNews(naverConfig, { daysWindow: naverDaysWindow });
-        } else {
-            // Process RSS feed
-            const rssIndex = hasNaver ? state.feedIndex - 1 : state.feedIndex;
-            const currentFeed = feeds[rssIndex];
-            sourceName = currentFeed?.category || `RSS ${rssIndex + 1}`;
-
-            console.log(`Cron: Processing ${state.feedIndex + 1}/${totalSources}: ${sourceName}`);
-
-            if (currentFeed) {
-                allArticles = await fetchCustomFeeds([currentFeed], 0);
-            }
-        }
-
-        const deduped = deduplicateArticles(allArticles);
-        const rssDaysWindow = queryDaysWindow ?? (config?.rssDaysWindow ?? 7);
-        const recentArticles = filterRecentArticles(deduped, rssDaysWindow);
-
-        // Enqueue new articles (avoid re-analysis within a short window)
+        let sourceName = '큐';
         let enqueued = 0;
-        for (const article of recentArticles.slice(0, ENQUEUE_LIMIT)) {
-            const link = normalizeLink(article);
-            if (!link) continue;
 
-            const leadId = generateLeadId(link);
-            const existingState = await redis.get<any>(RedisKeys.leadState(leadId));
-            if (existingState?.status === 'EXCLUDED' || existingState) {
-                continue;
+        if (!drainOnly) {
+            feeds = config?.rssFeeds || [];
+
+            // Naver counts as index 0, RSS feeds start from index 1
+            hasNaver = !!(config?.naverEnabled !== false && config?.naverClientId && config?.naverClientSecret && config?.keywords?.length);
+            totalSources = (hasNaver ? 1 : 0) + feeds.length;
+
+            if (totalSources === 0) {
+                return NextResponse.json({
+                    success: true,
+                    message: 'No feeds configured',
+                    leads: 0,
+                });
             }
 
-            const pendingKey = `${CRON_PENDING_PREFIX}${leadId}`;
-            const pending = await redis.get(pendingKey);
-            if (pending) {
-                continue;
+            // Get current cron state
+            state = await redis.get<CronState>(CRON_STATE_KEY);
+            if (!state || state.feedIndex >= totalSources) {
+                state = { feedIndex: 0, lastRun: new Date().toISOString(), totalFeeds: totalSources };
             }
 
-            await redis.lPush(CRON_QUEUE_KEY, JSON.stringify({ article, sourceName }));
-            await redis.set(pendingKey, Date.now(), { ex: 60 * 60 * 24 });
-            enqueued += 1;
+            // Index 0 = Naver (if configured), otherwise RSS[0]
+            if (hasNaver && state.feedIndex === 0) {
+                // Process Naver
+                sourceName = '네이버 뉴스';
+                console.log(`Cron: Processing ${state.feedIndex + 1}/${totalSources}: ${sourceName}`);
+
+                const naverConfig: NaverConfig = {
+                    naverClientId: config!.naverClientId!,
+                    naverClientSecret: config!.naverClientSecret!,
+                    keywords: config!.keywords || [],
+                };
+                const naverDaysWindow = config?.naverDaysWindow ?? 3;
+                allArticles = await fetchNaverNews(naverConfig, { daysWindow: naverDaysWindow });
+            } else {
+                // Process RSS feed
+                const rssIndex = hasNaver ? state.feedIndex - 1 : state.feedIndex;
+                const currentFeed = feeds[rssIndex];
+                sourceName = currentFeed?.category || `RSS ${rssIndex + 1}`;
+
+                console.log(`Cron: Processing ${state.feedIndex + 1}/${totalSources}: ${sourceName}`);
+
+                if (currentFeed) {
+                    allArticles = await fetchCustomFeeds([currentFeed], 0);
+                }
+            }
+
+            const deduped = deduplicateArticles(allArticles);
+            const rssDaysWindow = queryDaysWindow ?? (config?.rssDaysWindow ?? 7);
+            const recentArticles = filterRecentArticles(deduped, rssDaysWindow);
+
+            // Enqueue new articles (avoid re-analysis within a short window)
+            for (const article of recentArticles.slice(0, ENQUEUE_LIMIT)) {
+                const link = normalizeLink(article);
+                if (!link) continue;
+
+                const leadId = generateLeadId(link);
+                const existingState = await redis.get<any>(RedisKeys.leadState(leadId));
+                if (existingState?.status === 'EXCLUDED' || existingState) {
+                    continue;
+                }
+
+                const pendingKey = `${CRON_PENDING_PREFIX}${leadId}`;
+                const pending = await redis.get(pendingKey);
+                if (pending) {
+                    continue;
+                }
+
+                await redis.lPush(CRON_QUEUE_KEY, JSON.stringify({ article, sourceName }));
+                await redis.set(pendingKey, Date.now(), { ex: 60 * 60 * 24 });
+                enqueued += 1;
+            }
+
+            console.log(`Cron: ${allArticles.length} fetched, ${enqueued} enqueued`);
         }
-
-        console.log(`Cron: ${allArticles.length} fetched, ${enqueued} enqueued`);
 
         const startTime = Date.now();
 
@@ -287,8 +295,21 @@ export async function GET(req: NextRequest) {
             }
         }
 
+        const queueLength = await redis.llen(CRON_QUEUE_KEY);
+
+        if (drainOnly) {
+            return NextResponse.json({
+                success: true,
+                source: sourceName,
+                processed: leads.length,
+                queueLength,
+                newLeads: leads.length,
+                enqueued: 0,
+            });
+        }
+
         // Update cron state - move to next source
-        const nextIndex = (state.feedIndex + 1) % totalSources;
+        const nextIndex = (state!.feedIndex + 1) % totalSources;
 
         // Determine next source name for UX
         let nextSourceName = '';
@@ -305,12 +326,10 @@ export async function GET(req: NextRequest) {
             totalFeeds: totalSources,
         });
 
-        const queueLength = await redis.llen(CRON_QUEUE_KEY);
-
         return NextResponse.json({
             success: true,
             source: sourceName,
-            sourceIndex: state.feedIndex,
+            sourceIndex: state!.feedIndex,
             nextSourceIndex: nextIndex,
             nextSourceName,
             totalSources,
