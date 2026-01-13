@@ -171,6 +171,7 @@ export async function GET(req: NextRequest) {
         // Build and save leads
         const leads: LeadCore[] = [];
         const minScore = queryMinScore ? Number(queryMinScore) : (config?.minScore ?? 50);
+        console.log(`Cron: minScore=${minScore} mode=${mode || 'normal'}`);
 
         let analyzedCount = 0;
         for (const rawItem of itemsToAnalyze) {
