@@ -172,6 +172,7 @@ export async function GET(req: NextRequest) {
         const leads: LeadCore[] = [];
         const minScore = queryMinScore ? Number(queryMinScore) : (config?.minScore ?? 50);
 
+        let analyzedCount = 0;
         for (const rawItem of itemsToAnalyze) {
             if (Date.now() - startTime > TIMEOUT_THRESHOLD) {
                 console.warn('Cron: Approaching timeout, re-queueing remaining items');
@@ -218,6 +219,7 @@ export async function GET(req: NextRequest) {
             }
 
             analyzedArticles.push({ article, analysis, sourceLabel, leadId });
+            analyzedCount += 1;
         }
 
         const excludedCompanyKeys = buildExcludedCompanySet(config || undefined);
@@ -301,6 +303,7 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({
                 success: true,
                 source: sourceName,
+                analyzed: analyzedCount,
                 processed: leads.length,
                 queueLength,
                 newLeads: leads.length,
@@ -335,6 +338,7 @@ export async function GET(req: NextRequest) {
             totalSources,
             articlesFound: allArticles.length,
             enqueued,
+            analyzed: analyzedCount,
             processed: leads.length,
             queueLength,
             newLeads: leads.length,

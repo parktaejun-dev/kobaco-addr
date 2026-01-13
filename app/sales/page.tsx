@@ -376,8 +376,9 @@ export default function SalesDashboardPage() {
         // Update status with queue info
         const remaining = data.queueLength || 0;
         const total = totalProcessed + remaining;
+        const analyzed = data.analyzed || 0;
         setScanStatus(
-          `Round ${round}: ${total}개 중 ${totalProcessed}개 처리 완료. 잔여 ${remaining}개`
+          `Round ${round}: ${total}개 중 ${totalProcessed}개 처리 완료 (분석 ${analyzed}개). 잔여 ${remaining}개`
         );
 
         // Stop only when queue is empty
