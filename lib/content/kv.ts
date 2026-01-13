@@ -250,8 +250,8 @@ export async function getStatsDashboard() {
         todayCtaCount
     ] = await Promise.all([
         redis.get(KEYS.STATS.SEARCH_COUNT_DAY(date)),
-        redis.zRange(KEYS.STATS.SEARCH_TERMS_DAY(date), 0, 9, { REV: true, WITHSCORES: true }),
-        redis.zRange(KEYS.STATS.SEARCH_TERMS_MONTH(month), 0, 9, { REV: true, WITHSCORES: true }),
+        redis.zRangeWithScores(KEYS.STATS.SEARCH_TERMS_DAY(date), 0, 9, { REV: true }),
+        redis.zRangeWithScores(KEYS.STATS.SEARCH_TERMS_MONTH(month), 0, 9, { REV: true }),
         redis.lRange(KEYS.STATS.SEARCH_RECENT, 0, 19), // Latest 20
         redis.get(KEYS.STATS.ADMIN_SAVE_DAY(date)),
         redis.get(KEYS.STATS.ADMIN_UPLOAD_DAY(date)),
