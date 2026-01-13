@@ -358,7 +358,7 @@ export default function SalesDashboardPage() {
     };
     setScanStatus(formatProgress(initialQueue, 0, 0, 0, initialQueue));
 
-    const MAX_ROUNDS = 20; // Max 20 rounds (safety limit)
+    const MAX_ROUNDS = 100; // Max 100 rounds (safety limit)
     let round = 1;
     let totalProcessed = 0;
     let totalAnalyzed = 0;
