@@ -351,7 +351,8 @@ export default function SalesDashboardPage() {
 
     setSmartScanning(true);
     smartScanRef.current = true;
-    setScanStatus('스마트 큐 처리 시작...');
+    const initialQueue = queueLength ?? 0;
+    setScanStatus(`스마트 큐 처리 시작... (${initialQueue}개 중 0개 처리 완료. 잔여 ${initialQueue}개)`);
 
     const MAX_ROUNDS = 20; // Max 20 rounds (safety limit)
     let round = 1;
@@ -359,7 +360,9 @@ export default function SalesDashboardPage() {
 
     try {
       while (round <= MAX_ROUNDS && smartScanRef.current) {
-        setScanStatus(`큐 처리 중... (Round ${round})`);
+        setScanStatus(
+          `큐 처리 중... (Round ${round})`
+        );
 
         const res = await fetch(`/api/sales/scan/cron?minScore=${minScore}`);
 
@@ -375,8 +378,10 @@ export default function SalesDashboardPage() {
         }
 
         // Update status with queue info
+        const remaining = data.queueLength || 0;
+        const total = totalProcessed + remaining;
         setScanStatus(
-          `Round ${round}: ${data.processed || 0}개 처리 (큐: ${data.queueLength || 0}개 남음)`
+          `Round ${round}: ${total}개 중 ${totalProcessed}개 처리 완료. 잔여 ${remaining}개`
         );
 
         // Stop only when queue is empty
