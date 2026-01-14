@@ -1,5 +1,5 @@
 /**
- * Naver News API Integration for KOBACO Lead Sniper
+ * Naver News API Integration for KOBACO Advertiser Discovery Bot
  * Fetches news articles by keywords
  */
 

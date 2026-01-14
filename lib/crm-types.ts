@@ -1,5 +1,5 @@
 /**
- * CRM Types and Utilities for KOBACO Lead Sniper
+ * CRM Types and Utilities for KOBACO Advertiser Discovery Bot
  * Phase 2 Mini CRM Data Model
  */
 

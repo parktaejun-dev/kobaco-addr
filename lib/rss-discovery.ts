@@ -11,7 +11,7 @@ const FETCH_TIMEOUT = 7000; // 7 seconds
 const parser = new Parser({
     timeout: FETCH_TIMEOUT,
     headers: {
-        'User-Agent': 'KOBACO-Lead-Sniper/1.0',
+        'User-Agent': 'KOBACO-Advertiser-Discovery-Bot/1.0',
     },
 });
 
@@ -54,7 +54,7 @@ export async function discoverFeed(inputUrl: string): Promise<DiscoveryResult> {
         const response = await fetch(url, {
             signal: controller.signal,
             headers: {
-                'User-Agent': 'KOBACO-Lead-Sniper/1.0',
+                'User-Agent': 'KOBACO-Advertiser-Discovery-Bot/1.0',
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
             },
         });

@@ -23,7 +23,7 @@ export default function Footer() {
             <div className="flex items-center gap-4 font-bold text-slate-300">
               <Link href="/estimate" className="hover:text-white transition-colors" target="_blank" rel="noopener noreferrer">견적 시뮬레이션</Link>
               <span className="text-slate-700">|</span>
-              <Link href="/sales" className="hover:text-white transition-colors" target="_blank" rel="noopener noreferrer">영업 사원 로그인</Link>
+              <Link href="/sales" className="hover:text-white transition-colors" prefetch={false} target="_blank" rel="noopener noreferrer">영업 사원 로그인</Link>
               <span className="text-slate-700">|</span>
               <Link href="/admin" className="hover:text-white transition-colors" prefetch={false} target="_blank" rel="noopener noreferrer">관리자 로그인</Link>
             </div>

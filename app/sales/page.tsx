@@ -272,7 +272,7 @@ export default function SalesDashboardPage() {
 
         if (!isAuto) {
           alert(
-            `증분 스캔 완료!\n소스: ${data.source || data.feed || '-'}\n새 리드: ${data.newLeads || 0}개\n다음: ${data.nextSourceName || (data.nextSourceIndex + 1 + '번째')}`
+            `증분 스캔 완료!\n소스: ${data.source || data.feed || '-'}\n새 광고주 후보: ${data.newLeads || 0}개\n다음: ${data.nextSourceName || (data.nextSourceIndex + 1 + '번째')}`
           );
         }
         loadLeads(currentStatus);
@@ -447,7 +447,7 @@ export default function SalesDashboardPage() {
 
   async function handleBulkDelete() {
     if (selectedLeads.size === 0) return;
-    if (!confirm(`선택한 ${selectedLeads.size}개의 리드를 정말 삭제하시겠습니까?`)) return;
+    if (!confirm(`선택한 ${selectedLeads.size}개의 광고주 후보를 정말 삭제하시겠습니까?`)) return;
 
     try {
       const res = await fetch('/api/sales/leads/bulk-delete', {
@@ -572,7 +572,7 @@ export default function SalesDashboardPage() {
 
   async function handleBulkRestoreExcluded() {
     if (selectedLeads.size === 0) return;
-    if (!confirm(`선택한 ${selectedLeads.size}개의 리드를 제외 해제하시겠습니까?`)) return;
+    if (!confirm(`선택한 ${selectedLeads.size}개의 광고주 후보를 제외 해제하시겠습니까?`)) return;
 
     try {
       await bulkUpdateStatus('NEW');
@@ -586,11 +586,11 @@ export default function SalesDashboardPage() {
 
   async function handleBulkTemporaryExclude(days: number) {
     if (selectedLeads.size === 0) return;
-    if (!confirm(`선택한 ${selectedLeads.size}개의 리드를 ${days}일 제외하시겠습니까?`)) return;
+    if (!confirm(`선택한 ${selectedLeads.size}개의 광고주 후보를 ${days}일 제외하시겠습니까?`)) return;
 
     const companies = getSelectedCompanyNames();
     if (companies.length === 0) {
-      alert('기업명이 없는 리드는 제외 목록에 추가할 수 없습니다.');
+      alert('기업명이 없는 광고주 후보는 제외 목록에 추가할 수 없습니다.');
       return;
     }
 
@@ -610,11 +610,11 @@ export default function SalesDashboardPage() {
 
   async function handleBulkPermanentExclude() {
     if (selectedLeads.size === 0) return;
-    if (!confirm(`선택한 ${selectedLeads.size}개의 리드를 영구 제외하시겠습니까?`)) return;
+    if (!confirm(`선택한 ${selectedLeads.size}개의 광고주 후보를 영구 제외하시겠습니까?`)) return;
 
     const companies = getSelectedCompanyNames();
     if (companies.length === 0) {
-      alert('기업명이 없는 리드는 제외 목록에 추가할 수 없습니다.');
+      alert('기업명이 없는 광고주 후보는 제외 목록에 추가할 수 없습니다.');
       return;
     }
 
@@ -631,11 +631,11 @@ export default function SalesDashboardPage() {
 
   async function handleBulkPermanentRestore() {
     if (selectedLeads.size === 0) return;
-    if (!confirm(`선택한 ${selectedLeads.size}개의 리드를 영구 제외 해제하시겠습니까?`)) return;
+    if (!confirm(`선택한 ${selectedLeads.size}개의 광고주 후보를 영구 제외 해제하시겠습니까?`)) return;
 
     const companies = getSelectedCompanyNames();
     if (companies.length === 0) {
-      alert('기업명이 없는 리드는 제외 해제할 수 없습니다.');
+      alert('기업명이 없는 광고주 후보는 제외 해제할 수 없습니다.');
       return;
     }
 
@@ -857,7 +857,7 @@ export default function SalesDashboardPage() {
             className="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-sm"
             title="피드별로 순차 스캔 (60초 타임아웃 방지)"
           >
-            {scanning ? '스캔 중...' : '📥 리드 스캔'}
+            {scanning ? '스캔 중...' : '📥 광고주 후보 스캔'}
           </button>
 
           <button
@@ -938,7 +938,7 @@ export default function SalesDashboardPage() {
             <div className="p-4 border-b border-gray-200 flex flex-col gap-3 bg-gray-50/50">
               <div className="flex items-center justify-between">
                 <h2 className="font-semibold text-gray-900">
-                  리드 목록 ({leads.length})
+                  광고주 후보 목록 ({leads.length})
                 </h2>
                 <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-gray-200 shadow-sm">
                   <button
@@ -1009,7 +1009,7 @@ export default function SalesDashboardPage() {
                 <div className="p-8 text-center text-gray-500">로딩 중...</div>
               ) : leads.length === 0 ? (
                 <div className="p-8 text-center text-gray-500">
-                  리드가 없습니다. 스캔을 실행하세요.
+                  광고주 후보가 없습니다. 스캔을 실행하세요.
                 </div>
               ) : (
                 leads.map((lead) => {
@@ -1226,7 +1226,7 @@ export default function SalesDashboardPage() {
                     />
 
                     <span className="text-[10px] text-gray-400 hidden lg:inline pt-1.5">
-                      → 담당자 지정 및 리드 분류
+                      → 담당자 지정 및 광고주 후보 분류
                     </span>
                   </div>
 
@@ -1360,7 +1360,7 @@ export default function SalesDashboardPage() {
               </div>
             ) : (
               <div className="h-full flex items-center justify-center text-gray-500">
-                리드를 선택하세요
+                광고주 후보를 선택하세요
               </div>
             )}
           </div>
@@ -1372,7 +1372,7 @@ export default function SalesDashboardPage() {
           <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-4 rounded-2xl shadow-2xl z-50 flex items-center gap-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
             <div className="flex items-center gap-3">
               <span className="bg-blue-600 text-[10px] font-bold px-2 py-1 rounded-full">{selectedLeads.size}</span>
-              <span className="text-sm font-medium">개 리드 선택됨</span>
+              <span className="text-sm font-medium">개 광고주 후보 선택됨</span>
             </div>
 
             <div className="flex items-center gap-2 border-l border-gray-700 pl-8">

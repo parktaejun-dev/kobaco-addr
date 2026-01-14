@@ -264,7 +264,7 @@ export default function SalesSettingsPage() {
                   className="w-24 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  이 점수 이상의 리드가 발견되면 텔레그램/슬랙 알림을 보냅니다. 권장: 70-80
+                  이 점수 이상의 광고주 후보가 발견되면 텔레그램/슬랙 알림을 보냅니다. 권장: 70-80
                 </p>
               </div>
             </div>
@@ -370,7 +370,7 @@ export default function SalesSettingsPage() {
                   className="w-24 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  이 점수 미만의 리드는 저장되지 않습니다. 권장: 50-60
+                  이 점수 미만의 광고주 후보는 저장되지 않습니다. 권장: 50-60
                 </p>
               </div>
             </div>

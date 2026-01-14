@@ -84,7 +84,7 @@ export async function sendLeadNotification(
                 type: 'header',
                 text: {
                     type: 'plain_text',
-                    text: `🎯 새로운 고점수 리드 발견! (${lead.score}점)`,
+                    text: `🎯 새로운 고점수 광고주 후보 발견! (${lead.score}점)`,
                     emoji: true,
                 },
             },
@@ -122,7 +122,7 @@ export async function sendLeadNotification(
     const safeLink = lead.link; // Link itself shouldn't be escaped if used in [text](link)
 
     const telegramMessage = `
-🎯 *새로운 고점수 리드 발견\\!*
+🎯 *새로운 고점수 광고주 후보 발견\\!*
 ${TEL_SEP}
 🏢 *기업:* ${safeCompany}
 ⭐ *점수:* ${lead.score}점

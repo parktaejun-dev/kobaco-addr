@@ -37,7 +37,7 @@ export default function SalesLayout({ children }: SalesLayoutProps) {
                 </button>
                 <Link href="/sales" className="ml-3 font-bold text-gray-900 flex items-center gap-2">
                     <span className="text-xl">🎯</span>
-                    <span>KOBACO Sniper</span>
+                    <span>광고주 발굴봇</span>
                 </Link>
             </header>
 

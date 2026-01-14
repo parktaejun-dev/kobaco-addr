@@ -1,5 +1,5 @@
 /**
- * AI Provider for KOBACO Lead Sniper
+ * AI Provider for KOBACO Advertiser Discovery Bot
  * Supports Gemini and DeepSeek with strict JSON validation
  */
 

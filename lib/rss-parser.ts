@@ -1,5 +1,5 @@
 /**
- * RSS Feed Parser for KOBACO Lead Sniper
+ * RSS Feed Parser for KOBACO Advertiser Discovery Bot
  * Fetches latest news from Korean newswire sources
  */
 
@@ -48,7 +48,7 @@ const DEFAULT_RSS: RSSFeedConfig[] = [
 const parser = new Parser({
   timeout: 20000,
   headers: {
-    'User-Agent': 'KOBACO-Lead-Sniper/1.0',
+    'User-Agent': 'KOBACO-Advertiser-Discovery-Bot/1.0',
   },
 });
 

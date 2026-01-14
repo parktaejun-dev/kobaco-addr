@@ -1,5 +1,5 @@
 /**
- * Redis client for KOBACO Lead Sniper
+ * Redis client for KOBACO Advertiser Discovery Bot
  * Uses standard redis package with REDIS_URL
  */
 
