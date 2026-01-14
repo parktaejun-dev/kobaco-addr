@@ -26,6 +26,33 @@ interface LeadsResponse {
   counts: Record<string, number>;
 }
 
+interface SalesConfig {
+  excludedCompanies?: string[];
+  excludedCompaniesTemporary?: Array<{ name: string; expiresAt: number }>;
+}
+
+function normalizeCompanyKey(name: string): string {
+  return name.trim().toLowerCase();
+}
+
+function buildExcludedCompanySet(config?: SalesConfig): Set<string> {
+  const keys = new Set<string>();
+
+  for (const company of config?.excludedCompanies || []) {
+    const key = normalizeCompanyKey(company);
+    if (key) keys.add(key);
+  }
+
+  const now = Date.now();
+  for (const item of config?.excludedCompaniesTemporary || []) {
+    if (!item || item.expiresAt <= now) continue;
+    const key = normalizeCompanyKey(item.name || '');
+    if (key) keys.add(key);
+  }
+
+  return keys;
+}
+
 /**
  * GET /api/sales/leads?status=ALL&limit=50
  * Returns leads with state and notes count
@@ -83,16 +110,29 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    let filteredLeads = leads;
+    if (statusParam === 'NEW') {
+      const config = await redis.get<SalesConfig>(RedisKeys.config());
+      const excludedCompanyKeys = buildExcludedCompanySet(config);
+      if (excludedCompanyKeys.size > 0) {
+        filteredLeads = leads.filter((lead) => {
+          const company = lead.ai_analysis?.company_name?.trim();
+          if (!company) return true;
+          return !excludedCompanyKeys.has(normalizeCompanyKey(company));
+        });
+      }
+    }
+
     // Sorting
     if (sortBy === 'score') {
-      leads.sort((a, b) => (b.final_score || 0) - (a.final_score || 0));
+      filteredLeads.sort((a, b) => (b.final_score || 0) - (a.final_score || 0));
     } else {
       // Default latest (already mostly correct from Redis, but ensure by created_at)
-      leads.sort((a, b) => b.created_at - a.created_at);
+      filteredLeads.sort((a, b) => b.created_at - a.created_at);
     }
 
     // Final limit after sorting
-    const finalLeads = leads.slice(0, limit);
+    const finalLeads = filteredLeads.slice(0, limit);
 
     const counts = await getStatusCounts();
 
