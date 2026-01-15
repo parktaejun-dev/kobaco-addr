@@ -35,7 +35,7 @@ function normalizeCompanyKey(name: string): string {
   return name.trim().toLowerCase();
 }
 
-function buildExcludedCompanySet(config?: SalesConfig): Set<string> {
+function buildExcludedCompanySet(config?: SalesConfig | null): Set<string> {
   const keys = new Set<string>();
 
   for (const company of config?.excludedCompanies || []) {
